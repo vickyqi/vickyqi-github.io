@@ -1,0 +1,774 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="一个不甘做屌丝的程序员" />
+
+
+
+  <meta name="keywords" content="JDK,Java,并发类,源码," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="作为JDK并发工具类源码学习系列的第一个被分析的类，ConcurrentHashMap类在我的开发过程中经常被使用。个人觉得如果在共享一个Map时，如果无法判断是否需要加锁，那么就干脆直接使用ConcurrentHashMap，即能保证并发安全，同时性能也不会有太多下降，因为ConcurrentHashMap可实现无锁读，不过内存会占用的多些，但是并不明显，基本可以忽略。下面我们就来看看Concu">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JDK并发工具类源码学习系列——ConcurrentHashMap">
+<meta property="og:url" content="http://vickyqi.com/2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="作为JDK并发工具类源码学习系列的第一个被分析的类，ConcurrentHashMap类在我的开发过程中经常被使用。个人觉得如果在共享一个Map时，如果无法判断是否需要加锁，那么就干脆直接使用ConcurrentHashMap，即能保证并发安全，同时性能也不会有太多下降，因为ConcurrentHashMap可实现无锁读，不过内存会占用的多些，但是并不明显，基本可以忽略。下面我们就来看看Concu">
+<meta property="og:image" content="http://img.blog.csdn.net/20151009213243833">
+<meta property="og:image" content="http://img.blog.csdn.net/20151012120235225">
+<meta property="og:image" content="http://img.blog.csdn.net/20151012120621035">
+<meta property="og:updated_time" content="2015-10-20T05:09:24.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JDK并发工具类源码学习系列——ConcurrentHashMap">
+<meta name="twitter:description" content="作为JDK并发工具类源码学习系列的第一个被分析的类，ConcurrentHashMap类在我的开发过程中经常被使用。个人觉得如果在共享一个Map时，如果无法判断是否需要加锁，那么就干脆直接使用ConcurrentHashMap，即能保证并发安全，同时性能也不会有太多下降，因为ConcurrentHashMap可实现无锁读，不过内存会占用的多些，但是并不明显，基本可以忽略。下面我们就来看看Concu">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> JDK并发工具类源码学习系列——ConcurrentHashMap - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              JDK并发工具类源码学习系列——ConcurrentHashMap
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-10-19T14:19:11+08:00" content="2015-10-19">
+            2015-10-19
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>作为JDK并发工具类源码学习系列的第一个被分析的类，ConcurrentHashMap类在我的开发过程中经常被使用。个人觉得如果在共享一个Map时，如果无法判断是否需要加锁，那么就干脆直接使用ConcurrentHashMap，即能保证并发安全，同时性能也不会有太多下降，因为ConcurrentHashMap可实现无锁读，不过内存会占用的多些，但是并不明显，基本可以忽略。<br>下面我们就来看看ConcurrentHashMap类的内部构造。</p>
+<h5 id="1-_结构预览"><strong>1. 结构预览</strong></h5><p> 1.1 类定义<br><figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">public <span class="class"><span class="keyword">class</span> <span class="title">ConcurrentHashMap&lt;K</span>, <span class="title">V&gt;</span> <span class="keyword"><span class="keyword">extends</span></span> <span class="title">AbstractMap&lt;K</span>, <span class="title">V&gt;</span> <span class="title">implements</span> <span class="title">ConcurrentMap&lt;K</span>, <span class="title">V&gt;</span>, <span class="title">Serializable</span></span></span><br></pre></td></tr></table></figure></p>
+<p>上面是ConcurrentHashMap类的定义，从ConcurrentHashMap的定义可以看出ConcurrentHashMap是实现了ConcurrentMap接口，而非直接实现Map接口。同时ConcurrentMap的子接口还有一个ConcurrentNavigableMap，表示可支持导航的并发Map。可见ConcurrentMap接口定义可支持并发，NavigableMap接口定义可支持导航，SortedMap接口定义可支持排序，NavigableMap继承自SortedMap。从Map的API介绍可以看出Java Collections Framework家族中重要一员——Map的组织结构——通过接口定义Map的行为，或者说Map可支持的功能，多个接口之间可交叉，如ConcurrentNavigableMap即实现ConcurrentMap接口又实现NavigableMap接口。</p>
+<p> 1.2 类结构<br><img src="http://img.blog.csdn.net/20151009213243833" alt="ConcurrentHashMap结构图"><br>从图中可以看出ConcurrentHashMap内部包含了多个内部类，其中最重要的也是我们最需要关心的是：<strong>Segment</strong>和<strong>HashEntry</strong>。<br><strong>Segment</strong>是ConcurrentHashMap非常重要的一个内部类，是ConcurrentHashMap实现高并发的关键点，Segment在ConcurrentHashMap中承担着所有的操作，即所有对ConcurrentHashMap的操作最终都会对Segment进行操作。因为Segment保存了最终的数据，而ConcurrentHashMap只是保存了一个Segment的数组。ConcurrentHashMap通过N个Segment将数据切分成N块，而每块之间是互不影响的，所以理论上可以同时并行的执行N个需要加锁的操作，这就是ConcurrentHashMap并发的基础。<br><strong>HashEntry</strong>同HashMap中的Entry，每个HashEntry是一个节点，保存key和value，以及下一个节点。HashEntry中的key，hash 和 next 域都被声明为 final 型，value 域被声明为 volatile 型，可见HashEntry类的value是可变的，其他的key和next都是不可变的。<br>EntryIterator，EntrySet，HashIterator，KeyIterator，KeySet，ValueIterator，Values是辅助ConcurrentHashMap实现遍历的内部类。<br>下面简单介绍下<strong>Segment</strong>和<strong>HashEntry</strong>类。<br><strong>HashEntry</strong><br><figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> HashEntry&lt;K,V&gt; &#123;</span><br><span class="line">        <span class="keyword">final</span> K key;</span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">int</span> hash;</span><br><span class="line">        <span class="keyword">volatile</span> V value;</span><br><span class="line">        <span class="keyword">final</span> HashEntry&lt;K,V&gt; <span class="keyword">next</span>;</span><br><span class="line"></span><br><span class="line">        HashEntry(K key, <span class="keyword">int</span> hash, HashEntry&lt;K,V&gt; <span class="keyword">next</span>, V value) &#123;</span><br><span class="line">            <span class="keyword">this</span>.key = key;</span><br><span class="line">            <span class="keyword">this</span>.hash = hash;</span><br><span class="line">            <span class="keyword">this</span>.<span class="keyword">next</span> = <span class="keyword">next</span>;</span><br><span class="line">            <span class="keyword">this</span>.value = value;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">		@SuppressWarnings(<span class="string">"unchecked"</span>)</span><br><span class="line">		<span class="keyword">static</span> <span class="keyword">final</span> &lt;K,V&gt; HashEntry&lt;K,V&gt;[] newArray(<span class="keyword">int</span> i) &#123;</span><br><span class="line">		    <span class="keyword">return</span> <span class="keyword">new</span> HashEntry[i];</span><br><span class="line">		&#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>HashEntry类的结构很简单，就是四个变量，一个构造函数，一个static方法。由于没有任何getter和setter方法，所以对其操作是直接访问变量。在 ConcurrentHashMap 中，在散列时如果产生“碰撞”，将采用“分离链接法”来处理“碰撞”：把“碰撞”的 HashEntry 对象链接成一个链表。由于 HashEntry 的 next 域为 final 型，所以新节点只能在链表的表头处插入。所以链表中节点的顺序和插入的顺序相反。<br><strong>Segment</strong><br><figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">static <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Segment&lt;K</span>,<span class="title">V&gt;</span> <span class="keyword"><span class="keyword">extends</span></span> <span class="title">ReentrantLock</span> <span class="title">implements</span> <span class="title">Serializable</span></span></span><br></pre></td></tr></table></figure></p>
+<p>Segment继承自ReentrantLock ，所以它可以作为一个锁使用，其在ConcurrentHashMap也正是作为一个锁来使用的。</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">transient</span> <span class="keyword">volatile</span> <span class="keyword">int</span> <span class="keyword">count</span>;<span class="comment">//Segment中保存的元素数量</span></span><br><span class="line"><span class="keyword">transient</span> <span class="keyword">int</span> modCount;<span class="comment">//记录Segment被修改的次数，用于在读取时判断读取期间改Segment是否有过修改，有的话则重试</span></span><br><span class="line"><span class="keyword">transient</span> <span class="keyword">int</span> threshold;<span class="comment">//阀值，元素数量达到该值则会进行自动扩展</span></span><br><span class="line"><span class="keyword">transient</span> <span class="keyword">volatile</span> HashEntry&lt;K,V&gt;[] table;<span class="comment">//桶，一个HashEntry的数组，按HashCode值散列保存，采用链表解决hash碰撞问题</span></span><br><span class="line"><span class="keyword">final</span> <span class="keyword">float</span> loadFactor;<span class="comment">//负载因子</span></span><br></pre></td></tr></table></figure>
+<p><strong>count </strong>变量是一个计数器，它表示每个 Segment 对象管理的 table 数组（若干个 HashEntry 组成的链表）包含的 HashEntry 对象的个数。每一个 Segment 对象都有一个 count 对象来表示本 Segment 中包含的 HashEntry 对象的总数。注意，之所以在每个 Segment 对象中包含一个计数器，而不是在 ConcurrentHashMap 中使用全局的计数器，是为了避免出现“热点域”而影响 ConcurrentHashMap 的并发性。<br><img src="http://img.blog.csdn.net/20151012120235225" alt="Segment结构"><br>从Segment拥有的方法可以看出，针对ConcurrentHashMap的操作基本上都会调用具体某个Segment的对应方法，如put会调用Segment的put方法。所以Segment是最终的操作类。</p>
+<p>下图是依次插入 ABC 三个 HashEntry 节点后，Segment 的结构示意图。<br><img src="http://img.blog.csdn.net/20151012120621035" alt="插入三个节点后 Segment 的结构示意图"><br>Segment的方法会在介绍ConcurrentHashMap的方法时进行解释，这里先不介绍。</p>
+<h5 id="2-_构造器解读"><strong>2. 构造器解读</strong></h5><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ConcurrentHashMap</span><span class="params">(<span class="keyword">int</span> initialCapacity, <span class="keyword">float</span> loadFactor)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>(initialCapacity, loadFactor, DEFAULT_CONCURRENCY_LEVEL);</span><br><span class="line">    &#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ConcurrentHashMap</span><span class="params">(<span class="keyword">int</span> initialCapacity)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>(initialCapacity, DEFAULT_LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL);</span><br><span class="line">    &#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ConcurrentHashMap</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>以上的构造器都只是一个个重载函数，最终都会调用下面的构造器。其中使用到了三个常量：</p>
+<ul>
+<li>DEFAULT_INITIAL_CAPACITY：默认初始容量</li>
+<li>DEFAULT_LOAD_FACTOR：默认加载因子</li>
+<li>DEFAULT_CONCURRENCY_LEVEL：默认并发级别，该值决定一个包含多少个Segment，即将ConcurrentHashMap切分成多少块</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ConcurrentHashMap</span><span class="params">(<span class="keyword">int</span> initialCapacity,</span><br><span class="line">                             <span class="keyword">float</span> loadFactor, <span class="keyword">int</span> concurrencyLevel)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (!(loadFactor &gt; <span class="number">0</span>) || initialCapacity &lt; <span class="number">0</span> || concurrencyLevel &lt;= <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (concurrencyLevel &gt; MAX_SEGMENTS)</span><br><span class="line">            concurrencyLevel = MAX_SEGMENTS;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Find power-of-two sizes best matching arguments</span></span><br><span class="line">        <span class="keyword">int</span> sshift = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> ssize = <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span> (ssize &lt; concurrencyLevel) &#123;</span><br><span class="line">            ++sshift;</span><br><span class="line">            ssize &lt;&lt;= <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        segmentShift = <span class="number">32</span> - sshift;</span><br><span class="line">        segmentMask = ssize - <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">this</span>.segments = Segment.newArray(ssize);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (initialCapacity &gt; MAXIMUM_CAPACITY)</span><br><span class="line">            initialCapacity = MAXIMUM_CAPACITY;</span><br><span class="line">        <span class="keyword">int</span> c = initialCapacity / ssize;</span><br><span class="line">        <span class="keyword">if</span> (c * ssize &lt; initialCapacity)</span><br><span class="line">            ++c;</span><br><span class="line">        <span class="keyword">int</span> cap = <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span> (cap &lt; c)</span><br><span class="line">            cap &lt;&lt;= <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="keyword">this</span>.segments.length; ++i)</span><br><span class="line">            <span class="keyword">this</span>.segments[i] = <span class="keyword">new</span> Segment&lt;K,V&gt;(cap, loadFactor);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>该构造函数需要制定初始容量、加载因子以及并发级别，对应上面提到的三个常量（默认值）。代码前几句是对参数进行正确性校验。<strong>// Find power-of-two sizes best matching arguments</strong>这句注释的意思是寻找一个参数的最佳匹配值：最接近指定的参数的2的幂方值。下面我们对照着代码来说明这句话的含义：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Find power-of-two sizes best matching arguments</span></span><br><span class="line"><span class="keyword">int</span> sshift = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">int</span> ssize = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">while</span> (ssize &lt; concurrencyLevel) &#123;</span><br><span class="line">    ++sshift;</span><br><span class="line">    ssize &lt;&lt;= <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里定义了一个ssize变量，该变量就是concurrencyLevel的最佳匹配值，可以看见首先是循环，直到ssize&gt;=concurrencyLevel，所以最佳匹配值是大于等于指定参数的，循环里面每次会将ssize右移一位，即*2，所以最终得到的值就是一个最接近且大于等于concurrencyLevel的2次幂方值。同时定义了一个sshift变量，该变量随着ssize的每次右移而+1，最终得到的即是ssize是2的多少次方，即sszie=2^sshift。继续往下看：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">segmentShift = <span class="number">32</span> - sshift;<span class="comment">//偏移量</span></span><br><span class="line">segmentMask = ssize - <span class="number">1</span>;<span class="comment">//掩码值</span></span><br><span class="line"><span class="keyword">this</span>.segments = Segment.newArray(ssize);<span class="comment">//初始化segments数组</span></span><br></pre></td></tr></table></figure>
+<p>segmentShift以及segmentMask在后面将一个hash映射到某一个segments时使用，目的是将hash均匀的分配到每个segments，具体为什么使用这两个来进行均匀分配我们这里不介绍。最后一句是初始化一个segments数组，大小是ssize，而非参数concurrencyLevel值。下面继续看：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (initialCapacity &gt; MAXIMUM_CAPACITY)</span><br><span class="line">    initialCapacity = MAXIMUM_CAPACITY;</span><br><span class="line"><span class="keyword">int</span> c = initialCapacity / ssize;</span><br><span class="line"><span class="keyword">if</span> (c * ssize &lt; initialCapacity)</span><br><span class="line">    ++c;</span><br><span class="line"><span class="keyword">int</span> cap = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">while</span> (cap &lt; c)</span><br><span class="line">    cap &lt;&lt;= <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="keyword">this</span>.segments.length; ++i)</span><br><span class="line">    <span class="keyword">this</span>.segments[i] = <span class="keyword">new</span> Segment&lt;K,V&gt;(cap, loadFactor);</span><br></pre></td></tr></table></figure>
+<p>initialCapacity是构造器指定的初始化容量，ssize是segments数组大小，所以c的值就是每个segments的容量。下面定义了一个cap，这里的cap和前面的ssize是一个含义，即选择一个最接近且大于等于c的2的幂方值，然后初始化segments数组，传入的参数有cap（segment容量）和loadFactor（负载因子）。这里选择cap作为segment容量，而非c，是出于方便后期对segment的容量进行扩充考虑，如果容量是2的幂方，那么想要将容量扩充一倍只需右移1位即可，同时保证依旧是2的幂方。<br>对于segment的初始化很简单，对loadFactor赋值，然后根据指定的初始容量创建一个HashEntry数组，并计算出threshold（阀值，当segment中的元素超过这个阈值则进行容量扩充）。</p>
+<h5 id="3-_常用方法解读"><strong>3. 常用方法解读</strong></h5><p>ConcurrentHashMap实现了Map接口，那么他的核心方法包括我们常用的put(K, V)、get(Object)、contains(Object)、size()，同时继承自ConcurrentMap让他包含了putIfAbsent(K, V)、remove(Object, Object)、replace(K, V, V)、replace(K, V)四个并发方法。后面的四个并发方法是ConcurrentMap为我们提供的在并发情景下使用的工具方法，都是基于CAS来实现的。<br>在看put(K, V)、get(Object)等方法实现之前，先来看下这两个方法：hash(int)和segmentFor(int)。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">/* ---------------- Small Utilities -------------- */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line"> * Applies a supplemental hash function to a given hashCode, which</span><br><span class="line"> * defends against poor quality hash functions.  This is critical</span><br><span class="line"> * because ConcurrentHashMap uses power-of-two length hash tables,</span><br><span class="line"> * that otherwise encounter collisions for hashCodes that do not</span><br><span class="line"> * differ in lower or upper bits.</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">hash</span><span class="params">(<span class="keyword">int</span> h)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Spread bits to regularize both segment and index locations,</span></span><br><span class="line">    <span class="comment">// using variant of single-word Wang/Jenkins hash.</span></span><br><span class="line">    h += (h &lt;&lt;  <span class="number">15</span>) ^ <span class="number">0xffffcd7d</span>;</span><br><span class="line">    h ^= (h &gt;&gt;&gt; <span class="number">10</span>);</span><br><span class="line">    h += (h &lt;&lt;   <span class="number">3</span>);</span><br><span class="line">    h ^= (h &gt;&gt;&gt;  <span class="number">6</span>);</span><br><span class="line">    h += (h &lt;&lt;   <span class="number">2</span>) + (h &lt;&lt; <span class="number">14</span>);</span><br><span class="line">    <span class="keyword">return</span> h ^ (h &gt;&gt;&gt; <span class="number">16</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line"> * Returns the segment that should be used for key with given hash</span><br><span class="line"> * @param hash the hash code for the key</span><br><span class="line"> * @return the segment</span><br><span class="line"> */</span></span><br><span class="line">final Segment&lt;K,V&gt; segmentFor(<span class="keyword">int</span> hash) &#123;</span><br><span class="line">    <span class="keyword">return</span> segments[(hash &gt;&gt;&gt; segmentShift) &amp; segmentMask];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>源码中对这两个方法的注释是：Small Utilities，即小工具方法。源码中对于hash方法的注释的意思是：该方法是一个补充hash方法，ConcurrentHashMap的hash表的长度是2的幂方，使用该补充hash函数可降低一些质量差的hash函数发生的碰撞概率。具体如何实现的就不看了，就算看懂了代码也很难理解这样做的原因，所以不浪费时间。segmentFor是为一个hash值找到它应该去的segment，这里使用到了segmentShift以及segmentMask，还记得segmentShift是32-sshift，这里将hash值无符号左移segmentShift位，即取hash值的高sshift位，然后同segmentMask按位与运算。其实就是取hash值的高sshift位将值限制在0~ssize之间，然后与ssize-1取余得到segments数组的下标（取高位是因为更加均匀，低位的重复率比高位高，臆测~！！！）。<br>了解了上面两个方法，下面我们就来看看put(K, V)、get(Object)这两个方法的具体实现。</p>
+<h6 id="1-_put(K,_V)"><strong>1. put(K, V)</strong></h6><figure class="highlight cs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> V <span class="title">put</span>(<span class="params">K key, V <span class="keyword">value</span></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">value</span> == <span class="keyword">null</span>)</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();</span><br><span class="line">    <span class="keyword">int</span> hash = hash(key.hashCode());</span><br><span class="line">    <span class="keyword">return</span> segmentFor(hash).put(key, hash, <span class="keyword">value</span>, <span class="keyword">false</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ConcurrentHashMap的put方法内部只是根据key的hash值找到对应的Segement，然后调用Segement的put方法，注意Segement的put方法的第四个参数，这里穿的值是false。我们主要分析下Segement的put方法。Segement在这里的作用就是将元素均匀分成N等份，各个Segement之间互不干扰，读写也不会发生冲突，降低并发要求。</p>
+<figure class="highlight cs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">V <span class="title">put</span>(<span class="params">K key, <span class="keyword">int</span> hash, V <span class="keyword">value</span>, boolean onlyIfAbsent</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">lock</span>();</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">int</span> c = count;</span><br><span class="line">        <span class="keyword">if</span> (c++ &gt; threshold) <span class="comment">// ensure capacity</span></span><br><span class="line">            rehash();</span><br><span class="line">        HashEntry&lt;K,V&gt;[] tab = table;</span><br><span class="line">        <span class="keyword">int</span> index = hash &amp; (tab.length - <span class="number">1</span>);</span><br><span class="line">        HashEntry&lt;K,V&gt; first = tab[index];</span><br><span class="line">        HashEntry&lt;K,V&gt; e = first;</span><br><span class="line">        <span class="keyword">while</span> (e != <span class="keyword">null</span> &amp;&amp; (e.hash != hash || !key.equals(e.key)))</span><br><span class="line">            e = e.next;</span><br><span class="line"></span><br><span class="line">        V oldValue;</span><br><span class="line">        <span class="keyword">if</span> (e != <span class="keyword">null</span>) &#123;</span><br><span class="line">            oldValue = e.<span class="keyword">value</span>;</span><br><span class="line">            <span class="keyword">if</span> (!onlyIfAbsent)</span><br><span class="line">                e.<span class="keyword">value</span> = <span class="keyword">value</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            oldValue = <span class="keyword">null</span>;</span><br><span class="line">            ++modCount;</span><br><span class="line">            tab[index] = <span class="keyword">new</span> HashEntry&lt;K,V&gt;(key, hash, first, <span class="keyword">value</span>);</span><br><span class="line">            count = c; <span class="comment">// write-volatile</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> oldValue;</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        unlock();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先第一步就是lock，看来再NB的并发类在写时也需要lock啊。读取count值，从count的注释可以看出该值是记录Segment包含的元素数量，volatile修饰的。然后判断增加之后元素数量是否超过阈值，超过的话提前扩容。接着找到该hash对应的table（桶），简单的取余操作。找到该table的第一个元素——first，因为ConcurrentHashMap使用链表来解决hash冲突问题，所以这里的table是一个链表。</p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (<span class="keyword">e</span> != null &amp;&amp; (<span class="keyword">e</span>.hash != hash || !key.equals(<span class="keyword">e</span>.key)))</span><br><span class="line">      <span class="keyword">e</span> = <span class="keyword">e</span>.next;</span><br></pre></td></tr></table></figure>
+<p>通过循环，并通过比较hash值以及equals()校验，寻找与key相同的已存在的元素。</p>
+<figure class="highlight cs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">V oldValue;</span><br><span class="line"><span class="keyword">if</span> (e != <span class="keyword">null</span>) &#123;</span><br><span class="line">    oldValue = e.<span class="keyword">value</span>;</span><br><span class="line">    <span class="keyword">if</span> (!onlyIfAbsent)</span><br><span class="line">        e.<span class="keyword">value</span> = <span class="keyword">value</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span> &#123;</span><br><span class="line">    oldValue = <span class="keyword">null</span>;</span><br><span class="line">    ++modCount;</span><br><span class="line">    tab[index] = <span class="keyword">new</span> HashEntry&lt;K,V&gt;(key, hash, first, <span class="keyword">value</span>);</span><br><span class="line">    count = c; <span class="comment">// write-volatile</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>e!=null说明找到与要插入的元素key相同的元素，那么onlyIfAbsent=false则直接将原元素的value值替换，返回原值，由于HashEntry的value是volatile的，所以修改之后会立即被后续线程可见；onlyIfAbsent=true则不做任何操作。e==null时，modCount自增（modCount记录了对该Segment的进行的结构性修改的次数，modCount值使得在进行批量读取时能够知道在读取期间Segment结构是否被修改来决定是否进行加锁读取）。<strong>tab[index] = new HashEntry(key, hash, first, value)</strong>这句就是将被插入的元素添加到链表中，但是插入的位置是头部，而非尾部。HashEntry的构造器传入一个HashEntry对象，该对象是链表原来的头部，被作为新创建的节点的next指针，所以新的链表的头部元素是新增加的，后面接着是原来的链表。<br>注意：此处的lock并非对整个Map进行加锁，而只是对该Segment进行加锁，所以如果一个线程进行put操作，其他的另外15个（ssize-1）Segment仍是可访问的。</p>
+<h6 id="2-_get(Object)"><strong>2. get(Object)</strong></h6><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> V <span class="built_in">get</span>(<span class="keyword">Object</span> <span class="variable">key</span>) &#123;</span><br><span class="line">    <span class="built_in">int</span> hash = hash(<span class="variable">key</span>.hashCode());</span><br><span class="line">    <span class="keyword">return</span> segmentFor(hash).<span class="built_in">get</span>(<span class="variable">key</span>, hash);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ConcurrentHashMap的get()方法同put()一样，也是依赖于Segment的get()方法。</p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">V <span class="literal">get</span>(Object key, int hash) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">count</span> != 0) &#123; <span class="comment">// read-volatile</span></span><br><span class="line">        HashEntry&lt;K,V&gt; <span class="keyword">e</span> = getFirst(hash);</span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">e</span> != null) &#123;</span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">e</span>.hash == hash &amp;&amp; key.equals(<span class="keyword">e</span>.key)) &#123;</span><br><span class="line">                V v = <span class="keyword">e</span>.value;</span><br><span class="line">                <span class="keyword">if</span> (v != null)</span><br><span class="line">                    <span class="keyword">return</span> v;</span><br><span class="line">                <span class="keyword">return</span> readValueUnderLock(<span class="keyword">e</span>); <span class="comment">// recheck</span></span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">e</span> = <span class="keyword">e</span>.next;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从代码可以看到get()方法在读取时无需进行加锁操作，除非读取到的值为NULL。</p>
+<h5 id="4-_使用场景"><strong>4. 使用场景</strong></h5></span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/JDK/" rel="tag">#JDK</a>
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/并发类/" rel="tag">#并发类</a>
+          
+            <a href="/tags/源码/" rel="tag">#源码</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/10/19/正则学习二三事/" rel="prev">正则学习二三事</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/"
+     data-title="JDK并发工具类源码学习系列——ConcurrentHashMap"
+     data-content=""
+     data-url="http://vickyqi.com/2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/"
+                       data-title="JDK并发工具类源码学习系列——ConcurrentHashMap" data-url="http://vickyqi.com/2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/images/Vicky.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">一个不甘做屌丝的程序员</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">5</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">2</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">13</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#1-_结构预览"><span class="nav-number">1.</span> <span class="nav-text">1. 结构预览</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-_构造器解读"><span class="nav-number">2.</span> <span class="nav-text">2. 构造器解读</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-_常用方法解读"><span class="nav-number">3.</span> <span class="nav-text">3. 常用方法解读</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#1-_put(K,_V)"><span class="nav-number">3.1.</span> <span class="nav-text">1. put(K, V)</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#2-_get(Object)"><span class="nav-number">3.2.</span> <span class="nav-text">2. get(Object)</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#4-_使用场景"><span class="nav-number">4.</span> <span class="nav-text">4. 使用场景</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>

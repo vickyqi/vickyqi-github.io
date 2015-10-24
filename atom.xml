@@ -1,0 +1,693 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title><![CDATA[Vicky's Blog]]></title>
+  
+  <link href="/atom.xml" rel="self"/>
+  <link href="http://vickyqi.com/"/>
+  <updated>2015-10-20T08:01:52.000Z</updated>
+  <id>http://vickyqi.com/</id>
+  
+  <author>
+    <name><![CDATA[Vicky]]></name>
+    
+  </author>
+  
+  <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[几种常用JSON库性能比较]]></title>
+    <link href="http://vickyqi.com/2015/10/19/%E5%87%A0%E7%A7%8D%E5%B8%B8%E7%94%A8JSON%E5%BA%93%E6%80%A7%E8%83%BD%E6%AF%94%E8%BE%83/"/>
+    <id>http://vickyqi.com/2015/10/19/几种常用JSON库性能比较/</id>
+    <published>2015-10-19T06:47:47.000Z</published>
+    <updated>2015-10-20T08:01:52.000Z</updated>
+    <content type="html"><![CDATA[<p>JSON不管是在Web开发还是服务器开发中是相当常见的数据传输格式，一般情况我们对于JSON解析构造的性能并不需要过于关心，除非是在性能要求比较高的系统。<br>目前对于Java开源的JSON类库有很多种，下面我们取三个常用的JSON库进行性能测试对比，同时根据测试结果分析如果根据实际应用场景选择最合适的JSON库。<br>四个JSON类库分别为：Gson，FastJson，Jackson，Json-lib。<br>简单介绍下四个类库的身份背景。</p>
+<ul>
+<li>Gson（项目地址：<a href="https://github.com/google/gson）" target="_blank" rel="external">https://github.com/google/gson）</a><ul>
+<li>Gson是目前功能最全的Json解析神器，Gson当初是为因应Google公司内部需求而由Google自行研发而来，但自从在2008年五月公开发布第一版后已被许多公司或用户应用。Gson的应用主要为toJson与fromJson两个转换函数，无依赖，不需要例外额外的jar，能够直接跑在JDK上。而在使用这种对象转换之前需先创建好对象的类型以及其成员才能成功的将JSON字符串成功转换成相对应的对象。类里面只要有get和set方法，Gson完全可以将复杂类型的json到bean或bean到json的转换，是JSON解析的神器。</li>
+</ul>
+</li>
+<li>FastJson（项目地址：<a href="https://github.com/alibaba/fastjson）" target="_blank" rel="external">https://github.com/alibaba/fastjson）</a><ul>
+<li>Fastjson是一个Java语言编写的高性能的JSON处理器,由阿里巴巴公司开发。无依赖，不需要例外额外的jar，能够直接跑在JDK上。FastJson在复杂类型的Bean转换Json上会出现一些问题，可能会出现引用的类型，导致Json转换出错，需要制定引用。FastJson采用独创的算法，将parse的速度提升到极致，超过所有json库。</li>
+</ul>
+</li>
+<li>Jackson（项目地址：<a href="https://github.com/FasterXML/jackson）" target="_blank" rel="external">https://github.com/FasterXML/jackson）</a><ul>
+<li>相比json-lib框架，Jackson所依赖的jar包较少，简单易用并且性能也要相对高些。而且Jackson社区相对比较活跃，更新速度也比较快。Jackson对于复杂类型的json转换bean会出现问题，一些集合Map，List的转换出现问题。Jackson对于复杂类型的bean转换Json，转换的json格式不是标准的Json格式。</li>
+</ul>
+</li>
+<li>Json-lib（项目地址：<a href="http://json-lib.sourceforge.net/index.html）" target="_blank" rel="external">http://json-lib.sourceforge.net/index.html）</a><ul>
+<li>json-lib最开始的也是应用最广泛的json解析工具，json-lib 不好的地方确实是依赖于很多第三方包，包括commons-beanutils.jar，commons-collections-3.2.jar，commons-lang-2.6.jar，commons-logging-1.1.1.jar，ezmorph-1.0.6.jar，对于复杂类型的转换，json-lib对于json转换成bean还有缺陷，比如一个类里面会出现另一个类的list或者map集合，json-lib从json到bean的转换就会出现问题。json-lib在功能和性能上面都不能满足现在互联网化的需求。</li>
+</ul>
+</li>
+</ul>
+<p>选择一个合适的JSON库要从多个方面进行考虑：</p>
+<ol>
+<li>字符串解析成JSON性能</li>
+<li>字符串解析成JavaBean性能</li>
+<li>JavaBean构造JSON性能</li>
+<li>集合构造JSON性能</li>
+<li>易用性</li>
+</ol>
+<p>对于前四条其实都是从JSON的解析构造性能角度考虑，而最后一条则是考虑易用性，这点对于开发者来说其实也是需要考虑的一个问题，如果该库的API使用难度大，或者很复杂，那么不建议使用，毕竟JSON解析的性能差异并不大。下面的测试结果针对四个不同数量级的JSON字符串，以及分别测试上面提到的前四条性能，结果如下：<br><img src="http://img.blog.csdn.net/20150901164447842" alt="这里写图片描述"><br>Json-lib在数据量在10W时OOM了，内存开到1G都不行，所以直接Pass了。<br>从上面图表可以看到：</p>
+<ol>
+<li>字符串解析成JavaBean：当数据量较少时首选FastJson，数据量较大使用Jackson。但是Jackson无法堆一个对象集合进行解析，只能转成一个Map集合，这点Gson和FastJson处理的比较好。</li>
+<li>字符串解析成JSON：当数据量较少时首选FastJson，数据量较大使用Jackson。</li>
+<li>JavaBean构造JSON：当数据量较少时选择Gson，数据量较大可使用Jackson。</li>
+<li>集合构造JSON：首先Jackson，其次Fastjson。</li>
+</ol>
+<p>上面是从性能角度分析四种JSON类库，从易用性角度来分析的话，FastJson的API设计的最简单，最方便使用，直接使用JSON的两个静态方法即可完成四种操作；而Gson和Jackson都需要new一个对象，虽然这个对象可以复用，但是在实际使用过程中还需要用一个全局变量来保存改变量，同时API设计的也不是很好理解，对于FastJson来说复杂的API是因为他支持流式解析，适合对JSON进行大量且复杂的操作，但是实际应用中对于JSON的操作都是简单的解析成JavaBean，然后JavaBean序列化成JSON字符串即可，复杂的操作很少。<br>下面从我自己实际的应用场景出发，考虑该如何选择合适的JSON类库。<br>应用场景：游戏服务器，基本是对客户端发送过来的JSON格式字符串解析成JavaBean，然后将封装好的指令转成JSON字符串返回给客户端，这里考虑到JavaBean转成JSON与集合转成JSON的性能差异，所以直接使用集合进行转成JSON，避免使用JavaBean。<br>考虑上述场景适合使用FastJson进行JSON字符串解析，Jackson将集合转成JSON格式字符串。<br>浅尝辄止，欢迎批评指出。</p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>JSON不管是在Web开发还是服务器开发中是相当常见的数据传输格式，一般情况我们对于JSON解析构造的性能并不需要过于关心，除非是在性能要求比较高的系统。<br>目前对于Java开源的JSON类库有很多种，下面我们取三个常用的JSON库进行性能测试对比，同时根据测试结果分析]]>
+    </summary>
+    
+      <category term="JSON" scheme="http://vickyqi.com/tags/JSON/"/>
+    
+      <category term="Java学习" scheme="http://vickyqi.com/categories/Java%E5%AD%A6%E4%B9%A0/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[使用Apache Commons CLI开发命令行工具]]></title>
+    <link href="http://vickyqi.com/2015/10/19/%E4%BD%BF%E7%94%A8Apache%20Commons%20CLI%E5%BC%80%E5%8F%91%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%B7%A5%E5%85%B7/"/>
+    <id>http://vickyqi.com/2015/10/19/使用Apache Commons CLI开发命令行工具/</id>
+    <published>2015-10-19T06:47:47.000Z</published>
+    <updated>2015-10-20T05:11:24.000Z</updated>
+    <content type="html"><![CDATA[<p>工作两年多，从没遇到需要使用命令行那样的参数形式执行命令的需求，突然好奇想试试，于是找到了Apache Commons CLI，大致了解试用了下，挺简单的，总共也就那点东西。<br>Apache Commons CLI官网地址：(<a href="https://commons.apache.org/cli/download_cli.cgi" target="_blank" rel="external">https://commons.apache.org/cli/download_cli.cgi</a>)<br>使用Apache Commons CLI开发命令行工具分成三步：<br>1）定义CLI<br>2）解析CLI<br>3）处理CLI<br>首先我们参考官网给出的一个例子：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">ant [options] [target [target2 [target3] ...]]</span><br><span class="line">  Options: </span><br><span class="line">  -<span class="operator"><span class="keyword">help</span>                  print this message</span><br><span class="line">  -projecthelp           print <span class="keyword">project</span> <span class="keyword">help</span> information</span><br><span class="line">  -<span class="keyword">version</span>               print the <span class="keyword">version</span> information <span class="keyword">and</span> <span class="keyword">exit</span></span><br><span class="line">  -quiet                 be extra quiet</span><br><span class="line">  -verbose               be extra verbose</span><br><span class="line">  -debug                 print debugging information</span><br><span class="line">  -emacs                 produce <span class="keyword">logging</span> information <span class="keyword">without</span> adornments</span><br><span class="line">  -<span class="keyword">logfile</span> &lt;<span class="keyword">file</span>&gt;        <span class="keyword">use</span> given <span class="keyword">file</span> <span class="keyword">for</span> <span class="keyword">log</span></span><br><span class="line">  -logger &lt;classname&gt;    the <span class="keyword">class</span> which <span class="keyword">is</span> <span class="keyword">to</span> perform <span class="keyword">logging</span></span><br><span class="line">  -listener &lt;classname&gt;  <span class="keyword">add</span> an <span class="keyword">instance</span> <span class="keyword">of</span> <span class="keyword">class</span> <span class="keyword">as</span> a <span class="keyword">project</span> listener</span><br><span class="line">  -buildfile &lt;<span class="keyword">file</span>&gt;      <span class="keyword">use</span> given buildfile</span><br><span class="line">  -<span class="keyword">D</span>&lt;property&gt;=&lt;<span class="keyword">value</span>&gt;   <span class="keyword">use</span> <span class="keyword">value</span> <span class="keyword">for</span> given property</span><br><span class="line">  -find &lt;<span class="keyword">file</span>&gt;           <span class="keyword">search</span> <span class="keyword">for</span> buildfile towards the root <span class="keyword">of</span> the</span><br><span class="line">                         filesystem <span class="keyword">and</span> <span class="keyword">use</span> it</span></span><br></pre></td></tr></table></figure></p>
+<p>该例子是ant的命令，我们可以对照着进行开发（其实官网就有，英文好的可以直接移步<br>(<a href="https://commons.apache.org/proper/commons-cli/usage.html)）。" target="_blank" rel="external">https://commons.apache.org/proper/commons-cli/usage.html)）。</a></p>
+<p>####定义CLI：<br>首先参照上面的三部曲，第一步定义CLI：<br>Apache Commons CLI使用Option表示每一个命令，使用Options封装多个Option，创建Option的方式有三种：</p>
+<ol>
+<li>Option op = new Option(…);//构造器</li>
+<li>Options.addOption(…);//Options直接构造</li>
+<li>Option.Builder辅助类<br>1.2适合简单的创建的命令，如上面logfile命令以上的命令。我们举几个例子：</li>
+</ol>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Options ops = new Options();</span><br><span class="line">Option <span class="operator"><span class="keyword">help</span> = <span class="keyword">new</span> <span class="keyword">Option</span>( <span class="string">"help"</span>, <span class="string">"print this message"</span> );</span></span><br><span class="line">ops.addOption(<span class="operator"><span class="keyword">help</span>);</span></span><br><span class="line">ops.addOption("projecthelp", "print project <span class="operator"><span class="keyword">help</span> information<span class="string">");</span></span></span><br></pre></td></tr></table></figure>
+<p>同时如果我们假设debug命令后可跟值true/false，那么我们可以这样定义命令：</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ops.addOption(<span class="string">"debug"</span>, <span class="keyword">true</span>, <span class="string">"print debugging information"</span>); <span class="regexp">//</span>第二个参数<span class="keyword">true</span>表示该命令后可跟参数，其实就是命令后面跟上值</span><br></pre></td></tr></table></figure>
+<p>下面我们看logfile以下除去<code>-D&lt;property&gt;=&lt;value&gt;</code> 之外的的命令如何创建，这里使用第三种方式：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Option</span> logfile = <span class="built_in">Option</span>.builder(<span class="string">"logfile"</span>).argName(<span class="string">"file"</span>).hasArg().desc(<span class="string">"use given file for log"</span>).build();<span class="comment">// argName指定命令后跟的参数名称</span></span><br><span class="line">ops.addOption(logfile);</span><br></pre></td></tr></table></figure>
+<p>最后我们看看如何定义<code>-D&lt;property&gt;=&lt;value&gt;</code>：</p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Option <span class="keyword">D</span> = Option.builder(<span class="string">"D"</span>).argName(<span class="string">"property=value"</span>).numberOfArgs(2).valueSeparator(<span class="string">"="</span>)</span><br><span class="line">				.<span class="keyword">desc</span>(<span class="string">"use value for given property"</span>).build();<span class="comment">// 这里numberOfArgs指定了后跟两个参数，且valueSeparator指定了连接符是=，这样CLI可以自动帮我们解析键值对</span></span><br><span class="line">ops.addOption(<span class="keyword">D</span>);</span><br></pre></td></tr></table></figure>
+<h4 id="解析CLI：">解析CLI：</h4><p>以上全部定义好之后，就可以对传入的参数进行解析了。DefaultParser类是用来解析参数，得到每个命令以及对应的值，而且对于如上面的<code>-D&lt;property&gt;=&lt;value&gt;</code> 这种命令，由于我们制定了“=”为分隔符，DefaultParser可以自动为我们将参数解析成Properties，很方便。</p>
+<figure class="highlight monkey"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">CommandLine comm = <span class="literal">null</span>;</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">	comm = <span class="keyword">new</span> DefaultParser().parse(ops, args);</span><br><span class="line">&#125; <span class="keyword">catch</span> (ParseException e) &#123;</span><br><span class="line">	e.printStackTrace();</span><br><span class="line">	<span class="built_in">log</span>.<span class="built_in">error</span>(<span class="string">"解析参数失败，参数：["</span> + Arrays.asList(args).toString() + <span class="string">"]"</span>);</span><br><span class="line">	<span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="处理CLI">处理CLI</h4><p>上面已经对传入的参数解析好了，剩下的就是获取到这些命令的值，以及进行相应的处理了，也就是我们的业务逻辑了。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (comm.getOptions().length == <span class="number">0</span>) &#123;</span><br><span class="line">	<span class="built_in">log</span>.info(<span class="string">"No any param to specify."</span>);</span><br><span class="line">	<span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (comm.hasOption(<span class="string">"h"</span>)) &#123;<span class="comment">// help</span></span><br><span class="line">	HelpFormatter formatter = <span class="keyword">new</span> HelpFormatter();</span><br><span class="line">	formatter.printHelp(<span class="string">"options"</span>, ops);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (comm.hasOption(<span class="string">"s"</span>)) &#123;<span class="comment">// 执行命令</span></span><br><span class="line">	<span class="keyword">new</span> SystemCommand().execute(comm.getOptionValue(<span class="string">"s"</span>));</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (comm.hasOption(<span class="string">"D"</span>)) &#123;<span class="comment">// 传递参数</span></span><br><span class="line">	Properties props = comm.getOptionProperties(<span class="string">"D"</span>);</span><br><span class="line">	<span class="keyword">new</span> ParamParser(props).parse();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面是一个简单的例子，这里有个getOptionProperties方法，这个方法是针对使用分隔符的命令方便获取键值对行为的属性值而设计的，很好用，免去了自己再做字符串切分的麻烦。<br>到这里整个使用Apache Commons CLI开发命令行工具的工作就完成了，很简单。</p>
+<ul>
+<li>Apache Commons CLI总共支持的几种命令模式：</li>
+<li>POSIX like options (ie. tar -zxvf foo.tar.gz)</li>
+<li>GNU like long options (ie. du –human-readable –max-depth=1)</li>
+<li>Java like properties (ie. java -Djava.awt.headless=true -Djava.net.useSystemProxies=true Foo)</li>
+<li>Short options with value attached (ie. gcc -O2 foo.c)</li>
+<li>long options with single hyphen (ie. ant -projecthelp)</li>
+</ul>
+<p>对于GNU模式官网还有一个例子，可以自行参考下。<br>附上官网的一个Option的属性表：</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>opt</td>
+<td style="text-align:left">java.lang.String</td>
+<td style="text-align:left">the identification string of the Option.</td>
+</tr>
+<tr>
+<td>longOpt</td>
+<td style="text-align:left">java.lang.String</td>
+<td style="text-align:left">an alias and more descriptive identification string.</td>
+</tr>
+<tr>
+<td>description</td>
+<td style="text-align:left">java.lang.String</td>
+<td style="text-align:left">a description of the function of the option.</td>
+</tr>
+<tr>
+<td>required</td>
+<td style="text-align:left">boolean</td>
+<td style="text-align:left">a flag to say whether the option must appear on the command line.</td>
+</tr>
+<tr>
+<td>arg</td>
+<td style="text-align:left">boolean</td>
+<td style="text-align:left">a flag to say whether the option takes an argument.</td>
+</tr>
+<tr>
+<td>args</td>
+<td style="text-align:left">boolean</td>
+<td style="text-align:left">a flag to say whether the option takes more than one argument.</td>
+</tr>
+<tr>
+<td>optionalArg</td>
+<td style="text-align:left">boolean</td>
+<td style="text-align:left">a flag to say whether the option’s argument is optional.</td>
+</tr>
+<tr>
+<td>argName</td>
+<td style="text-align:left">java.lang.String</td>
+<td style="text-align:left">the name of the argument value for the usage statement.</td>
+</tr>
+<tr>
+<td>valueSeparator</td>
+<td style="text-align:left">char</td>
+<td style="text-align:left">the character value used to split the argument string, that is used in conjunction with multipleArgs e.g. if the separator is ‘,’ and the argument string is ‘a,b,c’ then there are three argument values, ‘a’, ‘b’ and ‘c’.</td>
+</tr>
+<tr>
+<td>type</td>
+<td style="text-align:left">java.lang.Object</td>
+<td style="text-align:left">the type of the argument.</td>
+</tr>
+<tr>
+<td>value</td>
+<td style="text-align:left">java.lang.String</td>
+<td style="text-align:left">the value of the option.</td>
+</tr>
+<tr>
+<td>values</td>
+<td style="text-align:left">java.lang.String[]</td>
+<td style="text-align:left">the values of the option.</td>
+</tr>
+</tbody>
+</table>
+<p>参考文章：<br><a href="https://www.ibm.com/developerworks/cn/java/j-lo-commonscli/" target="_blank" rel="external">使用 Apache Commons CLI 开发命令行工具</a><br><a href="https://commons.apache.org/proper/commons-cli/project-info.html" target="_blank" rel="external">Apache Commons CLI</a></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>工作两年多，从没遇到需要使用命令行那样的参数形式执行命令的需求，突然好奇想试试，于是找到了Apache Commons CLI，大致了解试用了下，挺简单的，总共也就那点东西。<br>Apache Commons CLI官网地址：(<a href="https://commo]]>
+    </summary>
+    
+      <category term="Cli" scheme="http://vickyqi.com/tags/Cli/"/>
+    
+      <category term="Java" scheme="http://vickyqi.com/tags/Java/"/>
+    
+      <category term="命令行" scheme="http://vickyqi.com/tags/%E5%91%BD%E4%BB%A4%E8%A1%8C/"/>
+    
+      <category term="Java学习" scheme="http://vickyqi.com/categories/Java%E5%AD%A6%E4%B9%A0/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[详解原码、反码、补码——深入理解补码]]></title>
+    <link href="http://vickyqi.com/2015/10/19/%E8%AF%A6%E8%A7%A3%E5%8E%9F%E7%A0%81%E3%80%81%E5%8F%8D%E7%A0%81%E3%80%81%E8%A1%A5%E7%A0%81%E2%80%94%E2%80%94%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%A1%A5%E7%A0%81/"/>
+    <id>http://vickyqi.com/2015/10/19/详解原码、反码、补码——深入理解补码/</id>
+    <published>2015-10-19T06:19:11.000Z</published>
+    <updated>2015-10-20T03:39:34.000Z</updated>
+    <content type="html"><![CDATA[<p>学过计算机原理的人都知道原码、反码、补码，但是有多少人知道为什么会有这三种码呢，这三种码又是用来干嘛的呢。<br>众所周知，在计算机的世界只有01，那么显然所有的数都得转成二进制，这样计算机才能够理解。如何将一个十进制的数转成二进制就不说了，说下原码，正数的原码就是十进制转成二进制得到的二进制值，而负数是对应的正数转成二进制得到的二进制值，然后将最高位（符号位）置为1表示这是一个负数，如-10:10001010。</p>
+<h5 id="1-_原码"><strong>1. 原码</strong></h5><p>计算机进行算术运算时为了简单效率所以要求能够使用加法代替减法，如1-1==1+(-1)==0，那么我们先看看原码能不能实现这种需求。<br>示例：<br><figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">计算76-10==66</span><br><span class="line"><span class="code">   十进制     二进制</span></span><br><span class="line"><span class="code">   76        01001100</span></span><br><span class="line"><span class="header"> +  -10       10001010</span><br><span class="line">---------------------</span></span><br><span class="line"><span class="code">   66        11010110（-86）</span></span><br></pre></td></tr></table></figure></p>
+<h5 id="2-_反码"><strong>2. 反码</strong></h5><p>从上面算出的结果可见原码是无法完成对减法的运算需求的，那么由于1-1==1+（-1），所以人类又找到了一个看似能够解决这个问题的解决方法——反码，即将负数的符号位不变其余位取反。下面我们再看看反码能不能解决问题。<br>示例1：计算15-125<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">计算<span class="number">15</span>-<span class="number">125</span>==-<span class="number">110</span></span><br><span class="line">   十进制     二进制原码    二进制反码</span><br><span class="line">   <span class="number">15</span>        <span class="number">00001111</span>    <span class="number">00001111</span></span><br><span class="line"> +  -<span class="number">125</span>      <span class="number">11111101</span>    <span class="number">10000010</span></span><br><span class="line">---------------------------------</span><br><span class="line">   -<span class="number">110</span>      <span class="number">11101110</span>    <span class="number">10010001</span></span><br><span class="line">得到<span class="number">10010001</span>(反码)==<span class="number">11101110</span>(原码)==-<span class="number">110</span>，正确。注意：使用反码计算得到的结果也是反码，需要再次转换成原码。</span><br></pre></td></tr></table></figure></p>
+<p>示例2：计算76-10<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">计算<span class="number">76</span>-<span class="number">10</span>==<span class="number">66</span></span><br><span class="line">   十进制     二进制原码    二进制反码</span><br><span class="line">   <span class="number">76</span>        <span class="number">01001100</span>    <span class="number">01001100</span></span><br><span class="line"> + -<span class="number">10</span>       <span class="number">10001010</span>    <span class="number">11110101</span></span><br><span class="line">---------------------------------</span><br><span class="line">   <span class="number">66</span>        <span class="number">01000010</span>    <span class="number">101000001</span>==<span class="number">01000010</span>  </span><br><span class="line">这里得到的值超过<span class="number">8</span>bit，所以最高的<span class="number">1</span>需要丢弃，丢弃后需要在最低位+<span class="number">1</span>，得到<span class="number">01000010</span>(反码)==<span class="number">01000010</span>(原码)==<span class="number">66</span>，正确。</span><br></pre></td></tr></table></figure></p>
+<p>示例3：计算1-1<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">计算<span class="number">1</span>-<span class="number">1</span>==<span class="number">0</span></span><br><span class="line">   十进制     二进制原码    二进制反码</span><br><span class="line">   <span class="number">1</span>         <span class="number">00000001</span>    <span class="number">00000001</span></span><br><span class="line"> + -<span class="number">1</span>        <span class="number">10000001</span>    <span class="number">11111110</span></span><br><span class="line">---------------------------------</span><br><span class="line">   <span class="number">0</span>         <span class="number">10000000</span>    <span class="number">11111111</span>  </span><br><span class="line">得到<span class="number">11111111</span>(反码)==<span class="number">10000000</span>(原码)==-<span class="number">0</span>，-<span class="number">0</span>？通过反码计算会出现+<span class="number">0</span>和-<span class="number">0</span>，一个<span class="number">0</span>对应了两个码，显然是不合理的。</span><br></pre></td></tr></table></figure></p>
+<p>从上面三个例子可以看出使用反码进行减法运算时存在两个问题：</p>
+<ol>
+<li>当计算结果溢出时需要额外进行+1操作，使得运算多了一步，效率降低</li>
+<li><p>0存在+0和-0两种存在方式，不方便理解</p>
+<h5 id="3-_模与互补、同余"><strong>3. 模与互补、同余</strong></h5><p>在看补码之前，先介绍三个概念——模、补数、同余。我们从现实生活举例来看：</p>
+<ul>
+<li>我们将一个时钟的分针往前拨20分钟，和往后拨40分钟，得到的结果是一样的。</li>
+<li>把你的属年(属猴)往后退5年，和往前进7年，一样都是属兔。</li>
+<li>把数字 87，减去 25，和加上 75，在不考虑百位数的条件下，得到的结果都是62。</li>
+</ul>
+</li>
+</ol>
+<p>上述几组数字，有这样的关系：<br>　　20 + 40 = 60<br>　　5 + 7 = 12<br>　　25 + 75 = 100<br>式中的 60、12 和 100，就是“模”。<br>式中的 20和40、5和7，以及25和75，就是一对对“互补”的数字。<br>而且20，80，140在模是60的情况下就是互为“同余”的数字。<br>通俗解释下模、补数、同余的概念：</p>
+<ul>
+<li><strong>模</strong>：就是一个轮回，比如分针转一圈，十二生肖一轮等等。</li>
+<li><strong>互补 </strong>：一个数值针对某个模的互补值就是这个数值加上或者减去多少能够等于模，或者等于模的同余值。</li>
+<li><strong>同余 </strong>：一个数值加上或者减去模的整数倍得到的所有数值即为该数值的同余值<strong>(也就是除上模，余数是一样，所以叫同余)</strong>，0是模的同余，-模也是模的同余。</li>
+</ul>
+<p>理解了什么是模，什么是互补、什么是同余，那么如果给一个模，以及一个值a，如果计算a的补数(与a互补的值)呢，其实很简单，只需要拿模-a即可，计算同余值可以直接加上或者减去模的整数倍即可。</p>
+<h5 id="4-_那么互补的值有什么用呢？"><strong>4. 那么互补的值有什么用呢？</strong></h5><p>如果我们在进行减法运算时，用与减数互补的值代替减数与被减数进行加法运算会发生什么呢？废话不多说，看示例。<br>示例1：在分钟刻度下，计算55分钟往后拨动34分钟，转化成数学计算就是：55-34<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">被减数	     <span class="number">55</span></span><br><span class="line">减数		  <span class="number">34</span></span><br><span class="line">减数补数   <span class="number">60</span>-<span class="number">34</span>==<span class="number">26</span></span><br><span class="line">最终结果     <span class="number">55</span>+<span class="number">26</span>==<span class="number">81</span></span><br><span class="line">---------------------</span><br><span class="line">用减数补数代替减数得到结果为<span class="number">81</span>,<span class="number">81</span>在分钟刻度盘上正好是<span class="number">21</span>，也就是<span class="number">81</span>是<span class="number">21</span>的同余值，和<span class="number">55</span>-<span class="number">34</span>是一样的。注意：这里涉及到类似上面的<span class="number">87</span>+<span class="number">75</span>的情况，即忽略了进位。</span><br></pre></td></tr></table></figure></p>
+<p>示例2：在十二生肖中，计算猴年往后退11年，转化成数学计算就是：9-11<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">被减数	     <span class="number">9</span></span><br><span class="line">减数		  <span class="number">11</span></span><br><span class="line">减数补数   <span class="number">12</span>-<span class="number">11</span>==<span class="number">1</span></span><br><span class="line">最终结果     <span class="number">9</span>+<span class="number">1</span>==<span class="number">10</span></span><br><span class="line">-------------------</span><br><span class="line">用减数互补值代替减数得到结果为<span class="number">10</span>,<span class="number">10</span>对应到十二生肖正好是鸡，和猴年往后退<span class="number">11</span>年是一样的，所以得到的也是一个同余值。</span><br></pre></td></tr></table></figure></p>
+<p>从上面的示例可以看出，使用互补值计算出的结果与实际值其实是<strong>同余</strong>的关系。</p>
+<h5 id="5-_二进制的模"><strong>5. 二进制的模</strong></h5><p>上面看了分钟刻度盘的模，十二生肖的模，以及两位整数的模，那么对于一个8bit的字节的模是多少呢？<br>分钟刻度盘的模为什么是60？是因为他的值是从1-59，总共60个值，十二生肖以及两位整数也是一样的，所以我们只需要看看一个8bit的字节的所有取值一共是多少个就是他的模，显示8个bit可表示的最小值是00000000==0，最大值是11111111==255，那么从0到255一共是256个值，所以一个8bit的字节的模就是256了。但是其实在计算机中为了能够表示负数，所以讲8bit的字节的最高位设为符号位，0表示整数，1表示负数，所以能够表示数值的也就只有7bit，如果我们忽视符号位，那么剩下7bit的模就是128，而不是256了。<strong>下面在计算时我们会直接使用128而非256！</strong></p>
+<h5 id="6-_使用互补值进行二进制的减法计算"><strong>6. 使用互补值进行二进制的减法计算</strong></h5><p>下面我们就来看看如果使用互补值来进行二进制的减法计算，我们先来看一个公式：假设模式M，我们计算X-Y，然后我们使用减数的补数来计算，看看下面的换算：</p>
+<figure class="highlight tp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">X</span>-<span class="keyword">Y</span> == <span class="keyword">X</span>+(M-<span class="keyword">Y</span>) == <span class="keyword">X</span>+((M-<span class="number">1</span>)-<span class="keyword">Y</span>+<span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+<p>下面我们来看示例，这个公式在下面会用到的。</p>
+<p>示例1：计算15-125<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">           十进制          二进制</span><br><span class="line">被减数	     <span class="number">15</span>             <span class="number">0001111</span></span><br><span class="line">减数		  <span class="number">125</span>            <span class="number">1111101</span></span><br><span class="line">减数补数   <span class="number">128</span>-<span class="number">125</span>==<span class="number">3</span>     <span class="number">0000011</span></span><br><span class="line">最终结果     <span class="number">18</span>             <span class="number">0010010</span></span><br><span class="line">------------------------------------</span><br><span class="line">得到<span class="number">0010010</span>==<span class="number">18</span>，在模式<span class="number">128</span>的情况下，<span class="number">18</span>正好是-<span class="number">110</span>的同余值，跟上面现实的例子是一样的！</span><br></pre></td></tr></table></figure></p>
+<p>示例2：计算76-10<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">           十进制          二进制</span><br><span class="line">被减数	     <span class="number">76</span>             <span class="number">01001100</span></span><br><span class="line">减数		  <span class="number">10</span>            <span class="number">00001010</span></span><br><span class="line">减数补数   <span class="number">256</span>-<span class="number">10</span>==<span class="number">246</span>   <span class="number">11110110</span></span><br><span class="line">最终结果     <span class="number">322</span>    <span class="number">101000010</span></span><br><span class="line">------------------------------------</span><br><span class="line">得到<span class="number">101000010</span>==<span class="number">322</span>，在模式<span class="number">256</span>的情况下，<span class="number">322</span>正好是<span class="number">66</span>的同余值，结果还是一样！</span><br></pre></td></tr></table></figure></p>
+<p>从上面两个例子我们应该可以看出，如果我们使用减数的补数进行加法运算，那么得到的结果就是一个与正确结果同余的值。在现实生活中，我们可以直接把两个同余的值看做是相同的，例如分钟20和分钟80完全就是一样的，那么在计算机里我们可以这么假设吗？答案是可以的，看下面。<br>试想当计算机使用一个7bit的空间保存一个数值时是如何保存的，比如18，我们可以这么推算，首先分配一个7bit的空间，每个bit上的值都是0，那么如何表示18呢？我们可以这样理解：往这个7bit的空间内进行18次加1操作，满2就进1，最终就会得到0010010。那么如何表示-110，我们可以理解为往这个7bit的空间内进行110次减1操作，一开始全是0，那么如何减1呢？很简单直接减成1111111即可，可以这样理解，分钟在0刻度，你往后拨一下就会指向59，这里也是这个道理，所以连续减110次，就会得到0010010，根18是一样的，所以在计算机看来18和-110是一样的。<br>也就是说<strong>15-125 == 15+(128-125) == 15+(127-125+1) </strong>(上面的公式)，也就是说-125被127-125+1代替了，那么<strong>127-125+1（M-）</strong>又是什么？</p>
+<h5 id="7-_补码"><strong>7. 补码</strong></h5><p>上面一路走来终于证明了使用补数可以代替减法，下面我们要解决的问题是M-1-Y+1是啥。<br>我们直接看二进制如何计算M-1-Y+1。<br>示例：计算M=128，Y=110</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">     十进制   二进制</span><br><span class="line"> M-<span class="number">1</span>  <span class="number">127</span>   <span class="number">1111111</span></span><br><span class="line"> -Y   <span class="number">110</span>   <span class="number">1101110</span></span><br><span class="line">            <span class="number">0010001</span></span><br><span class="line">--------------------</span><br><span class="line">M-<span class="number">1</span>换算成二进制就是N位<span class="number">1</span>，那么N位<span class="number">1</span>减去任何一个N位的二进制是啥呢？其实就是按位取反！因为遇到<span class="number">0</span>,<span class="number">1</span>-<span class="number">0</span>==<span class="number">1</span>，取反，遇到<span class="number">1</span>,<span class="number">1</span>-<span class="number">1</span>==<span class="number">0</span>，取反，所以整体就是按位取反，也就是反码。</span><br><span class="line">            </span><br><span class="line"> +<span class="number">1</span>   <span class="number">1</span>     <span class="number">0000001</span></span><br><span class="line">            <span class="number">0010010</span></span><br><span class="line"> ------------------</span><br><span class="line">所以总体就是在<span class="number">110</span>的二进制基础上按位取反然后加<span class="number">1</span>,也就是<span class="number">110</span>的反码加<span class="number">1</span>。</span><br></pre></td></tr></table></figure>
+<p>看了上面的示例，应该知道M=128，Y=110，M-1-Y+1就是Y的反码加1，也就是说，如果我们需要计算X-Y，只需要计算X+(Y的反码+1)，由于我们得出这个结论是使用<strong>补数替代减法</strong>得到的，所以<strong>Y的反码+1</strong>就被叫做Y的<strong>补码</strong>。<br>到这里我们知道了110的补码，上面我们介绍了计算机使用1字节的最高位表示符号位，1表示负数，所以-110的最高位是1，由于在使用补码进行减法运算过程中最高位并不参与运算，所以这个最高位应该是固定不动的，所以负数的反码补码最高位始终都是1。<strong>也就得到了-110的补码是：10010010</strong>。对于正数，符号位是0，那么反码补码最高位就始终是0，而且对于正数在计算时也无需使用其补码进行操作，但是为了统一都是用补码，所以定正数的反码补码都等于原码。<br>根据补码的计算过程有些文章会说一个负数X的补码对应的值==2^n-|X|，理解了上面的过程这个公式就自然懂了，不过这个公式没啥用，也没必要记。<br>到这里终于把<strong>补码</strong>的来历说清楚了，至少我自己是明白了，但愿读者也可以明白吧！</p>
+<h5 id="一些补码的其他知识"><strong>一些补码的其他知识</strong></h5><p>上面我们看了7bit的模式128，也就说是能表示0-127共128个数值，加上最高位的符号位就成了-127-127共计255个数值，因为没有-0这个数字。但是实际对于计算机来说8bit的空间是可以表示256个数字的，那么还有一个数字是啥呢？正是：<strong>10000000</strong>(注意：这是补码，因为计算机都存的补码)。我们可以试着计算下10000000的原码，可以得到10000000的原码就是10000000，也就是-0，但是如果存在+0和-0两个计算机码对应一个值(+0和-0都是0)，那么显然是没必要的，而且还会造成混乱，所以人为的规定<strong>10000000表示-128</strong>。所以一个8bit的空间可以表示的数字就是从-128到127了，而不是-127-127！</p>
+<h5 id="8-_参考文章"><strong>8. 参考文章</strong></h5><p>感谢下面这些文章帮助我理解补码：<br><a href="http://www.cnblogs.com/zhangziqiu/archive/2011/03/30/computercode.html" target="_blank" rel="external">原码, 反码, 补码 详解</a><br><a href="http://www.douban.com/note/223507364/" target="_blank" rel="external">原码、反码和补码</a></p>
+<p>欢迎大家点评讨论！</p>
+]]></content>
+    <summary type="html">
+    <![CDATA[介绍计算机中的原码、反码、补码]]>
+    
+    </summary>
+    
+      <category term="二进制" scheme="http://vickyqi.com/tags/%E4%BA%8C%E8%BF%9B%E5%88%B6/"/>
+    
+      <category term="反码" scheme="http://vickyqi.com/tags/%E5%8F%8D%E7%A0%81/"/>
+    
+      <category term="补数" scheme="http://vickyqi.com/tags/%E8%A1%A5%E6%95%B0/"/>
+    
+      <category term="补码" scheme="http://vickyqi.com/tags/%E8%A1%A5%E7%A0%81/"/>
+    
+      <category term="计算机" scheme="http://vickyqi.com/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA/"/>
+    
+      <category term="计算机基础" scheme="http://vickyqi.com/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[正则学习二三事]]></title>
+    <link href="http://vickyqi.com/2015/10/19/%E6%AD%A3%E5%88%99%E5%AD%A6%E4%B9%A0%E4%BA%8C%E4%B8%89%E4%BA%8B/"/>
+    <id>http://vickyqi.com/2015/10/19/正则学习二三事/</id>
+    <published>2015-10-19T06:19:11.000Z</published>
+    <updated>2015-10-20T07:57:08.000Z</updated>
+    <content type="html"><![CDATA[<p>正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。<br>以前看正则就是一堆符号，代表各个意思，如\d表示数字，\d+表示一个或者多个连续数字，单看每个规则都可以理解，除了组合，但是实际使用时真的很难组织到一起。归根结底还是因为对这些符号的理解不够深入。所以正则还是得多写，推荐一个在线练习的网站<a href="http://regex.alf.nu/" target="_blank" rel="external">RegexGolf</a>。好了，下面写写自己学习正则的一些总结吧，希望能够帮助到别人，也帮助自己总结总结。</p>
+<h4 id="正则的基础知识："><strong>正则的基础知识：</strong></h4><h5 id="字面值"><strong>字面值</strong></h5><p>正则表达式由只代表自身的字面值和代表特定含义的元字符组成。 只代表自身的字面值指的是普通的字符，如abcde，特殊含义的元字符包括：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>字符</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td>\</td>
+<td>反斜线字符</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\0n</td>
+<td>带有八进制值 0 的字符 n (0 &lt;= n &lt;= 7)</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\0nn</td>
+<td>带有八进制值 0 的字符 nn (0 &lt;= n &lt;= 7)</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\0mnn</td>
+<td>带有八进制值 0 的字符 mnn（0 &lt;= m &lt;= 3、0 &lt;= n &lt;= 7）</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\xhh</td>
+<td>带有十六进制值 0x 的字符 hh</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\uhhhh</td>
+<td>带有十六进制值 0x 的字符 hhhh</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\t</td>
+<td>制表符 (‘\u0009’)</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\n</td>
+<td>新行（换行）符 (‘\u000A’)</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\r</td>
+<td>回车符 (‘\u000D’)</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\f</td>
+<td>换页符 (‘\u000C’)</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\a</td>
+<td>报警 (bell) 符 (‘\u0007’)</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\e</td>
+<td>转义符 (‘\u001B’)</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\cx</td>
+<td>对应于 x 的控制符</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h5 id="字符类"><strong>字符类</strong></h5><p> 字符类是字符在方括号中的集合。表示“找到集合里任意一个字符“。例如：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>字符</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td>[abc]</td>
+<td>a、b 或 c（简单类）</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>[^abc]</td>
+<td>任何字符，除了 a、b 或 c（否定）</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>[a-zA-Z]</td>
+<td>a 到 z 或 A 到 Z，两头的字母包括在内（范围）</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>[a-d[m-p]]</td>
+<td>a 到 d 或 m 到 p：[a-dm-p]（并集）</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>[a-z&amp;&amp;[def]]</td>
+<td>d、e 或 f（交集）</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>[a-z&amp;&amp;[^bc]]</td>
+<td>a 到 z，除了 b 和 c：[ad-z]（减去）</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>[a-z&amp;&amp;[^m-p]]</td>
+<td>a 到 z，而非 m 到 p：[a-lq-z]（减去）</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>从上表可以看出<strong>[]</strong>里面可进行并集/交集/差集操作。对于字符范围是根据ASCII值的大小来的，例如[A-z]也是可以的，甚至能够匹配[，但是完全不建议如此使用，推荐使用的字符范围：[0-9]/[a-z]/[A-Z]。<br>字符类还有一些预定义的字符类：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>字符</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td>. 任何字符（与行结束符可能匹配也可能不匹配）</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\d</td>
+<td>数字：[0-9]</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\D</td>
+<td>非数字： [^0-9]</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\s</td>
+<td>空白字符：[ \t\n\x0B\f\r]</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\S</td>
+<td>非空白字符：[^\s]</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\w</td>
+<td>单词字符：[a-zA-Z_0-9]</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\W</td>
+<td>非单词字符：[^\w]</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>使用上面的预定义字符类能够更加方便的表示字符范围。需要牢记。<br><strong>注意</strong>： 区间是字符的区间，不是数字的区间。正则表达式[1-31]表示“找到一个1或一个2或一个3”，不是“找到一个从1到31的整数”。</p>
+<h5 id="乘法器"><strong>乘法器</strong></h5><table>
+<thead>
+<tr>
+<th></th>
+<th>字符</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td>X?</td>
+<td>X，一次或一次也没有</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>X*</td>
+<td>X，零次或多次</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>X+</td>
+<td>X，一次或多次</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>X{n}</td>
+<td>X，恰好 n 次</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>X{n,}</td>
+<td>X，至少 n 次</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>X{n,m}</td>
+<td>X，至少 n 次，但是不超过 m 次</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>X可以使一个普通字面值，如a+：一个或多个a，也可以是一个字符类，如[abc]{2}，表示a/b/c后跟a/b/c。<br>值得注意的是优先选择更长的匹配，因为乘法器是贪婪的。如果你输入的文本是I had an aaaaawful day，该正则表达式就会在aaaaawful中匹配到aaaaa。不会在第三个a后就停止匹配。<br>乘法器是贪婪的，但它不会忽略一个更好的匹配。如果你的输入文本为I had an aaawful daaaaay，之后这个正则表达式会在第一次的匹配中于aaawful找到aaa。只有在你说“给我找到另一个匹配”的时候，它才会继续搜索然后在daaaaay中找到aaaaa。<br>惰性：<br>正则表达式<em>“.</em>“<em>表示“找到一个双引号，接着找到尽可能多的字符，最后再找到一个双引号”。注意一下被.</em>匹配的内部字符，很可能包含多个双引号。这通常不是非常有用。乘法器可通过追加问号<strong>（?）</strong>来实现<strong>惰性</strong>。<em>“.</em>?”*表示“匹配一个双引号，跟着一个尽可能少的字符，再跟着一个双引号”。</p>
+<h5 id="分支"><strong>分支</strong></h5><p>可以使用管道符号来实现匹配多种选择。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>字符</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td>X!Y(用!代替竖线)</td>
+<td>X或者Y</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h5 id="组合"><strong>组合</strong></h5><p>可以使用圆括号来组合表达式。例：<br>在一周中找到一天，使用<strong>(Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day</strong>，这里如果把小括号或者中括号，结果是完全不一样的，因为中括号是字符类，即里面的Mon并不是完全匹配Mon，而是只要匹配M/o/n其中一个即可。<br>同时组合后面还可跟上乘法器，如：<strong>\w+(\s+\w+)*</strong>代表“找到一个或多个单词，它们以空格隔开”。</p>
+<h5 id="边界"><strong>边界</strong></h5><p>边界分成：单词边界，行边界，文本边界</p>
+<ol>
+<li>单词边界<br>单词边界是一个单词字符和非单词字符之间的位置。记住，一个单词字符是\w，它是[0-9A-Za-z<em>]，一个非单词字符是\W，也就是[^0-9A-Za-z</em>]。<br>文本的开头和结尾总是当作单词边界。<br>输入的文本<strong>it’s a cat</strong>有八个单词边界，分别为：文本开头-i，t-‘，’-s，s-空格，空格-a，a-空格，空格-c，t-文本结尾。</li>
+<li>行边界<br>每一块文本会分解成一个或多个行，用换行符分隔。<br>注意文本不是以换行符结束，而是以行结束。然而，任何行，包括最后一行，可以包含零个字符。<br>起始行位置是在一个换行符和下一行的第一个字符之间。与单词边界一样，在文本的开头也算作一个起始的行。结束行位置是在行的最后一个字符和换行符之间。与单词边界一样，文本结束也算作行结束。</li>
+<li>文本边界<br>很多实现提供一个标记，通过改变它来改变^和$的含义。从“行开始”和“行结束”变成“文本开始”和“文本结束”。其它的一些实现提供单独的元字符\A和\z来达到这个目的。<br>一些表示边界的符号：</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>字符</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td>^</td>
+<td>行的开头</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>$</td>
+<td>行的结尾</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\b</td>
+<td>单词边界</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\B</td>
+<td>非单词边界</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\A</td>
+<td>输入的开头</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\G</td>
+<td>上一个匹配的结尾</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\Z</td>
+<td>输入的结尾，仅用于最后的结束符（如果有的话）</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>\z</td>
+<td>输入的结尾</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>其中^$是最常用的两个边界分隔符。</p>
+<h4 id="捕获和替换："><strong>捕获和替换：</strong></h4><ol>
+<li><p>捕获组</p>
+<p>()在正则中被用来表示组，同时也可以用来捕获匹配上的子串，可以拥有多个捕获组，它们甚至可以嵌套使用，捕获组从左到右进行编号，只要计算左圆括号。例如：<br>对于表达式：<strong>(\w+) had a ((\w+) \w+)</strong>，文本是I had a nice day，那么</p>
+<ul>
+<li>捕获组1是I。</li>
+<li>捕获组2是nice day。</li>
+<li>捕获组3是nice。</li>
+<li>捕获组0是I had a nice day（根据具体实现不同）</li>
+</ul>
+<p>如果表达式使用了两个捕获组，但是只捕获到一组，那么组2是空字符串。引用捕获组使用+组序号，如\1表示引用第一个捕获组。</p>
+</li>
+<li>后向引用<br>可以在同样的表达式中引用同一个捕获组，这称为后向引用。<br>例：表达式[abc]{2}表示“匹配aa或ab或ac or ba或bb或bc或ca或cb或cc”，但是表达式([abc])\1表示“匹配aa或bb或cc”。</li>
+</ol>
+<p>以上就是正则的全部知识，其实了解正则的知识点很简单，但是真要应用到实际中还是需要通过大量的练习才能做到熟练使用。</p>
+<h5 id="实际案例"><strong>实际案例</strong></h5><ol>
+<li><p>压缩CSS文件，去掉CSS文件中的换行以及空格</p>
+<figure class="highlight livescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">工具：Notepad++  查找：([&#123;;])<span class="string">\s+</span>  替换：<span class="string">\1</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>替换文件中连续出现的#，为其后面添加一个空格，例：####你好-&gt;#### 你好</p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">工具：Notepad++  查找：([<span class="preprocessor">#]+)  替换：\<span class="number">1</span> (<span class="number">1</span>后面有个空格)</span></span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>以上案例会不断更新，已记录一些自己对正则使用的经历。</p>
+<h4 id="参考文章"><strong>参考文章</strong></h4><p><a href="http://doslin.com/regular%20expressions/2014/03/11/learn-regular-expressions-in-about-55-minutes.html" target="_blank" rel="external">55分钟学会正则表达式(译)</a></p>
+<p>JDK API文档</p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。<br>以前看正则就是一堆符号，代表各]]>
+    </summary>
+    
+      <category term="正则" scheme="http://vickyqi.com/tags/%E6%AD%A3%E5%88%99/"/>
+    
+      <category term="Java学习" scheme="http://vickyqi.com/categories/Java%E5%AD%A6%E4%B9%A0/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[JDK并发工具类源码学习系列——ConcurrentHashMap]]></title>
+    <link href="http://vickyqi.com/2015/10/19/JDK%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94ConcurrentHashMap/"/>
+    <id>http://vickyqi.com/2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/</id>
+    <published>2015-10-19T06:19:11.000Z</published>
+    <updated>2015-10-20T05:09:24.000Z</updated>
+    <content type="html"><![CDATA[<p>作为JDK并发工具类源码学习系列的第一个被分析的类，ConcurrentHashMap类在我的开发过程中经常被使用。个人觉得如果在共享一个Map时，如果无法判断是否需要加锁，那么就干脆直接使用ConcurrentHashMap，即能保证并发安全，同时性能也不会有太多下降，因为ConcurrentHashMap可实现无锁读，不过内存会占用的多些，但是并不明显，基本可以忽略。<br>下面我们就来看看ConcurrentHashMap类的内部构造。</p>
+<h5 id="1-_结构预览"><strong>1. 结构预览</strong></h5><p> 1.1 类定义<br><figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">public <span class="class"><span class="keyword">class</span> <span class="title">ConcurrentHashMap&lt;K</span>, <span class="title">V&gt;</span> <span class="keyword"><span class="keyword">extends</span></span> <span class="title">AbstractMap&lt;K</span>, <span class="title">V&gt;</span> <span class="title">implements</span> <span class="title">ConcurrentMap&lt;K</span>, <span class="title">V&gt;</span>, <span class="title">Serializable</span></span></span><br></pre></td></tr></table></figure></p>
+<p>上面是ConcurrentHashMap类的定义，从ConcurrentHashMap的定义可以看出ConcurrentHashMap是实现了ConcurrentMap接口，而非直接实现Map接口。同时ConcurrentMap的子接口还有一个ConcurrentNavigableMap，表示可支持导航的并发Map。可见ConcurrentMap接口定义可支持并发，NavigableMap接口定义可支持导航，SortedMap接口定义可支持排序，NavigableMap继承自SortedMap。从Map的API介绍可以看出Java Collections Framework家族中重要一员——Map的组织结构——通过接口定义Map的行为，或者说Map可支持的功能，多个接口之间可交叉，如ConcurrentNavigableMap即实现ConcurrentMap接口又实现NavigableMap接口。</p>
+<p> 1.2 类结构<br><img src="http://img.blog.csdn.net/20151009213243833" alt="ConcurrentHashMap结构图"><br>从图中可以看出ConcurrentHashMap内部包含了多个内部类，其中最重要的也是我们最需要关心的是：<strong>Segment</strong>和<strong>HashEntry</strong>。<br><strong>Segment</strong>是ConcurrentHashMap非常重要的一个内部类，是ConcurrentHashMap实现高并发的关键点，Segment在ConcurrentHashMap中承担着所有的操作，即所有对ConcurrentHashMap的操作最终都会对Segment进行操作。因为Segment保存了最终的数据，而ConcurrentHashMap只是保存了一个Segment的数组。ConcurrentHashMap通过N个Segment将数据切分成N块，而每块之间是互不影响的，所以理论上可以同时并行的执行N个需要加锁的操作，这就是ConcurrentHashMap并发的基础。<br><strong>HashEntry</strong>同HashMap中的Entry，每个HashEntry是一个节点，保存key和value，以及下一个节点。HashEntry中的key，hash 和 next 域都被声明为 final 型，value 域被声明为 volatile 型，可见HashEntry类的value是可变的，其他的key和next都是不可变的。<br>EntryIterator，EntrySet，HashIterator，KeyIterator，KeySet，ValueIterator，Values是辅助ConcurrentHashMap实现遍历的内部类。<br>下面简单介绍下<strong>Segment</strong>和<strong>HashEntry</strong>类。<br><strong>HashEntry</strong><br><figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> HashEntry&lt;K,V&gt; &#123;</span><br><span class="line">        <span class="keyword">final</span> K key;</span><br><span class="line">        <span class="keyword">final</span> <span class="keyword">int</span> hash;</span><br><span class="line">        <span class="keyword">volatile</span> V value;</span><br><span class="line">        <span class="keyword">final</span> HashEntry&lt;K,V&gt; <span class="keyword">next</span>;</span><br><span class="line"></span><br><span class="line">        HashEntry(K key, <span class="keyword">int</span> hash, HashEntry&lt;K,V&gt; <span class="keyword">next</span>, V value) &#123;</span><br><span class="line">            <span class="keyword">this</span>.key = key;</span><br><span class="line">            <span class="keyword">this</span>.hash = hash;</span><br><span class="line">            <span class="keyword">this</span>.<span class="keyword">next</span> = <span class="keyword">next</span>;</span><br><span class="line">            <span class="keyword">this</span>.value = value;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">		@SuppressWarnings(<span class="string">"unchecked"</span>)</span><br><span class="line">		<span class="keyword">static</span> <span class="keyword">final</span> &lt;K,V&gt; HashEntry&lt;K,V&gt;[] newArray(<span class="keyword">int</span> i) &#123;</span><br><span class="line">		    <span class="keyword">return</span> <span class="keyword">new</span> HashEntry[i];</span><br><span class="line">		&#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>HashEntry类的结构很简单，就是四个变量，一个构造函数，一个static方法。由于没有任何getter和setter方法，所以对其操作是直接访问变量。在 ConcurrentHashMap 中，在散列时如果产生“碰撞”，将采用“分离链接法”来处理“碰撞”：把“碰撞”的 HashEntry 对象链接成一个链表。由于 HashEntry 的 next 域为 final 型，所以新节点只能在链表的表头处插入。所以链表中节点的顺序和插入的顺序相反。<br><strong>Segment</strong><br><figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">static <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">Segment&lt;K</span>,<span class="title">V&gt;</span> <span class="keyword"><span class="keyword">extends</span></span> <span class="title">ReentrantLock</span> <span class="title">implements</span> <span class="title">Serializable</span></span></span><br></pre></td></tr></table></figure></p>
+<p>Segment继承自ReentrantLock ，所以它可以作为一个锁使用，其在ConcurrentHashMap也正是作为一个锁来使用的。</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">transient</span> <span class="keyword">volatile</span> <span class="keyword">int</span> <span class="keyword">count</span>;<span class="comment">//Segment中保存的元素数量</span></span><br><span class="line"><span class="keyword">transient</span> <span class="keyword">int</span> modCount;<span class="comment">//记录Segment被修改的次数，用于在读取时判断读取期间改Segment是否有过修改，有的话则重试</span></span><br><span class="line"><span class="keyword">transient</span> <span class="keyword">int</span> threshold;<span class="comment">//阀值，元素数量达到该值则会进行自动扩展</span></span><br><span class="line"><span class="keyword">transient</span> <span class="keyword">volatile</span> HashEntry&lt;K,V&gt;[] table;<span class="comment">//桶，一个HashEntry的数组，按HashCode值散列保存，采用链表解决hash碰撞问题</span></span><br><span class="line"><span class="keyword">final</span> <span class="keyword">float</span> loadFactor;<span class="comment">//负载因子</span></span><br></pre></td></tr></table></figure>
+<p><strong>count </strong>变量是一个计数器，它表示每个 Segment 对象管理的 table 数组（若干个 HashEntry 组成的链表）包含的 HashEntry 对象的个数。每一个 Segment 对象都有一个 count 对象来表示本 Segment 中包含的 HashEntry 对象的总数。注意，之所以在每个 Segment 对象中包含一个计数器，而不是在 ConcurrentHashMap 中使用全局的计数器，是为了避免出现“热点域”而影响 ConcurrentHashMap 的并发性。<br><img src="http://img.blog.csdn.net/20151012120235225" alt="Segment结构"><br>从Segment拥有的方法可以看出，针对ConcurrentHashMap的操作基本上都会调用具体某个Segment的对应方法，如put会调用Segment的put方法。所以Segment是最终的操作类。</p>
+<p>下图是依次插入 ABC 三个 HashEntry 节点后，Segment 的结构示意图。<br><img src="http://img.blog.csdn.net/20151012120621035" alt="插入三个节点后 Segment 的结构示意图"><br>Segment的方法会在介绍ConcurrentHashMap的方法时进行解释，这里先不介绍。</p>
+<h5 id="2-_构造器解读"><strong>2. 构造器解读</strong></h5><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ConcurrentHashMap</span><span class="params">(<span class="keyword">int</span> initialCapacity, <span class="keyword">float</span> loadFactor)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>(initialCapacity, loadFactor, DEFAULT_CONCURRENCY_LEVEL);</span><br><span class="line">    &#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ConcurrentHashMap</span><span class="params">(<span class="keyword">int</span> initialCapacity)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>(initialCapacity, DEFAULT_LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL);</span><br><span class="line">    &#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ConcurrentHashMap</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">this</span>(DEFAULT_INITIAL_CAPACITY, DEFAULT_LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>以上的构造器都只是一个个重载函数，最终都会调用下面的构造器。其中使用到了三个常量：</p>
+<ul>
+<li>DEFAULT_INITIAL_CAPACITY：默认初始容量</li>
+<li>DEFAULT_LOAD_FACTOR：默认加载因子</li>
+<li>DEFAULT_CONCURRENCY_LEVEL：默认并发级别，该值决定一个包含多少个Segment，即将ConcurrentHashMap切分成多少块</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ConcurrentHashMap</span><span class="params">(<span class="keyword">int</span> initialCapacity,</span><br><span class="line">                             <span class="keyword">float</span> loadFactor, <span class="keyword">int</span> concurrencyLevel)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (!(loadFactor &gt; <span class="number">0</span>) || initialCapacity &lt; <span class="number">0</span> || concurrencyLevel &lt;= <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (concurrencyLevel &gt; MAX_SEGMENTS)</span><br><span class="line">            concurrencyLevel = MAX_SEGMENTS;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Find power-of-two sizes best matching arguments</span></span><br><span class="line">        <span class="keyword">int</span> sshift = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> ssize = <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span> (ssize &lt; concurrencyLevel) &#123;</span><br><span class="line">            ++sshift;</span><br><span class="line">            ssize &lt;&lt;= <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        segmentShift = <span class="number">32</span> - sshift;</span><br><span class="line">        segmentMask = ssize - <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">this</span>.segments = Segment.newArray(ssize);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (initialCapacity &gt; MAXIMUM_CAPACITY)</span><br><span class="line">            initialCapacity = MAXIMUM_CAPACITY;</span><br><span class="line">        <span class="keyword">int</span> c = initialCapacity / ssize;</span><br><span class="line">        <span class="keyword">if</span> (c * ssize &lt; initialCapacity)</span><br><span class="line">            ++c;</span><br><span class="line">        <span class="keyword">int</span> cap = <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span> (cap &lt; c)</span><br><span class="line">            cap &lt;&lt;= <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="keyword">this</span>.segments.length; ++i)</span><br><span class="line">            <span class="keyword">this</span>.segments[i] = <span class="keyword">new</span> Segment&lt;K,V&gt;(cap, loadFactor);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>该构造函数需要制定初始容量、加载因子以及并发级别，对应上面提到的三个常量（默认值）。代码前几句是对参数进行正确性校验。<strong>// Find power-of-two sizes best matching arguments</strong>这句注释的意思是寻找一个参数的最佳匹配值：最接近指定的参数的2的幂方值。下面我们对照着代码来说明这句话的含义：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Find power-of-two sizes best matching arguments</span></span><br><span class="line"><span class="keyword">int</span> sshift = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">int</span> ssize = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">while</span> (ssize &lt; concurrencyLevel) &#123;</span><br><span class="line">    ++sshift;</span><br><span class="line">    ssize &lt;&lt;= <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里定义了一个ssize变量，该变量就是concurrencyLevel的最佳匹配值，可以看见首先是循环，直到ssize&gt;=concurrencyLevel，所以最佳匹配值是大于等于指定参数的，循环里面每次会将ssize右移一位，即*2，所以最终得到的值就是一个最接近且大于等于concurrencyLevel的2次幂方值。同时定义了一个sshift变量，该变量随着ssize的每次右移而+1，最终得到的即是ssize是2的多少次方，即sszie=2^sshift。继续往下看：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">segmentShift = <span class="number">32</span> - sshift;<span class="comment">//偏移量</span></span><br><span class="line">segmentMask = ssize - <span class="number">1</span>;<span class="comment">//掩码值</span></span><br><span class="line"><span class="keyword">this</span>.segments = Segment.newArray(ssize);<span class="comment">//初始化segments数组</span></span><br></pre></td></tr></table></figure>
+<p>segmentShift以及segmentMask在后面将一个hash映射到某一个segments时使用，目的是将hash均匀的分配到每个segments，具体为什么使用这两个来进行均匀分配我们这里不介绍。最后一句是初始化一个segments数组，大小是ssize，而非参数concurrencyLevel值。下面继续看：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (initialCapacity &gt; MAXIMUM_CAPACITY)</span><br><span class="line">    initialCapacity = MAXIMUM_CAPACITY;</span><br><span class="line"><span class="keyword">int</span> c = initialCapacity / ssize;</span><br><span class="line"><span class="keyword">if</span> (c * ssize &lt; initialCapacity)</span><br><span class="line">    ++c;</span><br><span class="line"><span class="keyword">int</span> cap = <span class="number">1</span>;</span><br><span class="line"><span class="keyword">while</span> (cap &lt; c)</span><br><span class="line">    cap &lt;&lt;= <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="keyword">this</span>.segments.length; ++i)</span><br><span class="line">    <span class="keyword">this</span>.segments[i] = <span class="keyword">new</span> Segment&lt;K,V&gt;(cap, loadFactor);</span><br></pre></td></tr></table></figure>
+<p>initialCapacity是构造器指定的初始化容量，ssize是segments数组大小，所以c的值就是每个segments的容量。下面定义了一个cap，这里的cap和前面的ssize是一个含义，即选择一个最接近且大于等于c的2的幂方值，然后初始化segments数组，传入的参数有cap（segment容量）和loadFactor（负载因子）。这里选择cap作为segment容量，而非c，是出于方便后期对segment的容量进行扩充考虑，如果容量是2的幂方，那么想要将容量扩充一倍只需右移1位即可，同时保证依旧是2的幂方。<br>对于segment的初始化很简单，对loadFactor赋值，然后根据指定的初始容量创建一个HashEntry数组，并计算出threshold（阀值，当segment中的元素超过这个阈值则进行容量扩充）。</p>
+<h5 id="3-_常用方法解读"><strong>3. 常用方法解读</strong></h5><p>ConcurrentHashMap实现了Map接口，那么他的核心方法包括我们常用的put(K, V)、get(Object)、contains(Object)、size()，同时继承自ConcurrentMap让他包含了putIfAbsent(K, V)、remove(Object, Object)、replace(K, V, V)、replace(K, V)四个并发方法。后面的四个并发方法是ConcurrentMap为我们提供的在并发情景下使用的工具方法，都是基于CAS来实现的。<br>在看put(K, V)、get(Object)等方法实现之前，先来看下这两个方法：hash(int)和segmentFor(int)。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">/* ---------------- Small Utilities -------------- */</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line"> * Applies a supplemental hash function to a given hashCode, which</span><br><span class="line"> * defends against poor quality hash functions.  This is critical</span><br><span class="line"> * because ConcurrentHashMap uses power-of-two length hash tables,</span><br><span class="line"> * that otherwise encounter collisions for hashCodes that do not</span><br><span class="line"> * differ in lower or upper bits.</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">hash</span><span class="params">(<span class="keyword">int</span> h)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Spread bits to regularize both segment and index locations,</span></span><br><span class="line">    <span class="comment">// using variant of single-word Wang/Jenkins hash.</span></span><br><span class="line">    h += (h &lt;&lt;  <span class="number">15</span>) ^ <span class="number">0xffffcd7d</span>;</span><br><span class="line">    h ^= (h &gt;&gt;&gt; <span class="number">10</span>);</span><br><span class="line">    h += (h &lt;&lt;   <span class="number">3</span>);</span><br><span class="line">    h ^= (h &gt;&gt;&gt;  <span class="number">6</span>);</span><br><span class="line">    h += (h &lt;&lt;   <span class="number">2</span>) + (h &lt;&lt; <span class="number">14</span>);</span><br><span class="line">    <span class="keyword">return</span> h ^ (h &gt;&gt;&gt; <span class="number">16</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line"> * Returns the segment that should be used for key with given hash</span><br><span class="line"> * @param hash the hash code for the key</span><br><span class="line"> * @return the segment</span><br><span class="line"> */</span></span><br><span class="line">final Segment&lt;K,V&gt; segmentFor(<span class="keyword">int</span> hash) &#123;</span><br><span class="line">    <span class="keyword">return</span> segments[(hash &gt;&gt;&gt; segmentShift) &amp; segmentMask];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>源码中对这两个方法的注释是：Small Utilities，即小工具方法。源码中对于hash方法的注释的意思是：该方法是一个补充hash方法，ConcurrentHashMap的hash表的长度是2的幂方，使用该补充hash函数可降低一些质量差的hash函数发生的碰撞概率。具体如何实现的就不看了，就算看懂了代码也很难理解这样做的原因，所以不浪费时间。segmentFor是为一个hash值找到它应该去的segment，这里使用到了segmentShift以及segmentMask，还记得segmentShift是32-sshift，这里将hash值无符号左移segmentShift位，即取hash值的高sshift位，然后同segmentMask按位与运算。其实就是取hash值的高sshift位将值限制在0~ssize之间，然后与ssize-1取余得到segments数组的下标（取高位是因为更加均匀，低位的重复率比高位高，臆测~！！！）。<br>了解了上面两个方法，下面我们就来看看put(K, V)、get(Object)这两个方法的具体实现。</p>
+<h6 id="1-_put(K,_V)"><strong>1. put(K, V)</strong></h6><figure class="highlight cs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> V <span class="title">put</span>(<span class="params">K key, V <span class="keyword">value</span></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">value</span> == <span class="keyword">null</span>)</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();</span><br><span class="line">    <span class="keyword">int</span> hash = hash(key.hashCode());</span><br><span class="line">    <span class="keyword">return</span> segmentFor(hash).put(key, hash, <span class="keyword">value</span>, <span class="keyword">false</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ConcurrentHashMap的put方法内部只是根据key的hash值找到对应的Segement，然后调用Segement的put方法，注意Segement的put方法的第四个参数，这里穿的值是false。我们主要分析下Segement的put方法。Segement在这里的作用就是将元素均匀分成N等份，各个Segement之间互不干扰，读写也不会发生冲突，降低并发要求。</p>
+<figure class="highlight cs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">V <span class="title">put</span>(<span class="params">K key, <span class="keyword">int</span> hash, V <span class="keyword">value</span>, boolean onlyIfAbsent</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">lock</span>();</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">int</span> c = count;</span><br><span class="line">        <span class="keyword">if</span> (c++ &gt; threshold) <span class="comment">// ensure capacity</span></span><br><span class="line">            rehash();</span><br><span class="line">        HashEntry&lt;K,V&gt;[] tab = table;</span><br><span class="line">        <span class="keyword">int</span> index = hash &amp; (tab.length - <span class="number">1</span>);</span><br><span class="line">        HashEntry&lt;K,V&gt; first = tab[index];</span><br><span class="line">        HashEntry&lt;K,V&gt; e = first;</span><br><span class="line">        <span class="keyword">while</span> (e != <span class="keyword">null</span> &amp;&amp; (e.hash != hash || !key.equals(e.key)))</span><br><span class="line">            e = e.next;</span><br><span class="line"></span><br><span class="line">        V oldValue;</span><br><span class="line">        <span class="keyword">if</span> (e != <span class="keyword">null</span>) &#123;</span><br><span class="line">            oldValue = e.<span class="keyword">value</span>;</span><br><span class="line">            <span class="keyword">if</span> (!onlyIfAbsent)</span><br><span class="line">                e.<span class="keyword">value</span> = <span class="keyword">value</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            oldValue = <span class="keyword">null</span>;</span><br><span class="line">            ++modCount;</span><br><span class="line">            tab[index] = <span class="keyword">new</span> HashEntry&lt;K,V&gt;(key, hash, first, <span class="keyword">value</span>);</span><br><span class="line">            count = c; <span class="comment">// write-volatile</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> oldValue;</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        unlock();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先第一步就是lock，看来再NB的并发类在写时也需要lock啊。读取count值，从count的注释可以看出该值是记录Segment包含的元素数量，volatile修饰的。然后判断增加之后元素数量是否超过阈值，超过的话提前扩容。接着找到该hash对应的table（桶），简单的取余操作。找到该table的第一个元素——first，因为ConcurrentHashMap使用链表来解决hash冲突问题，所以这里的table是一个链表。</p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (<span class="keyword">e</span> != null &amp;&amp; (<span class="keyword">e</span>.hash != hash || !key.equals(<span class="keyword">e</span>.key)))</span><br><span class="line">      <span class="keyword">e</span> = <span class="keyword">e</span>.next;</span><br></pre></td></tr></table></figure>
+<p>通过循环，并通过比较hash值以及equals()校验，寻找与key相同的已存在的元素。</p>
+<figure class="highlight cs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">V oldValue;</span><br><span class="line"><span class="keyword">if</span> (e != <span class="keyword">null</span>) &#123;</span><br><span class="line">    oldValue = e.<span class="keyword">value</span>;</span><br><span class="line">    <span class="keyword">if</span> (!onlyIfAbsent)</span><br><span class="line">        e.<span class="keyword">value</span> = <span class="keyword">value</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span> &#123;</span><br><span class="line">    oldValue = <span class="keyword">null</span>;</span><br><span class="line">    ++modCount;</span><br><span class="line">    tab[index] = <span class="keyword">new</span> HashEntry&lt;K,V&gt;(key, hash, first, <span class="keyword">value</span>);</span><br><span class="line">    count = c; <span class="comment">// write-volatile</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>e!=null说明找到与要插入的元素key相同的元素，那么onlyIfAbsent=false则直接将原元素的value值替换，返回原值，由于HashEntry的value是volatile的，所以修改之后会立即被后续线程可见；onlyIfAbsent=true则不做任何操作。e==null时，modCount自增（modCount记录了对该Segment的进行的结构性修改的次数，modCount值使得在进行批量读取时能够知道在读取期间Segment结构是否被修改来决定是否进行加锁读取）。<strong>tab[index] = new HashEntry(key, hash, first, value)</strong>这句就是将被插入的元素添加到链表中，但是插入的位置是头部，而非尾部。HashEntry的构造器传入一个HashEntry对象，该对象是链表原来的头部，被作为新创建的节点的next指针，所以新的链表的头部元素是新增加的，后面接着是原来的链表。<br>注意：此处的lock并非对整个Map进行加锁，而只是对该Segment进行加锁，所以如果一个线程进行put操作，其他的另外15个（ssize-1）Segment仍是可访问的。</p>
+<h6 id="2-_get(Object)"><strong>2. get(Object)</strong></h6><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> V <span class="built_in">get</span>(<span class="keyword">Object</span> <span class="variable">key</span>) &#123;</span><br><span class="line">    <span class="built_in">int</span> hash = hash(<span class="variable">key</span>.hashCode());</span><br><span class="line">    <span class="keyword">return</span> segmentFor(hash).<span class="built_in">get</span>(<span class="variable">key</span>, hash);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>ConcurrentHashMap的get()方法同put()一样，也是依赖于Segment的get()方法。</p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">V <span class="literal">get</span>(Object key, int hash) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">count</span> != 0) &#123; <span class="comment">// read-volatile</span></span><br><span class="line">        HashEntry&lt;K,V&gt; <span class="keyword">e</span> = getFirst(hash);</span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">e</span> != null) &#123;</span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">e</span>.hash == hash &amp;&amp; key.equals(<span class="keyword">e</span>.key)) &#123;</span><br><span class="line">                V v = <span class="keyword">e</span>.value;</span><br><span class="line">                <span class="keyword">if</span> (v != null)</span><br><span class="line">                    <span class="keyword">return</span> v;</span><br><span class="line">                <span class="keyword">return</span> readValueUnderLock(<span class="keyword">e</span>); <span class="comment">// recheck</span></span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">e</span> = <span class="keyword">e</span>.next;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从代码可以看到get()方法在读取时无需进行加锁操作，除非读取到的值为NULL。</p>
+<h5 id="4-_使用场景"><strong>4. 使用场景</strong></h5>]]></content>
+    <summary type="html">
+    <![CDATA[<p>作为JDK并发工具类源码学习系列的第一个被分析的类，ConcurrentHashMap类在我的开发过程中经常被使用。个人觉得如果在共享一个Map时，如果无法判断是否需要加锁，那么就干脆直接使用ConcurrentHashMap，即能保证并发安全，同时性能也不会有太多下降，因]]>
+    </summary>
+    
+      <category term="JDK" scheme="http://vickyqi.com/tags/JDK/"/>
+    
+      <category term="Java" scheme="http://vickyqi.com/tags/Java/"/>
+    
+      <category term="并发类" scheme="http://vickyqi.com/tags/%E5%B9%B6%E5%8F%91%E7%B1%BB/"/>
+    
+      <category term="源码" scheme="http://vickyqi.com/tags/%E6%BA%90%E7%A0%81/"/>
+    
+      <category term="Java学习" scheme="http://vickyqi.com/categories/Java%E5%AD%A6%E4%B9%A0/"/>
+    
+  </entry>
+  
+</feed>

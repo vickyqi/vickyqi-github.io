@@ -1,0 +1,776 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="一个不甘做屌丝的程序员" />
+
+
+
+  <meta name="keywords" content="二进制,反码,补数,补码,计算机," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="介绍计算机中的原码、反码、补码">
+<meta property="og:type" content="article">
+<meta property="og:title" content="详解原码、反码、补码——深入理解补码">
+<meta property="og:url" content="http://vickyqi.com/2015/10/19/详解原码、反码、补码——深入理解补码/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="介绍计算机中的原码、反码、补码">
+<meta property="og:updated_time" content="2015-10-20T03:39:34.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="详解原码、反码、补码——深入理解补码">
+<meta name="twitter:description" content="介绍计算机中的原码、反码、补码">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> 详解原码、反码、补码——深入理解补码 - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              详解原码、反码、补码——深入理解补码
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-10-19T14:19:11+08:00" content="2015-10-19">
+            2015-10-19
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/计算机基础/" itemprop="url" rel="index"><span itemprop="name">计算机基础</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/10/19/详解原码、反码、补码——深入理解补码/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/10/19/详解原码、反码、补码——深入理解补码/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>学过计算机原理的人都知道原码、反码、补码，但是有多少人知道为什么会有这三种码呢，这三种码又是用来干嘛的呢。<br>众所周知，在计算机的世界只有01，那么显然所有的数都得转成二进制，这样计算机才能够理解。如何将一个十进制的数转成二进制就不说了，说下原码，正数的原码就是十进制转成二进制得到的二进制值，而负数是对应的正数转成二进制得到的二进制值，然后将最高位（符号位）置为1表示这是一个负数，如-10:10001010。</p>
+<h5 id="1-_原码"><strong>1. 原码</strong></h5><p>计算机进行算术运算时为了简单效率所以要求能够使用加法代替减法，如1-1==1+(-1)==0，那么我们先看看原码能不能实现这种需求。<br>示例：<br><figure class="highlight asciidoc"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">计算76-10==66</span><br><span class="line"><span class="code">   十进制     二进制</span></span><br><span class="line"><span class="code">   76        01001100</span></span><br><span class="line"><span class="header"> +  -10       10001010</span><br><span class="line">---------------------</span></span><br><span class="line"><span class="code">   66        11010110（-86）</span></span><br></pre></td></tr></table></figure></p>
+<h5 id="2-_反码"><strong>2. 反码</strong></h5><p>从上面算出的结果可见原码是无法完成对减法的运算需求的，那么由于1-1==1+（-1），所以人类又找到了一个看似能够解决这个问题的解决方法——反码，即将负数的符号位不变其余位取反。下面我们再看看反码能不能解决问题。<br>示例1：计算15-125<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">计算<span class="number">15</span>-<span class="number">125</span>==-<span class="number">110</span></span><br><span class="line">   十进制     二进制原码    二进制反码</span><br><span class="line">   <span class="number">15</span>        <span class="number">00001111</span>    <span class="number">00001111</span></span><br><span class="line"> +  -<span class="number">125</span>      <span class="number">11111101</span>    <span class="number">10000010</span></span><br><span class="line">---------------------------------</span><br><span class="line">   -<span class="number">110</span>      <span class="number">11101110</span>    <span class="number">10010001</span></span><br><span class="line">得到<span class="number">10010001</span>(反码)==<span class="number">11101110</span>(原码)==-<span class="number">110</span>，正确。注意：使用反码计算得到的结果也是反码，需要再次转换成原码。</span><br></pre></td></tr></table></figure></p>
+<p>示例2：计算76-10<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">计算<span class="number">76</span>-<span class="number">10</span>==<span class="number">66</span></span><br><span class="line">   十进制     二进制原码    二进制反码</span><br><span class="line">   <span class="number">76</span>        <span class="number">01001100</span>    <span class="number">01001100</span></span><br><span class="line"> + -<span class="number">10</span>       <span class="number">10001010</span>    <span class="number">11110101</span></span><br><span class="line">---------------------------------</span><br><span class="line">   <span class="number">66</span>        <span class="number">01000010</span>    <span class="number">101000001</span>==<span class="number">01000010</span>  </span><br><span class="line">这里得到的值超过<span class="number">8</span>bit，所以最高的<span class="number">1</span>需要丢弃，丢弃后需要在最低位+<span class="number">1</span>，得到<span class="number">01000010</span>(反码)==<span class="number">01000010</span>(原码)==<span class="number">66</span>，正确。</span><br></pre></td></tr></table></figure></p>
+<p>示例3：计算1-1<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">计算<span class="number">1</span>-<span class="number">1</span>==<span class="number">0</span></span><br><span class="line">   十进制     二进制原码    二进制反码</span><br><span class="line">   <span class="number">1</span>         <span class="number">00000001</span>    <span class="number">00000001</span></span><br><span class="line"> + -<span class="number">1</span>        <span class="number">10000001</span>    <span class="number">11111110</span></span><br><span class="line">---------------------------------</span><br><span class="line">   <span class="number">0</span>         <span class="number">10000000</span>    <span class="number">11111111</span>  </span><br><span class="line">得到<span class="number">11111111</span>(反码)==<span class="number">10000000</span>(原码)==-<span class="number">0</span>，-<span class="number">0</span>？通过反码计算会出现+<span class="number">0</span>和-<span class="number">0</span>，一个<span class="number">0</span>对应了两个码，显然是不合理的。</span><br></pre></td></tr></table></figure></p>
+<p>从上面三个例子可以看出使用反码进行减法运算时存在两个问题：</p>
+<ol>
+<li>当计算结果溢出时需要额外进行+1操作，使得运算多了一步，效率降低</li>
+<li><p>0存在+0和-0两种存在方式，不方便理解</p>
+<h5 id="3-_模与互补、同余"><strong>3. 模与互补、同余</strong></h5><p>在看补码之前，先介绍三个概念——模、补数、同余。我们从现实生活举例来看：</p>
+<ul>
+<li>我们将一个时钟的分针往前拨20分钟，和往后拨40分钟，得到的结果是一样的。</li>
+<li>把你的属年(属猴)往后退5年，和往前进7年，一样都是属兔。</li>
+<li>把数字 87，减去 25，和加上 75，在不考虑百位数的条件下，得到的结果都是62。</li>
+</ul>
+</li>
+</ol>
+<p>上述几组数字，有这样的关系：<br>　　20 + 40 = 60<br>　　5 + 7 = 12<br>　　25 + 75 = 100<br>式中的 60、12 和 100，就是“模”。<br>式中的 20和40、5和7，以及25和75，就是一对对“互补”的数字。<br>而且20，80，140在模是60的情况下就是互为“同余”的数字。<br>通俗解释下模、补数、同余的概念：</p>
+<ul>
+<li><strong>模</strong>：就是一个轮回，比如分针转一圈，十二生肖一轮等等。</li>
+<li><strong>互补 </strong>：一个数值针对某个模的互补值就是这个数值加上或者减去多少能够等于模，或者等于模的同余值。</li>
+<li><strong>同余 </strong>：一个数值加上或者减去模的整数倍得到的所有数值即为该数值的同余值<strong>(也就是除上模，余数是一样，所以叫同余)</strong>，0是模的同余，-模也是模的同余。</li>
+</ul>
+<p>理解了什么是模，什么是互补、什么是同余，那么如果给一个模，以及一个值a，如果计算a的补数(与a互补的值)呢，其实很简单，只需要拿模-a即可，计算同余值可以直接加上或者减去模的整数倍即可。</p>
+<h5 id="4-_那么互补的值有什么用呢？"><strong>4. 那么互补的值有什么用呢？</strong></h5><p>如果我们在进行减法运算时，用与减数互补的值代替减数与被减数进行加法运算会发生什么呢？废话不多说，看示例。<br>示例1：在分钟刻度下，计算55分钟往后拨动34分钟，转化成数学计算就是：55-34<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">被减数	     <span class="number">55</span></span><br><span class="line">减数		  <span class="number">34</span></span><br><span class="line">减数补数   <span class="number">60</span>-<span class="number">34</span>==<span class="number">26</span></span><br><span class="line">最终结果     <span class="number">55</span>+<span class="number">26</span>==<span class="number">81</span></span><br><span class="line">---------------------</span><br><span class="line">用减数补数代替减数得到结果为<span class="number">81</span>,<span class="number">81</span>在分钟刻度盘上正好是<span class="number">21</span>，也就是<span class="number">81</span>是<span class="number">21</span>的同余值，和<span class="number">55</span>-<span class="number">34</span>是一样的。注意：这里涉及到类似上面的<span class="number">87</span>+<span class="number">75</span>的情况，即忽略了进位。</span><br></pre></td></tr></table></figure></p>
+<p>示例2：在十二生肖中，计算猴年往后退11年，转化成数学计算就是：9-11<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">被减数	     <span class="number">9</span></span><br><span class="line">减数		  <span class="number">11</span></span><br><span class="line">减数补数   <span class="number">12</span>-<span class="number">11</span>==<span class="number">1</span></span><br><span class="line">最终结果     <span class="number">9</span>+<span class="number">1</span>==<span class="number">10</span></span><br><span class="line">-------------------</span><br><span class="line">用减数互补值代替减数得到结果为<span class="number">10</span>,<span class="number">10</span>对应到十二生肖正好是鸡，和猴年往后退<span class="number">11</span>年是一样的，所以得到的也是一个同余值。</span><br></pre></td></tr></table></figure></p>
+<p>从上面的示例可以看出，使用互补值计算出的结果与实际值其实是<strong>同余</strong>的关系。</p>
+<h5 id="5-_二进制的模"><strong>5. 二进制的模</strong></h5><p>上面看了分钟刻度盘的模，十二生肖的模，以及两位整数的模，那么对于一个8bit的字节的模是多少呢？<br>分钟刻度盘的模为什么是60？是因为他的值是从1-59，总共60个值，十二生肖以及两位整数也是一样的，所以我们只需要看看一个8bit的字节的所有取值一共是多少个就是他的模，显示8个bit可表示的最小值是00000000==0，最大值是11111111==255，那么从0到255一共是256个值，所以一个8bit的字节的模就是256了。但是其实在计算机中为了能够表示负数，所以讲8bit的字节的最高位设为符号位，0表示整数，1表示负数，所以能够表示数值的也就只有7bit，如果我们忽视符号位，那么剩下7bit的模就是128，而不是256了。<strong>下面在计算时我们会直接使用128而非256！</strong></p>
+<h5 id="6-_使用互补值进行二进制的减法计算"><strong>6. 使用互补值进行二进制的减法计算</strong></h5><p>下面我们就来看看如果使用互补值来进行二进制的减法计算，我们先来看一个公式：假设模式M，我们计算X-Y，然后我们使用减数的补数来计算，看看下面的换算：</p>
+<figure class="highlight tp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">X</span>-<span class="keyword">Y</span> == <span class="keyword">X</span>+(M-<span class="keyword">Y</span>) == <span class="keyword">X</span>+((M-<span class="number">1</span>)-<span class="keyword">Y</span>+<span class="number">1</span>)</span><br></pre></td></tr></table></figure>
+<p>下面我们来看示例，这个公式在下面会用到的。</p>
+<p>示例1：计算15-125<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">           十进制          二进制</span><br><span class="line">被减数	     <span class="number">15</span>             <span class="number">0001111</span></span><br><span class="line">减数		  <span class="number">125</span>            <span class="number">1111101</span></span><br><span class="line">减数补数   <span class="number">128</span>-<span class="number">125</span>==<span class="number">3</span>     <span class="number">0000011</span></span><br><span class="line">最终结果     <span class="number">18</span>             <span class="number">0010010</span></span><br><span class="line">------------------------------------</span><br><span class="line">得到<span class="number">0010010</span>==<span class="number">18</span>，在模式<span class="number">128</span>的情况下，<span class="number">18</span>正好是-<span class="number">110</span>的同余值，跟上面现实的例子是一样的！</span><br></pre></td></tr></table></figure></p>
+<p>示例2：计算76-10<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">           十进制          二进制</span><br><span class="line">被减数	     <span class="number">76</span>             <span class="number">01001100</span></span><br><span class="line">减数		  <span class="number">10</span>            <span class="number">00001010</span></span><br><span class="line">减数补数   <span class="number">256</span>-<span class="number">10</span>==<span class="number">246</span>   <span class="number">11110110</span></span><br><span class="line">最终结果     <span class="number">322</span>    <span class="number">101000010</span></span><br><span class="line">------------------------------------</span><br><span class="line">得到<span class="number">101000010</span>==<span class="number">322</span>，在模式<span class="number">256</span>的情况下，<span class="number">322</span>正好是<span class="number">66</span>的同余值，结果还是一样！</span><br></pre></td></tr></table></figure></p>
+<p>从上面两个例子我们应该可以看出，如果我们使用减数的补数进行加法运算，那么得到的结果就是一个与正确结果同余的值。在现实生活中，我们可以直接把两个同余的值看做是相同的，例如分钟20和分钟80完全就是一样的，那么在计算机里我们可以这么假设吗？答案是可以的，看下面。<br>试想当计算机使用一个7bit的空间保存一个数值时是如何保存的，比如18，我们可以这么推算，首先分配一个7bit的空间，每个bit上的值都是0，那么如何表示18呢？我们可以这样理解：往这个7bit的空间内进行18次加1操作，满2就进1，最终就会得到0010010。那么如何表示-110，我们可以理解为往这个7bit的空间内进行110次减1操作，一开始全是0，那么如何减1呢？很简单直接减成1111111即可，可以这样理解，分钟在0刻度，你往后拨一下就会指向59，这里也是这个道理，所以连续减110次，就会得到0010010，根18是一样的，所以在计算机看来18和-110是一样的。<br>也就是说<strong>15-125 == 15+(128-125) == 15+(127-125+1) </strong>(上面的公式)，也就是说-125被127-125+1代替了，那么<strong>127-125+1（M-）</strong>又是什么？</p>
+<h5 id="7-_补码"><strong>7. 补码</strong></h5><p>上面一路走来终于证明了使用补数可以代替减法，下面我们要解决的问题是M-1-Y+1是啥。<br>我们直接看二进制如何计算M-1-Y+1。<br>示例：计算M=128，Y=110</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">     十进制   二进制</span><br><span class="line"> M-<span class="number">1</span>  <span class="number">127</span>   <span class="number">1111111</span></span><br><span class="line"> -Y   <span class="number">110</span>   <span class="number">1101110</span></span><br><span class="line">            <span class="number">0010001</span></span><br><span class="line">--------------------</span><br><span class="line">M-<span class="number">1</span>换算成二进制就是N位<span class="number">1</span>，那么N位<span class="number">1</span>减去任何一个N位的二进制是啥呢？其实就是按位取反！因为遇到<span class="number">0</span>,<span class="number">1</span>-<span class="number">0</span>==<span class="number">1</span>，取反，遇到<span class="number">1</span>,<span class="number">1</span>-<span class="number">1</span>==<span class="number">0</span>，取反，所以整体就是按位取反，也就是反码。</span><br><span class="line">            </span><br><span class="line"> +<span class="number">1</span>   <span class="number">1</span>     <span class="number">0000001</span></span><br><span class="line">            <span class="number">0010010</span></span><br><span class="line"> ------------------</span><br><span class="line">所以总体就是在<span class="number">110</span>的二进制基础上按位取反然后加<span class="number">1</span>,也就是<span class="number">110</span>的反码加<span class="number">1</span>。</span><br></pre></td></tr></table></figure>
+<p>看了上面的示例，应该知道M=128，Y=110，M-1-Y+1就是Y的反码加1，也就是说，如果我们需要计算X-Y，只需要计算X+(Y的反码+1)，由于我们得出这个结论是使用<strong>补数替代减法</strong>得到的，所以<strong>Y的反码+1</strong>就被叫做Y的<strong>补码</strong>。<br>到这里我们知道了110的补码，上面我们介绍了计算机使用1字节的最高位表示符号位，1表示负数，所以-110的最高位是1，由于在使用补码进行减法运算过程中最高位并不参与运算，所以这个最高位应该是固定不动的，所以负数的反码补码最高位始终都是1。<strong>也就得到了-110的补码是：10010010</strong>。对于正数，符号位是0，那么反码补码最高位就始终是0，而且对于正数在计算时也无需使用其补码进行操作，但是为了统一都是用补码，所以定正数的反码补码都等于原码。<br>根据补码的计算过程有些文章会说一个负数X的补码对应的值==2^n-|X|，理解了上面的过程这个公式就自然懂了，不过这个公式没啥用，也没必要记。<br>到这里终于把<strong>补码</strong>的来历说清楚了，至少我自己是明白了，但愿读者也可以明白吧！</p>
+<h5 id="一些补码的其他知识"><strong>一些补码的其他知识</strong></h5><p>上面我们看了7bit的模式128，也就说是能表示0-127共128个数值，加上最高位的符号位就成了-127-127共计255个数值，因为没有-0这个数字。但是实际对于计算机来说8bit的空间是可以表示256个数字的，那么还有一个数字是啥呢？正是：<strong>10000000</strong>(注意：这是补码，因为计算机都存的补码)。我们可以试着计算下10000000的原码，可以得到10000000的原码就是10000000，也就是-0，但是如果存在+0和-0两个计算机码对应一个值(+0和-0都是0)，那么显然是没必要的，而且还会造成混乱，所以人为的规定<strong>10000000表示-128</strong>。所以一个8bit的空间可以表示的数字就是从-128到127了，而不是-127-127！</p>
+<h5 id="8-_参考文章"><strong>8. 参考文章</strong></h5><p>感谢下面这些文章帮助我理解补码：<br><a href="http://www.cnblogs.com/zhangziqiu/archive/2011/03/30/computercode.html" target="_blank" rel="external">原码, 反码, 补码 详解</a><br><a href="http://www.douban.com/note/223507364/" target="_blank" rel="external">原码、反码和补码</a></p>
+<p>欢迎大家点评讨论！</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/二进制/" rel="tag">#二进制</a>
+          
+            <a href="/tags/反码/" rel="tag">#反码</a>
+          
+            <a href="/tags/补数/" rel="tag">#补数</a>
+          
+            <a href="/tags/补码/" rel="tag">#补码</a>
+          
+            <a href="/tags/计算机/" rel="tag">#计算机</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/10/19/使用Apache Commons CLI开发命令行工具/" rel="prev">使用Apache Commons CLI开发命令行工具</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/10/19/正则学习二三事/" rel="next">正则学习二三事</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2015/10/19/详解原码、反码、补码——深入理解补码/"
+     data-title="详解原码、反码、补码——深入理解补码"
+     data-content=""
+     data-url="http://vickyqi.com/2015/10/19/详解原码、反码、补码——深入理解补码/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2015/10/19/详解原码、反码、补码——深入理解补码/"
+                       data-title="详解原码、反码、补码——深入理解补码" data-url="http://vickyqi.com/2015/10/19/详解原码、反码、补码——深入理解补码/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/images/Vicky.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">一个不甘做屌丝的程序员</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">5</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">2</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">13</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#1-_原码"><span class="nav-number">1.</span> <span class="nav-text">1. 原码</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#2-_反码"><span class="nav-number">2.</span> <span class="nav-text">2. 反码</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#3-_模与互补、同余"><span class="nav-number">3.</span> <span class="nav-text">3. 模与互补、同余</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#4-_那么互补的值有什么用呢？"><span class="nav-number">4.</span> <span class="nav-text">4. 那么互补的值有什么用呢？</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#5-_二进制的模"><span class="nav-number">5.</span> <span class="nav-text">5. 二进制的模</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#6-_使用互补值进行二进制的减法计算"><span class="nav-number">6.</span> <span class="nav-text">6. 使用互补值进行二进制的减法计算</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#7-_补码"><span class="nav-number">7.</span> <span class="nav-text">7. 补码</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#一些补码的其他知识"><span class="nav-number">8.</span> <span class="nav-text">一些补码的其他知识</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#8-_参考文章"><span class="nav-number">9.</span> <span class="nav-text">8. 参考文章</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>
