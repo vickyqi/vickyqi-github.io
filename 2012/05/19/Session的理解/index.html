@@ -28,7 +28,7 @@
 
 
 
-  <meta name="keywords" content="正则," />
+  <meta name="keywords" content="Java,Session,Web," />
 
 
 
@@ -39,16 +39,19 @@
   <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
 
 
-<meta name="description" content="正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。以前看正则就是一堆符号，代表各个意思，如\d表示数字，\d+表示一个或者多个连续数字，单看每个规则都可以理解，除了组合，但是实际使用时真的很难组织到一起。归根结底还">
+<meta name="description" content="个人误区&amp;emsp;&amp;emsp;一开始很傻的把Session的会话与用户的登录与退出弄混淆了，实在很傻！Session的会话指的是当你打开浏览器，请求一个应用服务器时开始，直到与这个应用服务器断开连接（如关闭浏览器等）为止的一系列动作。这与用户登录完全没有关系，被弄混淆个人觉得是Session最普遍的用法就是用来控制用户的登录/退出事件的。
+Session的理解Session的机制、创建以及保存&amp;">
 <meta property="og:type" content="article">
-<meta property="og:title" content="正则学习二三事">
-<meta property="og:url" content="http://vickyqi.com/2015/10/19/正则学习二三事/index.html">
+<meta property="og:title" content="Session的理解">
+<meta property="og:url" content="http://vickyqi.com/2012/05/19/Session的理解/index.html">
 <meta property="og:site_name" content="Vicky's Blog">
-<meta property="og:description" content="正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。以前看正则就是一堆符号，代表各个意思，如\d表示数字，\d+表示一个或者多个连续数字，单看每个规则都可以理解，除了组合，但是实际使用时真的很难组织到一起。归根结底还">
-<meta property="og:updated_time" content="2015-10-20T07:57:08.000Z">
+<meta property="og:description" content="个人误区&amp;emsp;&amp;emsp;一开始很傻的把Session的会话与用户的登录与退出弄混淆了，实在很傻！Session的会话指的是当你打开浏览器，请求一个应用服务器时开始，直到与这个应用服务器断开连接（如关闭浏览器等）为止的一系列动作。这与用户登录完全没有关系，被弄混淆个人觉得是Session最普遍的用法就是用来控制用户的登录/退出事件的。
+Session的理解Session的机制、创建以及保存&amp;">
+<meta property="og:updated_time" content="2015-10-24T10:02:24.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="正则学习二三事">
-<meta name="twitter:description" content="正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。以前看正则就是一堆符号，代表各个意思，如\d表示数字，\d+表示一个或者多个连续数字，单看每个规则都可以理解，除了组合，但是实际使用时真的很难组织到一起。归根结底还">
+<meta name="twitter:title" content="Session的理解">
+<meta name="twitter:description" content="个人误区&amp;emsp;&amp;emsp;一开始很傻的把Session的会话与用户的登录与退出弄混淆了，实在很傻！Session的会话指的是当你打开浏览器，请求一个应用服务器时开始，直到与这个应用服务器断开连接（如关闭浏览器等）为止的一系列动作。这与用户登录完全没有关系，被弄混淆个人觉得是Session最普遍的用法就是用来控制用户的登录/退出事件的。
+Session的理解Session的机制、创建以及保存&amp;">
 
 
 <script type="text/javascript" id="hexo.configuration">
@@ -58,7 +61,7 @@
   };
 </script>
 
-    <title> 正则学习二三事 - Vicky's Blog </title>
+    <title> Session的理解 - Vicky's Blog </title>
 </head>
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
 <!--[if lte IE 8]>
@@ -206,7 +209,7 @@
           
           
             
-              正则学习二三事
+              Session的理解
             
           
         </h1>
@@ -215,8 +218,8 @@
       <div class="post-meta">
         <span class="post-time">
           发表于
-          <time itemprop="dateCreated" datetime="2015-10-19T14:19:11+08:00" content="2015-10-19">
-            2015-10-19
+          <time itemprop="dateCreated" datetime="2012-05-19T00:13:00+08:00" content="2012-05-19">
+            2012-05-19
           </time>
         </span>
 
@@ -225,6 +228,14 @@
             &nbsp; | &nbsp; 分类于
             
               <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
+
+              
+              
+                ， 
+              
+
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/Web开发/" itemprop="url" rel="index"><span itemprop="name">Web开发</span></a></span>
 
               
               
@@ -237,8 +248,8 @@
           
             <span class="post-comments-count">
               &nbsp; | &nbsp;
-              <a href="/2015/10/19/正则学习二三事/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2015/10/19/正则学习二三事/" itemprop="commentsCount"></span>
+              <a href="/2012/05/19/Session的理解/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2012/05/19/Session的理解/" itemprop="commentsCount"></span>
               </a>
             </span>
           
@@ -259,363 +270,11 @@
       
 
       
-        <span itemprop="articleBody"><p>正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。<br>以前看正则就是一堆符号，代表各个意思，如\d表示数字，\d+表示一个或者多个连续数字，单看每个规则都可以理解，除了组合，但是实际使用时真的很难组织到一起。归根结底还是因为对这些符号的理解不够深入。所以正则还是得多写，推荐一个在线练习的网站<a href="http://regex.alf.nu/" target="_blank" rel="external">RegexGolf</a>。好了，下面写写自己学习正则的一些总结吧，希望能够帮助到别人，也帮助自己总结总结。</p>
-<h4 id="正则的基础知识："><strong>正则的基础知识：</strong></h4><h5 id="字面值"><strong>字面值</strong></h5><p>正则表达式由只代表自身的字面值和代表特定含义的元字符组成。 只代表自身的字面值指的是普通的字符，如abcde，特殊含义的元字符包括：</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>\</td>
-<td>反斜线字符</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\0n</td>
-<td>带有八进制值 0 的字符 n (0 &lt;= n &lt;= 7)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\0nn</td>
-<td>带有八进制值 0 的字符 nn (0 &lt;= n &lt;= 7)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\0mnn</td>
-<td>带有八进制值 0 的字符 mnn（0 &lt;= m &lt;= 3、0 &lt;= n &lt;= 7）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\xhh</td>
-<td>带有十六进制值 0x 的字符 hh</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\uhhhh</td>
-<td>带有十六进制值 0x 的字符 hhhh</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\t</td>
-<td>制表符 (‘\u0009’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\n</td>
-<td>新行（换行）符 (‘\u000A’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\r</td>
-<td>回车符 (‘\u000D’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\f</td>
-<td>换页符 (‘\u000C’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\a</td>
-<td>报警 (bell) 符 (‘\u0007’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\e</td>
-<td>转义符 (‘\u001B’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\cx</td>
-<td>对应于 x 的控制符</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<h5 id="字符类"><strong>字符类</strong></h5><p> 字符类是字符在方括号中的集合。表示“找到集合里任意一个字符“。例如：</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>[abc]</td>
-<td>a、b 或 c（简单类）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[^abc]</td>
-<td>任何字符，除了 a、b 或 c（否定）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-zA-Z]</td>
-<td>a 到 z 或 A 到 Z，两头的字母包括在内（范围）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-d[m-p]]</td>
-<td>a 到 d 或 m 到 p：[a-dm-p]（并集）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-z&amp;&amp;[def]]</td>
-<td>d、e 或 f（交集）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-z&amp;&amp;[^bc]]</td>
-<td>a 到 z，除了 b 和 c：[ad-z]（减去）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-z&amp;&amp;[^m-p]]</td>
-<td>a 到 z，而非 m 到 p：[a-lq-z]（减去）</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>从上表可以看出<strong>[]</strong>里面可进行并集/交集/差集操作。对于字符范围是根据ASCII值的大小来的，例如[A-z]也是可以的，甚至能够匹配[，但是完全不建议如此使用，推荐使用的字符范围：[0-9]/[a-z]/[A-Z]。<br>字符类还有一些预定义的字符类：</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>. 任何字符（与行结束符可能匹配也可能不匹配）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\d</td>
-<td>数字：[0-9]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\D</td>
-<td>非数字： [^0-9]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\s</td>
-<td>空白字符：[ \t\n\x0B\f\r]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\S</td>
-<td>非空白字符：[^\s]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\w</td>
-<td>单词字符：[a-zA-Z_0-9]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\W</td>
-<td>非单词字符：[^\w]</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>使用上面的预定义字符类能够更加方便的表示字符范围。需要牢记。<br><strong>注意</strong>： 区间是字符的区间，不是数字的区间。正则表达式[1-31]表示“找到一个1或一个2或一个3”，不是“找到一个从1到31的整数”。</p>
-<h5 id="乘法器"><strong>乘法器</strong></h5><table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>X?</td>
-<td>X，一次或一次也没有</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X*</td>
-<td>X，零次或多次</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X+</td>
-<td>X，一次或多次</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X{n}</td>
-<td>X，恰好 n 次</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X{n,}</td>
-<td>X，至少 n 次</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X{n,m}</td>
-<td>X，至少 n 次，但是不超过 m 次</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>X可以使一个普通字面值，如a+：一个或多个a，也可以是一个字符类，如[abc]{2}，表示a/b/c后跟a/b/c。<br>值得注意的是优先选择更长的匹配，因为乘法器是贪婪的。如果你输入的文本是I had an aaaaawful day，该正则表达式就会在aaaaawful中匹配到aaaaa。不会在第三个a后就停止匹配。<br>乘法器是贪婪的，但它不会忽略一个更好的匹配。如果你的输入文本为I had an aaawful daaaaay，之后这个正则表达式会在第一次的匹配中于aaawful找到aaa。只有在你说“给我找到另一个匹配”的时候，它才会继续搜索然后在daaaaay中找到aaaaa。<br>惰性：<br>正则表达式<em>“.</em>“<em>表示“找到一个双引号，接着找到尽可能多的字符，最后再找到一个双引号”。注意一下被.</em>匹配的内部字符，很可能包含多个双引号。这通常不是非常有用。乘法器可通过追加问号<strong>（?）</strong>来实现<strong>惰性</strong>。<em>“.</em>?”*表示“匹配一个双引号，跟着一个尽可能少的字符，再跟着一个双引号”。</p>
-<h5 id="分支"><strong>分支</strong></h5><p>可以使用管道符号来实现匹配多种选择。</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>X!Y(用!代替竖线)</td>
-<td>X或者Y</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<h5 id="组合"><strong>组合</strong></h5><p>可以使用圆括号来组合表达式。例：<br>在一周中找到一天，使用<strong>(Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day</strong>，这里如果把小括号或者中括号，结果是完全不一样的，因为中括号是字符类，即里面的Mon并不是完全匹配Mon，而是只要匹配M/o/n其中一个即可。<br>同时组合后面还可跟上乘法器，如：<strong>\w+(\s+\w+)*</strong>代表“找到一个或多个单词，它们以空格隔开”。</p>
-<h5 id="边界"><strong>边界</strong></h5><p>边界分成：单词边界，行边界，文本边界</p>
-<ol>
-<li>单词边界<br>单词边界是一个单词字符和非单词字符之间的位置。记住，一个单词字符是\w，它是[0-9A-Za-z<em>]，一个非单词字符是\W，也就是[^0-9A-Za-z</em>]。<br>文本的开头和结尾总是当作单词边界。<br>输入的文本<strong>it’s a cat</strong>有八个单词边界，分别为：文本开头-i，t-‘，’-s，s-空格，空格-a，a-空格，空格-c，t-文本结尾。</li>
-<li>行边界<br>每一块文本会分解成一个或多个行，用换行符分隔。<br>注意文本不是以换行符结束，而是以行结束。然而，任何行，包括最后一行，可以包含零个字符。<br>起始行位置是在一个换行符和下一行的第一个字符之间。与单词边界一样，在文本的开头也算作一个起始的行。结束行位置是在行的最后一个字符和换行符之间。与单词边界一样，文本结束也算作行结束。</li>
-<li>文本边界<br>很多实现提供一个标记，通过改变它来改变^和$的含义。从“行开始”和“行结束”变成“文本开始”和“文本结束”。其它的一些实现提供单独的元字符\A和\z来达到这个目的。<br>一些表示边界的符号：</li>
-</ol>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>^</td>
-<td>行的开头</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>$</td>
-<td>行的结尾</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\b</td>
-<td>单词边界</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\B</td>
-<td>非单词边界</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\A</td>
-<td>输入的开头</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\G</td>
-<td>上一个匹配的结尾</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\Z</td>
-<td>输入的结尾，仅用于最后的结束符（如果有的话）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\z</td>
-<td>输入的结尾</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>其中^$是最常用的两个边界分隔符。</p>
-<h4 id="捕获和替换："><strong>捕获和替换：</strong></h4><ol>
-<li><p>捕获组</p>
-<p>()在正则中被用来表示组，同时也可以用来捕获匹配上的子串，可以拥有多个捕获组，它们甚至可以嵌套使用，捕获组从左到右进行编号，只要计算左圆括号。例如：<br>对于表达式：<strong>(\w+) had a ((\w+) \w+)</strong>，文本是I had a nice day，那么</p>
-<ul>
-<li>捕获组1是I。</li>
-<li>捕获组2是nice day。</li>
-<li>捕获组3是nice。</li>
-<li>捕获组0是I had a nice day（根据具体实现不同）</li>
-</ul>
-<p>如果表达式使用了两个捕获组，但是只捕获到一组，那么组2是空字符串。引用捕获组使用+组序号，如\1表示引用第一个捕获组。</p>
-</li>
-<li>后向引用<br>可以在同样的表达式中引用同一个捕获组，这称为后向引用。<br>例：表达式[abc]{2}表示“匹配aa或ab或ac or ba或bb或bc或ca或cb或cc”，但是表达式([abc])\1表示“匹配aa或bb或cc”。</li>
-</ol>
-<p>以上就是正则的全部知识，其实了解正则的知识点很简单，但是真要应用到实际中还是需要通过大量的练习才能做到熟练使用。</p>
-<h5 id="实际案例"><strong>实际案例</strong></h5><ol>
-<li><p>压缩CSS文件，去掉CSS文件中的换行以及空格</p>
-<figure class="highlight livescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">工具：Notepad++  查找：([&#123;;])<span class="string">\s+</span>  替换：<span class="string">\1</span></span><br></pre></td></tr></table></figure>
-</li>
-<li><p>替换文件中连续出现的#，为其后面添加一个空格，例：####你好-&gt;#### 你好</p>
- <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">工具：Notepad++  查找：([<span class="preprocessor">#]+)  替换：\<span class="number">1</span> (<span class="number">1</span>后面有个空格)</span></span><br></pre></td></tr></table></figure>
-</li>
-</ol>
-<p>以上案例会不断更新，已记录一些自己对正则使用的经历。</p>
-<h4 id="参考文章"><strong>参考文章</strong></h4><p><a href="http://doslin.com/regular%20expressions/2014/03/11/learn-regular-expressions-in-about-55-minutes.html" target="_blank" rel="external">55分钟学会正则表达式(译)</a></p>
-<p>JDK API文档</p>
+        <span itemprop="articleBody"><h4 id="个人误区">个人误区</h4><p>&emsp;&emsp;一开始很傻的把Session的会话与用户的登录与退出弄混淆了，实在很傻！Session的会话指的是当你打开浏览器，请求一个应用服务器时开始，直到与这个应用服务器断开连接（如关闭浏览器等）为止的一系列动作。这与用户登录完全没有关系，被弄混淆个人觉得是Session最普遍的用法就是用来控制用户的登录/退出事件的。</p>
+<h4 id="Session的理解">Session的理解</h4><h5 id="Session的机制、创建以及保存">Session的机制、创建以及保存</h5><p>&emsp;&emsp;Session机制是一种服务器端的机制，服务器使用一种类似于散列表的结构（也可能就是使用散列表）来保存信息。当程序需要为某个客户端的请求创建一个Session的时候，服务器首先检查这个客户端的请求里是否已包含了一个Session标识 - 称为 Session id，如果已包含一个Session id则说明以前已经为此客户端创建过Session，服务器就按照Session id把这个 Session检索出来使用（如果检索不到，可能会新建一个），如果客户端请求不包含Session id，则为此客户端创建一个Session并且生 成一个与此Session相关联的Session id，Session id的值应该是一个既不会重复，又不容易被找到规律以仿造的字符串，这个 Session id将被在本次响应中返回给客户端保存(客户端一般使用Cookie保存)。<br>&emsp;&emsp;例如：当你打开浏览器时，然后输入一个地址，这个地址其实对应的是一个服务器，当你的请求被服务器响应之后，如上所说服务器首先会根据你发送的请求是否包含一个Session标识（Session-Id），如果有则不新建Session，但若是没有则新建一个Session，并将该Session的ID返回给客户端（浏览器），客户端就将该Session-Id保存到一个Cookie中（一般这个cookie的名字都是类似于SEEESIONID，而。比如weblogic对于web应用程序生成的cookie，JSESSIONID= ByOK3vjFD75aPnrF7C2HmdnV6QZcEbzWoWiBYEnLerjQ99zWpBng!-145788764，它的名字就是 JSESSIONID），然后每次客户端请求一个新的页面时就将该Cookie通过某种机制发送给服务器端，服务器端就知道Session已经创建了，从而不需要再新建一个Session。</p>
+<h5 id="Session的销毁">Session的销毁</h5><p>&emsp;&emsp;Session的销毁并不是在浏览器窗口被关闭时。对于Session的销毁除非程序显示的告诉服务器销毁Session，否则服务器不会主动销毁一个Session。<br>然而浏览器从来不会主动在关闭之前通知服务器它将要关闭，因此服务器根本不会有机会知道浏览器已经关闭，之所以会有这种错觉，是大部分session机制都使用会话cookie来保存session id，而关闭浏览器后这个 session id就消失了，再次连接服务器时也就无法找到原来的session。如果服务器设置的cookie被保存到硬盘上，或者使用某种手段改写浏览器发出的HTTP请求头，把原来的session id发送给服务器，则再次打开浏览器仍然能够找到原来的Session。<br>&emsp;&emsp;Session被销毁的另一个原因就是为Session设置了失效时间，即当距离客户端上一次使用Session的时间超过这个失效时间时，服务器就可以认为客户端已经停止了活动，才会把Session销毁以节省存储空间。此时当用户再次访问时，如刷新页面、再次访问等，服务器会重新创建一个Session，并生成一个新的ID。<br>&emsp;&emsp;说明（实验得出，IE8，Google）：当你访问一个服务器之后，关闭窗口(所有浏览器窗口，如IE，那就关闭所有IE窗口，一个不留)，然后再打开访问同样的服务器，这时虽然上一个Session可能未被销毁，但是服务器找不到，因此就会再新建一个Session，这时会有两个Session。但是如果你未完全关不窗口的话，那么就会使用之前的Session。原因是Session-Id是保存在一个Cookie中的(测试时该Cookie名为JSESSIONID)，而这个Cookie的生命周期为浏览器关闭，即浏览器关闭(完全关闭)则该Cookie就会被删除，因此服务器无法通过这个Cookie找到Session-Id，这时服务器就会认为没有Session存在，就会新建一个Session。同时这个Session的Id会覆盖之前的Session-Id，因为使用的是同一个Cookie，而Cookie会覆盖。<br>自己可以做试验！在IE和Google中都是可以查看Cookie的！</p>
+<hr>
+<p><strong>个人理解，有错欢迎指出！</strong></p>
 </span>
       
     </div>
@@ -624,7 +283,11 @@
       
         <div class="post-tags">
           
-            <a href="/tags/正则/" rel="tag">#正则</a>
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/Session/" rel="tag">#Session</a>
+          
+            <a href="/tags/Web/" rel="tag">#Web</a>
           
         </div>
       
@@ -633,13 +296,13 @@
         <div class="post-nav">
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2015/10/19/详解原码、反码、补码——深入理解补码/" rel="prev">详解原码、反码、补码——深入理解补码</a>
+              <a href="/2012/05/19/Java类之间的关联关系/" rel="prev">Java类之间的关联关系</a>
             
           </div>
 
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/" rel="next">JDK并发工具类源码学习系列——ConcurrentHashMap</a>
+              <a href="/2012/05/13/Struts2整合Spring方法及原理/" rel="next">Struts2整合Spring方法及原理</a>
             
           </div>
         </div>
@@ -654,10 +317,10 @@
 	
     <div class="post-spread">
       
-        <div class="ds-share flat" data-thread-key="2015/10/19/正则学习二三事/"
-     data-title="正则学习二三事"
+        <div class="ds-share flat" data-thread-key="2012/05/19/Session的理解/"
+     data-title="Session的理解"
      data-content=""
-     data-url="http://vickyqi.com/2015/10/19/正则学习二三事/">
+     data-url="http://vickyqi.com/2012/05/19/Session的理解/">
   <div class="ds-share-inline">
     <ul  class="ds-share-icons-16">
 
@@ -684,8 +347,8 @@
             
               <div class="comments" id="comments">
                 
-                  <div class="ds-thread" data-thread-key="2015/10/19/正则学习二三事/"
-                       data-title="正则学习二三事" data-url="http://vickyqi.com/2015/10/19/正则学习二三事/">
+                  <div class="ds-thread" data-thread-key="2012/05/19/Session的理解/"
+                       data-title="Session的理解" data-url="http://vickyqi.com/2012/05/19/Session的理解/">
                   </div>
                 
               </div>
@@ -784,7 +447,7 @@
           <div class="post-toc">
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#正则的基础知识："><span class="nav-number">1.</span> <span class="nav-text">正则的基础知识：</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#字面值"><span class="nav-number">1.1.</span> <span class="nav-text">字面值</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#字符类"><span class="nav-number">1.2.</span> <span class="nav-text">字符类</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#乘法器"><span class="nav-number">1.3.</span> <span class="nav-text">乘法器</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#分支"><span class="nav-number">1.4.</span> <span class="nav-text">分支</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#组合"><span class="nav-number">1.5.</span> <span class="nav-text">组合</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#边界"><span class="nav-number">1.6.</span> <span class="nav-text">边界</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#捕获和替换："><span class="nav-number">2.</span> <span class="nav-text">捕获和替换：</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#实际案例"><span class="nav-number">2.1.</span> <span class="nav-text">实际案例</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#参考文章"><span class="nav-number">3.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#个人误区"><span class="nav-number">1.</span> <span class="nav-text">个人误区</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Session的理解"><span class="nav-number">2.</span> <span class="nav-text">Session的理解</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#Session的机制、创建以及保存"><span class="nav-number">2.1.</span> <span class="nav-text">Session的机制、创建以及保存</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Session的销毁"><span class="nav-number">2.2.</span> <span class="nav-text">Session的销毁</span></a></li></ol></li></ol></div>
             
           </div>
           <div class="post-toc-indicator-bottom post-toc-indicator"></div>

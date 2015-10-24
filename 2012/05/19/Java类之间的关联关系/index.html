@@ -28,7 +28,7 @@
 
 
 
-  <meta name="keywords" content="正则," />
+  <meta name="keywords" content="Java," />
 
 
 
@@ -39,16 +39,25 @@
   <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
 
 
-<meta name="description" content="正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。以前看正则就是一堆符号，代表各个意思，如\d表示数字，\d+表示一个或者多个连续数字，单看每个规则都可以理解，除了组合，但是实际使用时真的很难组织到一起。归根结底还">
+<meta name="description" content="UML类图中的关系分为四种：泛化、依赖、关联、实现；关联关系又可以细化为聚合和组合。
+泛化（Generalization）泛化是父类和子类之间的关系，子类继承父类的所有结构和行为。在子类中可以增加新的结构和行为，也可以覆写父类的行为。一般用一个带空心箭头的实线表示泛化关系，UML图如下：泛化对应Java中继承关系，即子类继承父类中出private修饰外的所有东西（变量、方法等）。示例代码：1234">
 <meta property="og:type" content="article">
-<meta property="og:title" content="正则学习二三事">
-<meta property="og:url" content="http://vickyqi.com/2015/10/19/正则学习二三事/index.html">
+<meta property="og:title" content="Java类之间的关联关系">
+<meta property="og:url" content="http://vickyqi.com/2012/05/19/Java类之间的关联关系/index.html">
 <meta property="og:site_name" content="Vicky's Blog">
-<meta property="og:description" content="正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。以前看正则就是一堆符号，代表各个意思，如\d表示数字，\d+表示一个或者多个连续数字，单看每个规则都可以理解，除了组合，但是实际使用时真的很难组织到一起。归根结底还">
-<meta property="og:updated_time" content="2015-10-20T07:57:08.000Z">
+<meta property="og:description" content="UML类图中的关系分为四种：泛化、依赖、关联、实现；关联关系又可以细化为聚合和组合。
+泛化（Generalization）泛化是父类和子类之间的关系，子类继承父类的所有结构和行为。在子类中可以增加新的结构和行为，也可以覆写父类的行为。一般用一个带空心箭头的实线表示泛化关系，UML图如下：泛化对应Java中继承关系，即子类继承父类中出private修饰外的所有东西（变量、方法等）。示例代码：1234">
+<meta property="og:image" content="http://my.csdn.net/uploads/201205/19/1337431354_5691.jpg">
+<meta property="og:image" content="http://my.csdn.net/uploads/201205/19/1337431458_2379.jpg">
+<meta property="og:image" content="http://my.csdn.net/uploads/201205/19/1337431398_4461.jpg">
+<meta property="og:image" content="http://my.csdn.net/uploads/201205/19/1337431489_2954.jpg">
+<meta property="og:image" content="http://my.csdn.net/uploads/201205/19/1337431517_8009.jpg">
+<meta property="og:image" content="http://my.csdn.net/uploads/201205/19/1337431557_8347.jpg">
+<meta property="og:updated_time" content="2015-10-24T10:12:54.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="正则学习二三事">
-<meta name="twitter:description" content="正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。以前看正则就是一堆符号，代表各个意思，如\d表示数字，\d+表示一个或者多个连续数字，单看每个规则都可以理解，除了组合，但是实际使用时真的很难组织到一起。归根结底还">
+<meta name="twitter:title" content="Java类之间的关联关系">
+<meta name="twitter:description" content="UML类图中的关系分为四种：泛化、依赖、关联、实现；关联关系又可以细化为聚合和组合。
+泛化（Generalization）泛化是父类和子类之间的关系，子类继承父类的所有结构和行为。在子类中可以增加新的结构和行为，也可以覆写父类的行为。一般用一个带空心箭头的实线表示泛化关系，UML图如下：泛化对应Java中继承关系，即子类继承父类中出private修饰外的所有东西（变量、方法等）。示例代码：1234">
 
 
 <script type="text/javascript" id="hexo.configuration">
@@ -58,7 +67,7 @@
   };
 </script>
 
-    <title> 正则学习二三事 - Vicky's Blog </title>
+    <title> Java类之间的关联关系 - Vicky's Blog </title>
 </head>
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
 <!--[if lte IE 8]>
@@ -206,7 +215,7 @@
           
           
             
-              正则学习二三事
+              Java类之间的关联关系
             
           
         </h1>
@@ -215,8 +224,8 @@
       <div class="post-meta">
         <span class="post-time">
           发表于
-          <time itemprop="dateCreated" datetime="2015-10-19T14:19:11+08:00" content="2015-10-19">
-            2015-10-19
+          <time itemprop="dateCreated" datetime="2012-05-19T20:43:00+08:00" content="2012-05-19">
+            2012-05-19
           </time>
         </span>
 
@@ -237,8 +246,8 @@
           
             <span class="post-comments-count">
               &nbsp; | &nbsp;
-              <a href="/2015/10/19/正则学习二三事/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2015/10/19/正则学习二三事/" itemprop="commentsCount"></span>
+              <a href="/2012/05/19/Java类之间的关联关系/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2012/05/19/Java类之间的关联关系/" itemprop="commentsCount"></span>
               </a>
             </span>
           
@@ -259,363 +268,35 @@
       
 
       
-        <span itemprop="articleBody"><p>正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。<br>以前看正则就是一堆符号，代表各个意思，如\d表示数字，\d+表示一个或者多个连续数字，单看每个规则都可以理解，除了组合，但是实际使用时真的很难组织到一起。归根结底还是因为对这些符号的理解不够深入。所以正则还是得多写，推荐一个在线练习的网站<a href="http://regex.alf.nu/" target="_blank" rel="external">RegexGolf</a>。好了，下面写写自己学习正则的一些总结吧，希望能够帮助到别人，也帮助自己总结总结。</p>
-<h4 id="正则的基础知识："><strong>正则的基础知识：</strong></h4><h5 id="字面值"><strong>字面值</strong></h5><p>正则表达式由只代表自身的字面值和代表特定含义的元字符组成。 只代表自身的字面值指的是普通的字符，如abcde，特殊含义的元字符包括：</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>\</td>
-<td>反斜线字符</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\0n</td>
-<td>带有八进制值 0 的字符 n (0 &lt;= n &lt;= 7)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\0nn</td>
-<td>带有八进制值 0 的字符 nn (0 &lt;= n &lt;= 7)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\0mnn</td>
-<td>带有八进制值 0 的字符 mnn（0 &lt;= m &lt;= 3、0 &lt;= n &lt;= 7）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\xhh</td>
-<td>带有十六进制值 0x 的字符 hh</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\uhhhh</td>
-<td>带有十六进制值 0x 的字符 hhhh</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\t</td>
-<td>制表符 (‘\u0009’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\n</td>
-<td>新行（换行）符 (‘\u000A’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\r</td>
-<td>回车符 (‘\u000D’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\f</td>
-<td>换页符 (‘\u000C’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\a</td>
-<td>报警 (bell) 符 (‘\u0007’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\e</td>
-<td>转义符 (‘\u001B’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\cx</td>
-<td>对应于 x 的控制符</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<h5 id="字符类"><strong>字符类</strong></h5><p> 字符类是字符在方括号中的集合。表示“找到集合里任意一个字符“。例如：</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>[abc]</td>
-<td>a、b 或 c（简单类）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[^abc]</td>
-<td>任何字符，除了 a、b 或 c（否定）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-zA-Z]</td>
-<td>a 到 z 或 A 到 Z，两头的字母包括在内（范围）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-d[m-p]]</td>
-<td>a 到 d 或 m 到 p：[a-dm-p]（并集）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-z&amp;&amp;[def]]</td>
-<td>d、e 或 f（交集）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-z&amp;&amp;[^bc]]</td>
-<td>a 到 z，除了 b 和 c：[ad-z]（减去）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-z&amp;&amp;[^m-p]]</td>
-<td>a 到 z，而非 m 到 p：[a-lq-z]（减去）</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>从上表可以看出<strong>[]</strong>里面可进行并集/交集/差集操作。对于字符范围是根据ASCII值的大小来的，例如[A-z]也是可以的，甚至能够匹配[，但是完全不建议如此使用，推荐使用的字符范围：[0-9]/[a-z]/[A-Z]。<br>字符类还有一些预定义的字符类：</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>. 任何字符（与行结束符可能匹配也可能不匹配）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\d</td>
-<td>数字：[0-9]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\D</td>
-<td>非数字： [^0-9]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\s</td>
-<td>空白字符：[ \t\n\x0B\f\r]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\S</td>
-<td>非空白字符：[^\s]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\w</td>
-<td>单词字符：[a-zA-Z_0-9]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\W</td>
-<td>非单词字符：[^\w]</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>使用上面的预定义字符类能够更加方便的表示字符范围。需要牢记。<br><strong>注意</strong>： 区间是字符的区间，不是数字的区间。正则表达式[1-31]表示“找到一个1或一个2或一个3”，不是“找到一个从1到31的整数”。</p>
-<h5 id="乘法器"><strong>乘法器</strong></h5><table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>X?</td>
-<td>X，一次或一次也没有</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X*</td>
-<td>X，零次或多次</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X+</td>
-<td>X，一次或多次</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X{n}</td>
-<td>X，恰好 n 次</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X{n,}</td>
-<td>X，至少 n 次</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X{n,m}</td>
-<td>X，至少 n 次，但是不超过 m 次</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>X可以使一个普通字面值，如a+：一个或多个a，也可以是一个字符类，如[abc]{2}，表示a/b/c后跟a/b/c。<br>值得注意的是优先选择更长的匹配，因为乘法器是贪婪的。如果你输入的文本是I had an aaaaawful day，该正则表达式就会在aaaaawful中匹配到aaaaa。不会在第三个a后就停止匹配。<br>乘法器是贪婪的，但它不会忽略一个更好的匹配。如果你的输入文本为I had an aaawful daaaaay，之后这个正则表达式会在第一次的匹配中于aaawful找到aaa。只有在你说“给我找到另一个匹配”的时候，它才会继续搜索然后在daaaaay中找到aaaaa。<br>惰性：<br>正则表达式<em>“.</em>“<em>表示“找到一个双引号，接着找到尽可能多的字符，最后再找到一个双引号”。注意一下被.</em>匹配的内部字符，很可能包含多个双引号。这通常不是非常有用。乘法器可通过追加问号<strong>（?）</strong>来实现<strong>惰性</strong>。<em>“.</em>?”*表示“匹配一个双引号，跟着一个尽可能少的字符，再跟着一个双引号”。</p>
-<h5 id="分支"><strong>分支</strong></h5><p>可以使用管道符号来实现匹配多种选择。</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>X!Y(用!代替竖线)</td>
-<td>X或者Y</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<h5 id="组合"><strong>组合</strong></h5><p>可以使用圆括号来组合表达式。例：<br>在一周中找到一天，使用<strong>(Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day</strong>，这里如果把小括号或者中括号，结果是完全不一样的，因为中括号是字符类，即里面的Mon并不是完全匹配Mon，而是只要匹配M/o/n其中一个即可。<br>同时组合后面还可跟上乘法器，如：<strong>\w+(\s+\w+)*</strong>代表“找到一个或多个单词，它们以空格隔开”。</p>
-<h5 id="边界"><strong>边界</strong></h5><p>边界分成：单词边界，行边界，文本边界</p>
-<ol>
-<li>单词边界<br>单词边界是一个单词字符和非单词字符之间的位置。记住，一个单词字符是\w，它是[0-9A-Za-z<em>]，一个非单词字符是\W，也就是[^0-9A-Za-z</em>]。<br>文本的开头和结尾总是当作单词边界。<br>输入的文本<strong>it’s a cat</strong>有八个单词边界，分别为：文本开头-i，t-‘，’-s，s-空格，空格-a，a-空格，空格-c，t-文本结尾。</li>
-<li>行边界<br>每一块文本会分解成一个或多个行，用换行符分隔。<br>注意文本不是以换行符结束，而是以行结束。然而，任何行，包括最后一行，可以包含零个字符。<br>起始行位置是在一个换行符和下一行的第一个字符之间。与单词边界一样，在文本的开头也算作一个起始的行。结束行位置是在行的最后一个字符和换行符之间。与单词边界一样，文本结束也算作行结束。</li>
-<li>文本边界<br>很多实现提供一个标记，通过改变它来改变^和$的含义。从“行开始”和“行结束”变成“文本开始”和“文本结束”。其它的一些实现提供单独的元字符\A和\z来达到这个目的。<br>一些表示边界的符号：</li>
-</ol>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>^</td>
-<td>行的开头</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>$</td>
-<td>行的结尾</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\b</td>
-<td>单词边界</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\B</td>
-<td>非单词边界</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\A</td>
-<td>输入的开头</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\G</td>
-<td>上一个匹配的结尾</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\Z</td>
-<td>输入的结尾，仅用于最后的结束符（如果有的话）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\z</td>
-<td>输入的结尾</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>其中^$是最常用的两个边界分隔符。</p>
-<h4 id="捕获和替换："><strong>捕获和替换：</strong></h4><ol>
-<li><p>捕获组</p>
-<p>()在正则中被用来表示组，同时也可以用来捕获匹配上的子串，可以拥有多个捕获组，它们甚至可以嵌套使用，捕获组从左到右进行编号，只要计算左圆括号。例如：<br>对于表达式：<strong>(\w+) had a ((\w+) \w+)</strong>，文本是I had a nice day，那么</p>
+        <span itemprop="articleBody"><p>UML类图中的关系分为四种：<strong>泛化、依赖、关联、实现</strong>；关联关系又可以细化为聚合和组合。</p>
+<h4 id="泛化（Generalization）">泛化（Generalization）</h4><p>泛化是父类和子类之间的关系，子类继承父类的所有结构和行为。在子类中可以增加新的结构和行为，也可以覆写父类的行为。<br>一般用一个带空心箭头的实线表示泛化关系，UML图如下：<br><img src="http://my.csdn.net/uploads/201205/19/1337431354_5691.jpg" alt="泛化关系"><br>泛化对应Java中继承关系，即子类继承父类中出private修饰外的所有东西（变量、方法等）。示例代码：<br><figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">public <span class="class"><span class="keyword">class</span><span class="title">　Animal</span> &#123;</span></span><br><span class="line">&#125;</span><br><span class="line">public <span class="class"><span class="keyword">class</span> <span class="title">Tiger</span> <span class="keyword"><span class="keyword">extends</span></span> <span class="title">Animal</span> &#123;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Tiger继承Animal，因此Tiger与Animal之间是泛化（继承）关系。这个很好理解。</p>
+<h4 id="依赖（Dependency）">依赖（Dependency）</h4><p>依赖关系是一种使用关系，特定事物的改变有可能会影响到使用该事物的事物，反之不成立。在你想显示一个事物使用另一个事物时使用。<br>一般用一条指向被依赖事物的虚线表示，UML图如下：<br><img src="http://my.csdn.net/uploads/201205/19/1337431458_2379.jpg" alt="依赖关系"><br>通常情况下，依赖关系体现在某个类的方法使用另一个类作为参数。代码示例：<br><figure class="highlight cs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Screwdriver</span> &#123;    <span class="comment">//螺丝刀，作为人类的工具，是用来被人类使用的</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Person</span>&#123;</span><br><span class="line">       <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">screw</span>(<span class="params">Screwdriver src</span>)</span>&#123;    <span class="comment">//拧螺丝，需使用螺丝刀</span></span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Person类的screw()方法在使用时就得传入一个Screwdriver类型的参数，这样Screwdriver的改变就会影响到Person，因此Person与Screwdriver之间就是依赖关系（Person依赖于Screwdriver）。</p>
+<h4 id="关联（Association）">关联（Association）</h4><p>是一种结构关系，说明一个事物的对象与另一个事物的对象相联系。给定有关联的两个类，可以从一个类的对象得到另一个类的对象。关联有两元关系和多元关系。两元关系是指一种一对一的关系，多元关系是一对多或多对一的关系。两个类之间的简单关联表示了两个同等地位类之间的结构关系。当你想要表示结构化关系时使用关联。（可以想想Hibernate的关联关系）<br>一般用实线连接有关联的同一个类或不同的两个类。UML图如下：<br><img src="http://my.csdn.net/uploads/201205/19/1337431398_4461.jpg" alt="关联关系"><br>通常情况下，关联关系是通过类的成员变量来实现的。代码示例：<br><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Company</span> </span>&#123;   <span class="comment">//公司</span></span><br><span class="line"><span class="keyword">private</span> Employee emp ;  <span class="comment">//一个公司雇员，公司与雇员之间就是一种关联关系。</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Employee</span></span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>雇员作为公司的属性，不同于上面的依赖。依赖的话，雇员的改变会影响公司，显然不是。在这里雇员仅仅作为公司的一个属性而存在。因此Employee与Company之间是关联关系。关联关系还可以细分为聚合和组合两种。</p>
+<h5 id="聚合（Aggregation）">聚合（Aggregation）</h5><p>聚合是一种特殊的关联。它描述了“has a”关系，表示整体对象拥有部分对象。<br>关联关系和聚合关系来语法上是没办法区分的，从语义 上才能更好的区分两者的区别。聚合是较强的关联关系，强调的是整体与部分 之间的关系。例如，学校和学生的关系。聚合的整体和部分之间在生命周期上没有什么必然的联系，部分对象可以在整体对象创建之前创建，也可以在整体对象销毁之后销毁。<br>一般用带一个空心菱形（整体的一端-学校）的实线表示。UML图如下：<br><img src="http://my.csdn.net/uploads/201205/19/1337431489_2954.jpg" alt="聚合关系"><br>与关联关系一样，聚合关系也是通过类的成员变量来实现的。示例代码：<br><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Student</span></span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">School</span></span>&#123;  </span><br><span class="line">       <span class="keyword">private</span> <span class="keyword">List</span>&lt;Student&gt; students ;  <span class="comment">//学校与学生是聚合关系</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>学校是整体，而学生是部分。学校与学生都是可以独立存在的，之间没有什么必然的联系。因此学校与学生就是聚合关系。</p>
+<h5 id="组合（Composition）">组合（Composition）</h5><p>组合是聚合的一种形式，它具有更强的拥有关系，强调整体与部分的生命周期是一致的，整体负责部分的生命周期的管理。生命周期一致指的是部分必须在组合创建的同时或者之后创建，在组合销毁之前或者同时销毁，部分的生命周期不会超出组合的生命周期。例如Windows的窗口和窗口上的菜单就是组合关系。如果整体被销毁，部分也必须跟着一起被销毁，如果所有者被复制，部分也必须一起被复制。<br>一般用带实心菱形(整体的一端)的实线来表示。UML图如下：<br><img src="http://my.csdn.net/uploads/201205/19/1337431517_8009.jpg" alt="组合关系"><br>与关联关系一样，组合关系也是通过类的成员变量 来实现的。示例代码：<br><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Menu</span></span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Window</span></span>&#123;</span><br><span class="line">       <span class="keyword">private</span> <span class="keyword">List</span>&lt;Menu&gt; menus ;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>菜单的存在前提是窗口的存在，两者之间存在很强的拥有关系。且窗口对菜单的生命周期负责，只有在窗口创建之后，菜单才能够创建，菜单必须在窗口销毁之前销毁。因此Window与Menu之间是组合关系。<br><strong>聚合和组合的区别在于：</strong><br>聚合关系是“has-a”关系，组合关系是“contains-a”关系；聚合关系表示整体与部分的关系比较弱，而组合比较强；聚合关系中代表部分事物的对象与代表聚合事物的对象的生存期无关，一旦删除了聚合对象不一定就删除了代表部分事物的对象。组合中一旦删除了组合对象，同时也就删除了代表部分事物的对象。<br>另外有一个差别是组合中的一个对象在同一时刻只能属于一个组合对象，而聚合的一个部分对象可以被多个整体对象聚合，例如一个学生可以在多个学校就读，而一个菜单在同一时刻只能是某个窗口内的对象。</p>
+<h4 id="实现（Realization）">实现（Realization）</h4><p>实现关系指定两个实体之间的一个合约。换言之，一个实体定义一个合约，而另一个实体保证履行该合约。对类来说，就是一个类实现了一个接口。<br>一般用一条指向接口的虚线表示，UML图如下：<br><img src="http://my.csdn.net/uploads/201205/19/1337431557_8347.jpg" alt="实现关系"><br>实现对应Java中的实现接口（implements）。示例代码：<br><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Person</span></span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Student</span> <span class="keyword">implements</span> <span class="title">Person</span></span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个和泛化一样很好理解。</p>
+<h4 id="总结">总结</h4><p>类间关系有很多种，在大的类别上可以分为两种：纵向关系、横向关系。纵向关系就是继承关系，它的概念非常明确，也成为OO的三个重要特征之一，这里不过多的讨论。<br>横向关系较为微妙，按照UML的建议大体上可以分为四种：</p>
 <ul>
-<li>捕获组1是I。</li>
-<li>捕获组2是nice day。</li>
-<li>捕获组3是nice。</li>
-<li>捕获组0是I had a nice day（根据具体实现不同）</li>
+<li>依赖    （Dependency）</li>
+<li>关联    （Association）</li>
+<li>聚合    （Aggregation）</li>
+<li>组合    （Composition）</li>
 </ul>
-<p>如果表达式使用了两个捕获组，但是只捕获到一组，那么组2是空字符串。引用捕获组使用+组序号，如\1表示引用第一个捕获组。</p>
-</li>
-<li>后向引用<br>可以在同样的表达式中引用同一个捕获组，这称为后向引用。<br>例：表达式[abc]{2}表示“匹配aa或ab或ac or ba或bb或bc或ca或cb或cc”，但是表达式([abc])\1表示“匹配aa或bb或cc”。</li>
-</ol>
-<p>以上就是正则的全部知识，其实了解正则的知识点很简单，但是真要应用到实际中还是需要通过大量的练习才能做到熟练使用。</p>
-<h5 id="实际案例"><strong>实际案例</strong></h5><ol>
-<li><p>压缩CSS文件，去掉CSS文件中的换行以及空格</p>
-<figure class="highlight livescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">工具：Notepad++  查找：([&#123;;])<span class="string">\s+</span>  替换：<span class="string">\1</span></span><br></pre></td></tr></table></figure>
-</li>
-<li><p>替换文件中连续出现的#，为其后面添加一个空格，例：####你好-&gt;#### 你好</p>
- <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">工具：Notepad++  查找：([<span class="preprocessor">#]+)  替换：\<span class="number">1</span> (<span class="number">1</span>后面有个空格)</span></span><br></pre></td></tr></table></figure>
-</li>
-</ol>
-<p>以上案例会不断更新，已记录一些自己对正则使用的经历。</p>
-<h4 id="参考文章"><strong>参考文章</strong></h4><p><a href="http://doslin.com/regular%20expressions/2014/03/11/learn-regular-expressions-in-about-55-minutes.html" target="_blank" rel="external">55分钟学会正则表达式(译)</a></p>
-<p>JDK API文档</p>
+<p>关于关联，聚合，组合在实现上并没有显著区别，相区别他们只有通过判断关系双方之间的实际关系，如关系强弱、创建与销毁之间有无必要关联等。<br>它们的强弱关系是没有异议的：依赖 &lt; 关联 &lt; 聚合 &lt; 组合&lt;泛化（继承）<br>实现方式区别：</p>
+<ul>
+<li>依赖关系：关系对象出现在局部变量或者方法的参数里，或者关系类的静态方法被调用</li>
+<li>关联关系：关系对象出现在实例变量中</li>
+<li>聚合关系:关系对象出现在实例变量中</li>
+<li>合成关系：关系对象出现在实例变量中</li>
+<li>Generalization: extends</li>
+<li>实现： implements</li>
+</ul>
 </span>
       
     </div>
@@ -624,7 +305,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/正则/" rel="tag">#正则</a>
+            <a href="/tags/Java/" rel="tag">#Java</a>
           
         </div>
       
@@ -633,13 +314,13 @@
         <div class="post-nav">
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2015/10/19/详解原码、反码、补码——深入理解补码/" rel="prev">详解原码、反码、补码——深入理解补码</a>
+              <a href="/2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/" rel="prev">JDK并发工具类源码学习系列——ConcurrentHashMap</a>
             
           </div>
 
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/" rel="next">JDK并发工具类源码学习系列——ConcurrentHashMap</a>
+              <a href="/2012/05/19/Session的理解/" rel="next">Session的理解</a>
             
           </div>
         </div>
@@ -654,10 +335,10 @@
 	
     <div class="post-spread">
       
-        <div class="ds-share flat" data-thread-key="2015/10/19/正则学习二三事/"
-     data-title="正则学习二三事"
+        <div class="ds-share flat" data-thread-key="2012/05/19/Java类之间的关联关系/"
+     data-title="Java类之间的关联关系"
      data-content=""
-     data-url="http://vickyqi.com/2015/10/19/正则学习二三事/">
+     data-url="http://vickyqi.com/2012/05/19/Java类之间的关联关系/">
   <div class="ds-share-inline">
     <ul  class="ds-share-icons-16">
 
@@ -684,8 +365,8 @@
             
               <div class="comments" id="comments">
                 
-                  <div class="ds-thread" data-thread-key="2015/10/19/正则学习二三事/"
-                       data-title="正则学习二三事" data-url="http://vickyqi.com/2015/10/19/正则学习二三事/">
+                  <div class="ds-thread" data-thread-key="2012/05/19/Java类之间的关联关系/"
+                       data-title="Java类之间的关联关系" data-url="http://vickyqi.com/2012/05/19/Java类之间的关联关系/">
                   </div>
                 
               </div>
@@ -784,7 +465,7 @@
           <div class="post-toc">
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#正则的基础知识："><span class="nav-number">1.</span> <span class="nav-text">正则的基础知识：</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#字面值"><span class="nav-number">1.1.</span> <span class="nav-text">字面值</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#字符类"><span class="nav-number">1.2.</span> <span class="nav-text">字符类</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#乘法器"><span class="nav-number">1.3.</span> <span class="nav-text">乘法器</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#分支"><span class="nav-number">1.4.</span> <span class="nav-text">分支</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#组合"><span class="nav-number">1.5.</span> <span class="nav-text">组合</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#边界"><span class="nav-number">1.6.</span> <span class="nav-text">边界</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#捕获和替换："><span class="nav-number">2.</span> <span class="nav-text">捕获和替换：</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#实际案例"><span class="nav-number">2.1.</span> <span class="nav-text">实际案例</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#参考文章"><span class="nav-number">3.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#泛化（Generalization）"><span class="nav-number">1.</span> <span class="nav-text">泛化（Generalization）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#依赖（Dependency）"><span class="nav-number">2.</span> <span class="nav-text">依赖（Dependency）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#关联（Association）"><span class="nav-number">3.</span> <span class="nav-text">关联（Association）</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#聚合（Aggregation）"><span class="nav-number">3.1.</span> <span class="nav-text">聚合（Aggregation）</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#组合（Composition）"><span class="nav-number">3.2.</span> <span class="nav-text">组合（Composition）</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实现（Realization）"><span class="nav-number">4.</span> <span class="nav-text">实现（Realization）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
             
           </div>
           <div class="post-toc-indicator-bottom post-toc-indicator"></div>

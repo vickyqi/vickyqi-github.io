@@ -28,7 +28,7 @@
 
 
 
-  <meta name="keywords" content="正则," />
+  <meta name="keywords" content="Java,Struts2,Web," />
 
 
 
@@ -39,16 +39,22 @@
   <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
 
 
-<meta name="description" content="正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。以前看正则就是一堆符号，代表各个意思，如\d表示数字，\d+表示一个或者多个连续数字，单看每个规则都可以理解，除了组合，但是实际使用时真的很难组织到一起。归根结底还">
+<meta name="description" content="Struts 2框架整合Spring步骤
+复制文件。复制struts2-spring-plugin-x-x-x.jar和spring.jar到WEB-INF/lib目录下。其中的x对应了Spring的版本号。还需要复制commons-logging.jar文件到WEB-INF/lib目录下。
+配置struts.objectFactory属性值。在struts.properties中设置struts">
 <meta property="og:type" content="article">
-<meta property="og:title" content="正则学习二三事">
-<meta property="og:url" content="http://vickyqi.com/2015/10/19/正则学习二三事/index.html">
+<meta property="og:title" content="Struts2整合Spring方法及原理">
+<meta property="og:url" content="http://vickyqi.com/2012/05/13/Struts2整合Spring方法及原理/index.html">
 <meta property="og:site_name" content="Vicky's Blog">
-<meta property="og:description" content="正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。以前看正则就是一堆符号，代表各个意思，如\d表示数字，\d+表示一个或者多个连续数字，单看每个规则都可以理解，除了组合，但是实际使用时真的很难组织到一起。归根结底还">
-<meta property="og:updated_time" content="2015-10-20T07:57:08.000Z">
+<meta property="og:description" content="Struts 2框架整合Spring步骤
+复制文件。复制struts2-spring-plugin-x-x-x.jar和spring.jar到WEB-INF/lib目录下。其中的x对应了Spring的版本号。还需要复制commons-logging.jar文件到WEB-INF/lib目录下。
+配置struts.objectFactory属性值。在struts.properties中设置struts">
+<meta property="og:updated_time" content="2015-10-24T10:03:04.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="正则学习二三事">
-<meta name="twitter:description" content="正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。以前看正则就是一堆符号，代表各个意思，如\d表示数字，\d+表示一个或者多个连续数字，单看每个规则都可以理解，除了组合，但是实际使用时真的很难组织到一起。归根结底还">
+<meta name="twitter:title" content="Struts2整合Spring方法及原理">
+<meta name="twitter:description" content="Struts 2框架整合Spring步骤
+复制文件。复制struts2-spring-plugin-x-x-x.jar和spring.jar到WEB-INF/lib目录下。其中的x对应了Spring的版本号。还需要复制commons-logging.jar文件到WEB-INF/lib目录下。
+配置struts.objectFactory属性值。在struts.properties中设置struts">
 
 
 <script type="text/javascript" id="hexo.configuration">
@@ -58,7 +64,7 @@
   };
 </script>
 
-    <title> 正则学习二三事 - Vicky's Blog </title>
+    <title> Struts2整合Spring方法及原理 - Vicky's Blog </title>
 </head>
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
 <!--[if lte IE 8]>
@@ -206,7 +212,7 @@
           
           
             
-              正则学习二三事
+              Struts2整合Spring方法及原理
             
           
         </h1>
@@ -215,8 +221,8 @@
       <div class="post-meta">
         <span class="post-time">
           发表于
-          <time itemprop="dateCreated" datetime="2015-10-19T14:19:11+08:00" content="2015-10-19">
-            2015-10-19
+          <time itemprop="dateCreated" datetime="2012-05-13T14:44:00+08:00" content="2012-05-13">
+            2012-05-13
           </time>
         </span>
 
@@ -225,6 +231,14 @@
             &nbsp; | &nbsp; 分类于
             
               <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
+
+              
+              
+                ， 
+              
+
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/Web开发/" itemprop="url" rel="index"><span itemprop="name">Web开发</span></a></span>
 
               
               
@@ -237,8 +251,8 @@
           
             <span class="post-comments-count">
               &nbsp; | &nbsp;
-              <a href="/2015/10/19/正则学习二三事/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2015/10/19/正则学习二三事/" itemprop="commentsCount"></span>
+              <a href="/2012/05/13/Struts2整合Spring方法及原理/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2012/05/13/Struts2整合Spring方法及原理/" itemprop="commentsCount"></span>
               </a>
             </span>
           
@@ -259,363 +273,38 @@
       
 
       
-        <span itemprop="articleBody"><p>正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。<br>以前看正则就是一堆符号，代表各个意思，如\d表示数字，\d+表示一个或者多个连续数字，单看每个规则都可以理解，除了组合，但是实际使用时真的很难组织到一起。归根结底还是因为对这些符号的理解不够深入。所以正则还是得多写，推荐一个在线练习的网站<a href="http://regex.alf.nu/" target="_blank" rel="external">RegexGolf</a>。好了，下面写写自己学习正则的一些总结吧，希望能够帮助到别人，也帮助自己总结总结。</p>
-<h4 id="正则的基础知识："><strong>正则的基础知识：</strong></h4><h5 id="字面值"><strong>字面值</strong></h5><p>正则表达式由只代表自身的字面值和代表特定含义的元字符组成。 只代表自身的字面值指的是普通的字符，如abcde，特殊含义的元字符包括：</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>\</td>
-<td>反斜线字符</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\0n</td>
-<td>带有八进制值 0 的字符 n (0 &lt;= n &lt;= 7)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\0nn</td>
-<td>带有八进制值 0 的字符 nn (0 &lt;= n &lt;= 7)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\0mnn</td>
-<td>带有八进制值 0 的字符 mnn（0 &lt;= m &lt;= 3、0 &lt;= n &lt;= 7）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\xhh</td>
-<td>带有十六进制值 0x 的字符 hh</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\uhhhh</td>
-<td>带有十六进制值 0x 的字符 hhhh</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\t</td>
-<td>制表符 (‘\u0009’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\n</td>
-<td>新行（换行）符 (‘\u000A’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\r</td>
-<td>回车符 (‘\u000D’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\f</td>
-<td>换页符 (‘\u000C’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\a</td>
-<td>报警 (bell) 符 (‘\u0007’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\e</td>
-<td>转义符 (‘\u001B’)</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\cx</td>
-<td>对应于 x 的控制符</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<h5 id="字符类"><strong>字符类</strong></h5><p> 字符类是字符在方括号中的集合。表示“找到集合里任意一个字符“。例如：</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>[abc]</td>
-<td>a、b 或 c（简单类）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[^abc]</td>
-<td>任何字符，除了 a、b 或 c（否定）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-zA-Z]</td>
-<td>a 到 z 或 A 到 Z，两头的字母包括在内（范围）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-d[m-p]]</td>
-<td>a 到 d 或 m 到 p：[a-dm-p]（并集）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-z&amp;&amp;[def]]</td>
-<td>d、e 或 f（交集）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-z&amp;&amp;[^bc]]</td>
-<td>a 到 z，除了 b 和 c：[ad-z]（减去）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>[a-z&amp;&amp;[^m-p]]</td>
-<td>a 到 z，而非 m 到 p：[a-lq-z]（减去）</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>从上表可以看出<strong>[]</strong>里面可进行并集/交集/差集操作。对于字符范围是根据ASCII值的大小来的，例如[A-z]也是可以的，甚至能够匹配[，但是完全不建议如此使用，推荐使用的字符范围：[0-9]/[a-z]/[A-Z]。<br>字符类还有一些预定义的字符类：</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>. 任何字符（与行结束符可能匹配也可能不匹配）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\d</td>
-<td>数字：[0-9]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\D</td>
-<td>非数字： [^0-9]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\s</td>
-<td>空白字符：[ \t\n\x0B\f\r]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\S</td>
-<td>非空白字符：[^\s]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\w</td>
-<td>单词字符：[a-zA-Z_0-9]</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\W</td>
-<td>非单词字符：[^\w]</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>使用上面的预定义字符类能够更加方便的表示字符范围。需要牢记。<br><strong>注意</strong>： 区间是字符的区间，不是数字的区间。正则表达式[1-31]表示“找到一个1或一个2或一个3”，不是“找到一个从1到31的整数”。</p>
-<h5 id="乘法器"><strong>乘法器</strong></h5><table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>X?</td>
-<td>X，一次或一次也没有</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X*</td>
-<td>X，零次或多次</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X+</td>
-<td>X，一次或多次</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X{n}</td>
-<td>X，恰好 n 次</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X{n,}</td>
-<td>X，至少 n 次</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>X{n,m}</td>
-<td>X，至少 n 次，但是不超过 m 次</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>X可以使一个普通字面值，如a+：一个或多个a，也可以是一个字符类，如[abc]{2}，表示a/b/c后跟a/b/c。<br>值得注意的是优先选择更长的匹配，因为乘法器是贪婪的。如果你输入的文本是I had an aaaaawful day，该正则表达式就会在aaaaawful中匹配到aaaaa。不会在第三个a后就停止匹配。<br>乘法器是贪婪的，但它不会忽略一个更好的匹配。如果你的输入文本为I had an aaawful daaaaay，之后这个正则表达式会在第一次的匹配中于aaawful找到aaa。只有在你说“给我找到另一个匹配”的时候，它才会继续搜索然后在daaaaay中找到aaaaa。<br>惰性：<br>正则表达式<em>“.</em>“<em>表示“找到一个双引号，接着找到尽可能多的字符，最后再找到一个双引号”。注意一下被.</em>匹配的内部字符，很可能包含多个双引号。这通常不是非常有用。乘法器可通过追加问号<strong>（?）</strong>来实现<strong>惰性</strong>。<em>“.</em>?”*表示“匹配一个双引号，跟着一个尽可能少的字符，再跟着一个双引号”。</p>
-<h5 id="分支"><strong>分支</strong></h5><p>可以使用管道符号来实现匹配多种选择。</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>X!Y(用!代替竖线)</td>
-<td>X或者Y</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<h5 id="组合"><strong>组合</strong></h5><p>可以使用圆括号来组合表达式。例：<br>在一周中找到一天，使用<strong>(Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day</strong>，这里如果把小括号或者中括号，结果是完全不一样的，因为中括号是字符类，即里面的Mon并不是完全匹配Mon，而是只要匹配M/o/n其中一个即可。<br>同时组合后面还可跟上乘法器，如：<strong>\w+(\s+\w+)*</strong>代表“找到一个或多个单词，它们以空格隔开”。</p>
-<h5 id="边界"><strong>边界</strong></h5><p>边界分成：单词边界，行边界，文本边界</p>
-<ol>
-<li>单词边界<br>单词边界是一个单词字符和非单词字符之间的位置。记住，一个单词字符是\w，它是[0-9A-Za-z<em>]，一个非单词字符是\W，也就是[^0-9A-Za-z</em>]。<br>文本的开头和结尾总是当作单词边界。<br>输入的文本<strong>it’s a cat</strong>有八个单词边界，分别为：文本开头-i，t-‘，’-s，s-空格，空格-a，a-空格，空格-c，t-文本结尾。</li>
-<li>行边界<br>每一块文本会分解成一个或多个行，用换行符分隔。<br>注意文本不是以换行符结束，而是以行结束。然而，任何行，包括最后一行，可以包含零个字符。<br>起始行位置是在一个换行符和下一行的第一个字符之间。与单词边界一样，在文本的开头也算作一个起始的行。结束行位置是在行的最后一个字符和换行符之间。与单词边界一样，文本结束也算作行结束。</li>
-<li>文本边界<br>很多实现提供一个标记，通过改变它来改变^和$的含义。从“行开始”和“行结束”变成“文本开始”和“文本结束”。其它的一些实现提供单独的元字符\A和\z来达到这个目的。<br>一些表示边界的符号：</li>
+        <span itemprop="articleBody"><h4 id="Struts_2框架整合Spring步骤">Struts 2框架整合Spring步骤</h4><ol>
+<li>复制文件。复制struts2-spring-plugin-x-x-x.jar和spring.jar到WEB-INF/lib目录下。其中的x对应了Spring的版本号。还需要复制commons-logging.jar文件到WEB-INF/lib目录下。</li>
+<li><p>配置struts.objectFactory属性值。在struts.properties中设置struts.objectFactory属性值：struts.objectFactory = spring<br>或者在XML文件中进行常量配置：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="title">struts</span>&gt;</span></span><br><span class="line">       <span class="tag">&lt;<span class="title">constant</span> <span class="attribute">name</span>=<span class="value">"struts.objectFactory"</span> <span class="attribute">value</span>=<span class="value">"spring"</span> /&gt;</span></span><br><span class="line">       ...</span><br><span class="line"><span class="tag">&lt;/<span class="title">struts</span>&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置Spring监听器。在web.xml文件中增加如下内容：</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;listener&gt;</span><br><span class="line">       &lt;listener-class&gt;</span><br><span class="line">org<span class="class">.springframework</span><span class="class">.web</span><span class="class">.context</span><span class="class">.ContextLoaderListener</span></span><br><span class="line">&lt;/listener-class&gt;</span><br><span class="line">&lt;/listener&gt;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Spring配置文件。默认情况下，Spring配置文件为applicationContext.xml，该文件需要保存在Web应用的WEB-INF目录下。内容示例如下所示：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="pi">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span></span><br><span class="line"><span class="doctype">&lt;!DOCTYPE beans PUBLIC</span><br><span class="line">       "-//SPRING//DTD BEAN//EN"</span><br><span class="line">       "http://www.springframework.org/dtd/spring-beans.dtd"&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">beans</span> <span class="attribute">default-autowire</span>=<span class="value">"byName"</span>&gt;</span></span><br><span class="line">       <span class="tag">&lt;<span class="title">bean</span> <span class="attribute">id</span>=<span class="value">"personManager"</span> <span class="attribute">class</span>=<span class="value">"com.acme.PersonManager"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="title">beans</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p> 开发者实际上可以使用多个Spring配置文件，在web.xml中进行下列设置，从而使Spring的ApplicationContext通过匹配所给定模式的文件来初始化对象：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 用来定位Spring XML文件的上下文配置 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">context-param</span>&gt;</span></span><br><span class="line">       <span class="tag">&lt;<span class="title">param-name</span>&gt;</span>contextConfigLocation<span class="tag">&lt;/<span class="title">param-name</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">param-value</span>&gt;</span></span><br><span class="line">/WEB-INF/applicationContext-*.xml,classpath*:applicationContext-*.xml</span><br><span class="line"><span class="tag">&lt;/<span class="title">param-value</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="title">context-param</span>&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>修改Struts配置文件。Struts 2框架整合Spring框架，需要在Struts配置文件中有所改变，下面是一个示例：</p>
+<figure class="highlight nimrod"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&lt;!<span class="type">DOCTYPE</span> struts <span class="type">PUBLIC</span></span><br><span class="line">       <span class="string">"-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"</span></span><br><span class="line">       <span class="string">"http://struts.apache.org/dtds/struts-2.0.dtd"</span>&gt;</span><br><span class="line">&lt;struts&gt;</span><br><span class="line">       &lt;<span class="keyword">include</span> file=<span class="string">"struts-default.xml"</span>/&gt;</span><br><span class="line">       &lt;package name=<span class="string">"default"</span> extends=<span class="string">"struts-default"</span>&gt;</span><br><span class="line">           &lt;action name=<span class="string">"foo"</span> class=<span class="string">"com.acme.Foo"</span>&gt;</span><br><span class="line">               &lt;<span class="literal">result</span>&gt;foo.ftl&lt;/<span class="literal">result</span>&gt;</span><br><span class="line">           &lt;/action&gt;</span><br><span class="line">       &lt;/package&gt;</span><br><span class="line">       &lt;package name=<span class="string">"secure"</span> namespace=<span class="string">"/secure"</span> extends=<span class="string">"default"</span>&gt;</span><br><span class="line">           &lt;action name=<span class="string">"bar"</span> class=<span class="string">"bar"</span>&gt;</span><br><span class="line">               &lt;<span class="literal">result</span>&gt;bar.ftl&lt;/<span class="literal">result</span>&gt;</span><br><span class="line">           &lt;/action&gt;</span><br><span class="line">       &lt;/package&gt;</span><br><span class="line">&lt;/struts&gt;</span><br></pre></td></tr></table></figure>
+<p> 该配置文件中定义了两个Action配置：foo是一个标准的Struts 2框架Action配置，指定了Action实现类为com.acme.Foo；bar对应的class并不存在，那么框架将在Spring配置文件中查找id属性为“bar”的定义，该配置文件如下所示：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="pi">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span></span><br><span class="line"><span class="doctype">&lt;!DOCTYPE beans PUBLIC</span><br><span class="line">       "-//SPRING//DTD BEAN//EN"</span><br><span class="line">       "http://www.springframework.org/dtd/spring-beans.dtd"&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">beans</span> <span class="attribute">default-autowire</span>=<span class="value">"byName"</span>&gt;</span></span><br><span class="line">       <span class="tag">&lt;<span class="title">bean</span> <span class="attribute">id</span>=<span class="value">"bar"</span> <span class="attribute">class</span>=<span class="value">"com.my.BarClass"</span> <span class="attribute">singleton</span>=<span class="value">"false"</span>/&gt;</span></span><br><span class="line">       ...</span><br><span class="line"><span class="tag">&lt;/<span class="title">beans</span>&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
 </ol>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>字符</th>
-<th>含义</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td></td>
-<td>^</td>
-<td>行的开头</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>$</td>
-<td>行的结尾</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\b</td>
-<td>单词边界</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\B</td>
-<td>非单词边界</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\A</td>
-<td>输入的开头</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\G</td>
-<td>上一个匹配的结尾</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\Z</td>
-<td>输入的结尾，仅用于最后的结束符（如果有的话）</td>
-<td></td>
-</tr>
-<tr>
-<td></td>
-<td>\z</td>
-<td>输入的结尾</td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>其中^$是最常用的两个边界分隔符。</p>
-<h4 id="捕获和替换："><strong>捕获和替换：</strong></h4><ol>
-<li><p>捕获组</p>
-<p>()在正则中被用来表示组，同时也可以用来捕获匹配上的子串，可以拥有多个捕获组，它们甚至可以嵌套使用，捕获组从左到右进行编号，只要计算左圆括号。例如：<br>对于表达式：<strong>(\w+) had a ((\w+) \w+)</strong>，文本是I had a nice day，那么</p>
+<h4 id="整合原理">整合原理</h4><p>Struts2与Spring的集成要用到Spring插件包struts2-spring-plugin-x-x-x.jar，这个包是同Struts2一起发布的。Spring插件是通过覆盖（override）Struts2的ObjectFactory来增强核心框架对象的创建。当创建一个对象的时候，它会用Struts2配置文件中的class属性去和Spring配置文件中的id属性进行关联，如果能找到，则由Spring创建，否则由Struts 2框架自身创建，然后由Spring来装配。Spring插件具体有如下几个作用：</p>
 <ul>
-<li>捕获组1是I。</li>
-<li>捕获组2是nice day。</li>
-<li>捕获组3是nice。</li>
-<li>捕获组0是I had a nice day（根据具体实现不同）</li>
+<li>允许Spring创建Action、Interceptror和Result。</li>
+<li>由Struts创建的对象能够被Spring装配。</li>
+<li>如果没有使用Spring ObjectFactory，提供了2个拦截器来自动装配action。</li>
+<li>开发者不必在Spring中去注册action，尽管可以这么去做，通常Struts框架会自动地从action mapping中创建action对象</li>
 </ul>
-<p>如果表达式使用了两个捕获组，但是只捕获到一组，那么组2是空字符串。引用捕获组使用+组序号，如\1表示引用第一个捕获组。</p>
-</li>
-<li>后向引用<br>可以在同样的表达式中引用同一个捕获组，这称为后向引用。<br>例：表达式[abc]{2}表示“匹配aa或ab或ac or ba或bb或bc或ca或cb或cc”，但是表达式([abc])\1表示“匹配aa或bb或cc”。</li>
-</ol>
-<p>以上就是正则的全部知识，其实了解正则的知识点很简单，但是真要应用到实际中还是需要通过大量的练习才能做到熟练使用。</p>
-<h5 id="实际案例"><strong>实际案例</strong></h5><ol>
-<li><p>压缩CSS文件，去掉CSS文件中的换行以及空格</p>
-<figure class="highlight livescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">工具：Notepad++  查找：([&#123;;])<span class="string">\s+</span>  替换：<span class="string">\1</span></span><br></pre></td></tr></table></figure>
-</li>
-<li><p>替换文件中连续出现的#，为其后面添加一个空格，例：####你好-&gt;#### 你好</p>
- <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">工具：Notepad++  查找：([<span class="preprocessor">#]+)  替换：\<span class="number">1</span> (<span class="number">1</span>后面有个空格)</span></span><br></pre></td></tr></table></figure>
-</li>
-</ol>
-<p>以上案例会不断更新，已记录一些自己对正则使用的经历。</p>
-<h4 id="参考文章"><strong>参考文章</strong></h4><p><a href="http://doslin.com/regular%20expressions/2014/03/11/learn-regular-expressions-in-about-55-minutes.html" target="_blank" rel="external">55分钟学会正则表达式(译)</a></p>
-<p>JDK API文档</p>
+<p>struts2-spring-plugin-x-x-x.jar插件中有一个struts-plugin.xml文件，该文件内容如下所示：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="doctype">&lt;!DOCTYPE struts PUBLIC</span><br><span class="line">    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"</span><br><span class="line">    "http://struts.apache.org/dtds/struts-2.0.dtd"&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">struts</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="title">bean</span> <span class="attribute">type</span>=<span class="value">"com.opensymphony.xwork2.ObjectFactory"</span> <span class="attribute">name</span>=<span class="value">"spring"</span> <span class="attribute">class</span>=<span class="value">"org.apache.struts2.spring.StrutsSpringObjectFactory"</span> /&gt;</span></span><br><span class="line">   </span><br><span class="line">    <span class="comment">&lt;!--  设置Spring对象工厂为自动 --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="title">constant</span> <span class="attribute">name</span>=<span class="value">"struts.objectFactory"</span> <span class="attribute">value</span>=<span class="value">"spring"</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="title">package</span> <span class="attribute">name</span>=<span class="value">"spring-default"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="title">interceptors</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="title">interceptor</span> <span class="attribute">name</span>=<span class="value">"autowiring"</span> <span class="attribute">class</span>=<span class="value">"com.opensymphony.xwork2.spring.interceptor.ActionAutowiringInterceptor"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="title">interceptor</span> <span class="attribute">name</span>=<span class="value">"sessionAutowiring"</span> <span class="attribute">class</span>=<span class="value">"org.apache.struts2.spring.interceptor.SessionContextAutowiringInterceptor"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="title">interceptors</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="title">package</span>&gt;</span>   </span><br><span class="line"><span class="tag">&lt;/<span class="title">struts</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>其中设置了Struts 2框架常量struts.objectFactory的值为spring，实际上，spring是org.apache.struts2.spring.StrutsSpringObjectFactory类的缩写，默认情况下所有由Struts 2框架创建的对象都是由ObjectFactory实例化的，ObjectFactory提供了与其他IoC容器如Spring、Pico等集成的方法。覆盖这个ObjectFactory的类必须继承ObjectFactory类或者它的任何子类，并且要带有一个不带参数的构造方法。在这里用org.apache.struts2.spring.StrutsSpring ObjectFactory代替了默认的ObjectFactory。<br>如果Action不是使用Spring ObjectFactory创建的话，插件提供了两个拦截器来自动装配Action，默认情况下框架使用的自动装配策略是name，也就是说框架会去Spring中寻找与Action属性名字相同的bean，可选的装配策略还有：type、auto、constructor，开发者可以通过常量struts.objectFactory.spring.autoWire来进行设置。 </p>
+<p>Struts 2框架整合Spring后，处理用户请求的Action并不是Struts框架创建的，而是由Spring插件创建的。创建实例时，不是利用配置Action时指定的class属性值，根据bean的配置id属性，从Spring容器中获得相应的实例。</p>
+<hr>
+<p><strong>声明：本文由网上一篇文章整理所得！</strong></p>
 </span>
       
     </div>
@@ -624,7 +313,11 @@
       
         <div class="post-tags">
           
-            <a href="/tags/正则/" rel="tag">#正则</a>
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/Struts2/" rel="tag">#Struts2</a>
+          
+            <a href="/tags/Web/" rel="tag">#Web</a>
           
         </div>
       
@@ -633,13 +326,13 @@
         <div class="post-nav">
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2015/10/19/详解原码、反码、补码——深入理解补码/" rel="prev">详解原码、反码、补码——深入理解补码</a>
+              <a href="/2012/05/19/Session的理解/" rel="prev">Session的理解</a>
             
           </div>
 
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/" rel="next">JDK并发工具类源码学习系列——ConcurrentHashMap</a>
+              <a href="/2012/05/12/Java多线程和同步的理解/" rel="next">Java多线程和同步的理解</a>
             
           </div>
         </div>
@@ -654,10 +347,10 @@
 	
     <div class="post-spread">
       
-        <div class="ds-share flat" data-thread-key="2015/10/19/正则学习二三事/"
-     data-title="正则学习二三事"
+        <div class="ds-share flat" data-thread-key="2012/05/13/Struts2整合Spring方法及原理/"
+     data-title="Struts2整合Spring方法及原理"
      data-content=""
-     data-url="http://vickyqi.com/2015/10/19/正则学习二三事/">
+     data-url="http://vickyqi.com/2012/05/13/Struts2整合Spring方法及原理/">
   <div class="ds-share-inline">
     <ul  class="ds-share-icons-16">
 
@@ -684,8 +377,8 @@
             
               <div class="comments" id="comments">
                 
-                  <div class="ds-thread" data-thread-key="2015/10/19/正则学习二三事/"
-                       data-title="正则学习二三事" data-url="http://vickyqi.com/2015/10/19/正则学习二三事/">
+                  <div class="ds-thread" data-thread-key="2012/05/13/Struts2整合Spring方法及原理/"
+                       data-title="Struts2整合Spring方法及原理" data-url="http://vickyqi.com/2012/05/13/Struts2整合Spring方法及原理/">
                   </div>
                 
               </div>
@@ -784,7 +477,7 @@
           <div class="post-toc">
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#正则的基础知识："><span class="nav-number">1.</span> <span class="nav-text">正则的基础知识：</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#字面值"><span class="nav-number">1.1.</span> <span class="nav-text">字面值</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#字符类"><span class="nav-number">1.2.</span> <span class="nav-text">字符类</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#乘法器"><span class="nav-number">1.3.</span> <span class="nav-text">乘法器</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#分支"><span class="nav-number">1.4.</span> <span class="nav-text">分支</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#组合"><span class="nav-number">1.5.</span> <span class="nav-text">组合</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#边界"><span class="nav-number">1.6.</span> <span class="nav-text">边界</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#捕获和替换："><span class="nav-number">2.</span> <span class="nav-text">捕获和替换：</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#实际案例"><span class="nav-number">2.1.</span> <span class="nav-text">实际案例</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#参考文章"><span class="nav-number">3.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#Struts_2框架整合Spring步骤"><span class="nav-number">1.</span> <span class="nav-text">Struts 2框架整合Spring步骤</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#整合原理"><span class="nav-number">2.</span> <span class="nav-text">整合原理</span></a></li></ol></div>
             
           </div>
           <div class="post-toc-indicator-bottom post-toc-indicator"></div>

@@ -690,4 +690,191 @@
     
   </entry>
   
+  <entry>
+    <title><![CDATA[Java类之间的关联关系]]></title>
+    <link href="http://vickyqi.com/2012/05/19/Java%E7%B1%BB%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E8%81%94%E5%85%B3%E7%B3%BB/"/>
+    <id>http://vickyqi.com/2012/05/19/Java类之间的关联关系/</id>
+    <published>2012-05-19T12:43:00.000Z</published>
+    <updated>2015-10-24T10:12:54.000Z</updated>
+    <content type="html"><![CDATA[<p>UML类图中的关系分为四种：<strong>泛化、依赖、关联、实现</strong>；关联关系又可以细化为聚合和组合。</p>
+<h4 id="泛化（Generalization）">泛化（Generalization）</h4><p>泛化是父类和子类之间的关系，子类继承父类的所有结构和行为。在子类中可以增加新的结构和行为，也可以覆写父类的行为。<br>一般用一个带空心箭头的实线表示泛化关系，UML图如下：<br><img src="http://my.csdn.net/uploads/201205/19/1337431354_5691.jpg" alt="泛化关系"><br>泛化对应Java中继承关系，即子类继承父类中出private修饰外的所有东西（变量、方法等）。示例代码：<br><figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">public <span class="class"><span class="keyword">class</span><span class="title">　Animal</span> &#123;</span></span><br><span class="line">&#125;</span><br><span class="line">public <span class="class"><span class="keyword">class</span> <span class="title">Tiger</span> <span class="keyword"><span class="keyword">extends</span></span> <span class="title">Animal</span> &#123;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Tiger继承Animal，因此Tiger与Animal之间是泛化（继承）关系。这个很好理解。</p>
+<h4 id="依赖（Dependency）">依赖（Dependency）</h4><p>依赖关系是一种使用关系，特定事物的改变有可能会影响到使用该事物的事物，反之不成立。在你想显示一个事物使用另一个事物时使用。<br>一般用一条指向被依赖事物的虚线表示，UML图如下：<br><img src="http://my.csdn.net/uploads/201205/19/1337431458_2379.jpg" alt="依赖关系"><br>通常情况下，依赖关系体现在某个类的方法使用另一个类作为参数。代码示例：<br><figure class="highlight cs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Screwdriver</span> &#123;    <span class="comment">//螺丝刀，作为人类的工具，是用来被人类使用的</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Person</span>&#123;</span><br><span class="line">       <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">screw</span>(<span class="params">Screwdriver src</span>)</span>&#123;    <span class="comment">//拧螺丝，需使用螺丝刀</span></span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>Person类的screw()方法在使用时就得传入一个Screwdriver类型的参数，这样Screwdriver的改变就会影响到Person，因此Person与Screwdriver之间就是依赖关系（Person依赖于Screwdriver）。</p>
+<h4 id="关联（Association）">关联（Association）</h4><p>是一种结构关系，说明一个事物的对象与另一个事物的对象相联系。给定有关联的两个类，可以从一个类的对象得到另一个类的对象。关联有两元关系和多元关系。两元关系是指一种一对一的关系，多元关系是一对多或多对一的关系。两个类之间的简单关联表示了两个同等地位类之间的结构关系。当你想要表示结构化关系时使用关联。（可以想想Hibernate的关联关系）<br>一般用实线连接有关联的同一个类或不同的两个类。UML图如下：<br><img src="http://my.csdn.net/uploads/201205/19/1337431398_4461.jpg" alt="关联关系"><br>通常情况下，关联关系是通过类的成员变量来实现的。代码示例：<br><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Company</span> </span>&#123;   <span class="comment">//公司</span></span><br><span class="line"><span class="keyword">private</span> Employee emp ;  <span class="comment">//一个公司雇员，公司与雇员之间就是一种关联关系。</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Employee</span></span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>雇员作为公司的属性，不同于上面的依赖。依赖的话，雇员的改变会影响公司，显然不是。在这里雇员仅仅作为公司的一个属性而存在。因此Employee与Company之间是关联关系。关联关系还可以细分为聚合和组合两种。</p>
+<h5 id="聚合（Aggregation）">聚合（Aggregation）</h5><p>聚合是一种特殊的关联。它描述了“has a”关系，表示整体对象拥有部分对象。<br>关联关系和聚合关系来语法上是没办法区分的，从语义 上才能更好的区分两者的区别。聚合是较强的关联关系，强调的是整体与部分 之间的关系。例如，学校和学生的关系。聚合的整体和部分之间在生命周期上没有什么必然的联系，部分对象可以在整体对象创建之前创建，也可以在整体对象销毁之后销毁。<br>一般用带一个空心菱形（整体的一端-学校）的实线表示。UML图如下：<br><img src="http://my.csdn.net/uploads/201205/19/1337431489_2954.jpg" alt="聚合关系"><br>与关联关系一样，聚合关系也是通过类的成员变量来实现的。示例代码：<br><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Student</span></span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">School</span></span>&#123;  </span><br><span class="line">       <span class="keyword">private</span> <span class="keyword">List</span>&lt;Student&gt; students ;  <span class="comment">//学校与学生是聚合关系</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>学校是整体，而学生是部分。学校与学生都是可以独立存在的，之间没有什么必然的联系。因此学校与学生就是聚合关系。</p>
+<h5 id="组合（Composition）">组合（Composition）</h5><p>组合是聚合的一种形式，它具有更强的拥有关系，强调整体与部分的生命周期是一致的，整体负责部分的生命周期的管理。生命周期一致指的是部分必须在组合创建的同时或者之后创建，在组合销毁之前或者同时销毁，部分的生命周期不会超出组合的生命周期。例如Windows的窗口和窗口上的菜单就是组合关系。如果整体被销毁，部分也必须跟着一起被销毁，如果所有者被复制，部分也必须一起被复制。<br>一般用带实心菱形(整体的一端)的实线来表示。UML图如下：<br><img src="http://my.csdn.net/uploads/201205/19/1337431517_8009.jpg" alt="组合关系"><br>与关联关系一样，组合关系也是通过类的成员变量 来实现的。示例代码：<br><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Menu</span></span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Window</span></span>&#123;</span><br><span class="line">       <span class="keyword">private</span> <span class="keyword">List</span>&lt;Menu&gt; menus ;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>菜单的存在前提是窗口的存在，两者之间存在很强的拥有关系。且窗口对菜单的生命周期负责，只有在窗口创建之后，菜单才能够创建，菜单必须在窗口销毁之前销毁。因此Window与Menu之间是组合关系。<br><strong>聚合和组合的区别在于：</strong><br>聚合关系是“has-a”关系，组合关系是“contains-a”关系；聚合关系表示整体与部分的关系比较弱，而组合比较强；聚合关系中代表部分事物的对象与代表聚合事物的对象的生存期无关，一旦删除了聚合对象不一定就删除了代表部分事物的对象。组合中一旦删除了组合对象，同时也就删除了代表部分事物的对象。<br>另外有一个差别是组合中的一个对象在同一时刻只能属于一个组合对象，而聚合的一个部分对象可以被多个整体对象聚合，例如一个学生可以在多个学校就读，而一个菜单在同一时刻只能是某个窗口内的对象。</p>
+<h4 id="实现（Realization）">实现（Realization）</h4><p>实现关系指定两个实体之间的一个合约。换言之，一个实体定义一个合约，而另一个实体保证履行该合约。对类来说，就是一个类实现了一个接口。<br>一般用一条指向接口的虚线表示，UML图如下：<br><img src="http://my.csdn.net/uploads/201205/19/1337431557_8347.jpg" alt="实现关系"><br>实现对应Java中的实现接口（implements）。示例代码：<br><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Person</span></span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Student</span> <span class="keyword">implements</span> <span class="title">Person</span></span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个和泛化一样很好理解。</p>
+<h4 id="总结">总结</h4><p>类间关系有很多种，在大的类别上可以分为两种：纵向关系、横向关系。纵向关系就是继承关系，它的概念非常明确，也成为OO的三个重要特征之一，这里不过多的讨论。<br>横向关系较为微妙，按照UML的建议大体上可以分为四种：</p>
+<ul>
+<li>依赖    （Dependency）</li>
+<li>关联    （Association）</li>
+<li>聚合    （Aggregation）</li>
+<li>组合    （Composition）</li>
+</ul>
+<p>关于关联，聚合，组合在实现上并没有显著区别，相区别他们只有通过判断关系双方之间的实际关系，如关系强弱、创建与销毁之间有无必要关联等。<br>它们的强弱关系是没有异议的：依赖 &lt; 关联 &lt; 聚合 &lt; 组合&lt;泛化（继承）<br>实现方式区别：</p>
+<ul>
+<li>依赖关系：关系对象出现在局部变量或者方法的参数里，或者关系类的静态方法被调用</li>
+<li>关联关系：关系对象出现在实例变量中</li>
+<li>聚合关系:关系对象出现在实例变量中</li>
+<li>合成关系：关系对象出现在实例变量中</li>
+<li>Generalization: extends</li>
+<li>实现： implements</li>
+</ul>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>UML类图中的关系分为四种：<strong>泛化、依赖、关联、实现</strong>；关联关系又可以细化为聚合和组合。</p>
+<h4 id="泛化（Generalization）">泛化（Generalization）</h4><p>泛化是父类和子类之间的关系，子类继承父]]>
+    </summary>
+    
+      <category term="Java" scheme="http://vickyqi.com/tags/Java/"/>
+    
+      <category term="Java学习" scheme="http://vickyqi.com/categories/Java%E5%AD%A6%E4%B9%A0/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[Session的理解]]></title>
+    <link href="http://vickyqi.com/2012/05/19/Session%E7%9A%84%E7%90%86%E8%A7%A3/"/>
+    <id>http://vickyqi.com/2012/05/19/Session的理解/</id>
+    <published>2012-05-18T16:13:00.000Z</published>
+    <updated>2015-10-24T10:02:24.000Z</updated>
+    <content type="html"><![CDATA[<h4 id="个人误区">个人误区</h4><p>&emsp;&emsp;一开始很傻的把Session的会话与用户的登录与退出弄混淆了，实在很傻！Session的会话指的是当你打开浏览器，请求一个应用服务器时开始，直到与这个应用服务器断开连接（如关闭浏览器等）为止的一系列动作。这与用户登录完全没有关系，被弄混淆个人觉得是Session最普遍的用法就是用来控制用户的登录/退出事件的。</p>
+<h4 id="Session的理解">Session的理解</h4><h5 id="Session的机制、创建以及保存">Session的机制、创建以及保存</h5><p>&emsp;&emsp;Session机制是一种服务器端的机制，服务器使用一种类似于散列表的结构（也可能就是使用散列表）来保存信息。当程序需要为某个客户端的请求创建一个Session的时候，服务器首先检查这个客户端的请求里是否已包含了一个Session标识 - 称为 Session id，如果已包含一个Session id则说明以前已经为此客户端创建过Session，服务器就按照Session id把这个 Session检索出来使用（如果检索不到，可能会新建一个），如果客户端请求不包含Session id，则为此客户端创建一个Session并且生 成一个与此Session相关联的Session id，Session id的值应该是一个既不会重复，又不容易被找到规律以仿造的字符串，这个 Session id将被在本次响应中返回给客户端保存(客户端一般使用Cookie保存)。<br>&emsp;&emsp;例如：当你打开浏览器时，然后输入一个地址，这个地址其实对应的是一个服务器，当你的请求被服务器响应之后，如上所说服务器首先会根据你发送的请求是否包含一个Session标识（Session-Id），如果有则不新建Session，但若是没有则新建一个Session，并将该Session的ID返回给客户端（浏览器），客户端就将该Session-Id保存到一个Cookie中（一般这个cookie的名字都是类似于SEEESIONID，而。比如weblogic对于web应用程序生成的cookie，JSESSIONID= ByOK3vjFD75aPnrF7C2HmdnV6QZcEbzWoWiBYEnLerjQ99zWpBng!-145788764，它的名字就是 JSESSIONID），然后每次客户端请求一个新的页面时就将该Cookie通过某种机制发送给服务器端，服务器端就知道Session已经创建了，从而不需要再新建一个Session。</p>
+<h5 id="Session的销毁">Session的销毁</h5><p>&emsp;&emsp;Session的销毁并不是在浏览器窗口被关闭时。对于Session的销毁除非程序显示的告诉服务器销毁Session，否则服务器不会主动销毁一个Session。<br>然而浏览器从来不会主动在关闭之前通知服务器它将要关闭，因此服务器根本不会有机会知道浏览器已经关闭，之所以会有这种错觉，是大部分session机制都使用会话cookie来保存session id，而关闭浏览器后这个 session id就消失了，再次连接服务器时也就无法找到原来的session。如果服务器设置的cookie被保存到硬盘上，或者使用某种手段改写浏览器发出的HTTP请求头，把原来的session id发送给服务器，则再次打开浏览器仍然能够找到原来的Session。<br>&emsp;&emsp;Session被销毁的另一个原因就是为Session设置了失效时间，即当距离客户端上一次使用Session的时间超过这个失效时间时，服务器就可以认为客户端已经停止了活动，才会把Session销毁以节省存储空间。此时当用户再次访问时，如刷新页面、再次访问等，服务器会重新创建一个Session，并生成一个新的ID。<br>&emsp;&emsp;说明（实验得出，IE8，Google）：当你访问一个服务器之后，关闭窗口(所有浏览器窗口，如IE，那就关闭所有IE窗口，一个不留)，然后再打开访问同样的服务器，这时虽然上一个Session可能未被销毁，但是服务器找不到，因此就会再新建一个Session，这时会有两个Session。但是如果你未完全关不窗口的话，那么就会使用之前的Session。原因是Session-Id是保存在一个Cookie中的(测试时该Cookie名为JSESSIONID)，而这个Cookie的生命周期为浏览器关闭，即浏览器关闭(完全关闭)则该Cookie就会被删除，因此服务器无法通过这个Cookie找到Session-Id，这时服务器就会认为没有Session存在，就会新建一个Session。同时这个Session的Id会覆盖之前的Session-Id，因为使用的是同一个Cookie，而Cookie会覆盖。<br>自己可以做试验！在IE和Google中都是可以查看Cookie的！</p>
+<hr>
+<p><strong>个人理解，有错欢迎指出！</strong></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<h4 id="个人误区">个人误区</h4><p>&emsp;&emsp;一开始很傻的把Session的会话与用户的登录与退出弄混淆了，实在很傻！Session的会话指的是当你打开浏览器，请求一个应用服务器时开始，直到与这个应用服务器断开连接（如关闭浏览器等）为止的一系列动作。]]>
+    </summary>
+    
+      <category term="Java" scheme="http://vickyqi.com/tags/Java/"/>
+    
+      <category term="Session" scheme="http://vickyqi.com/tags/Session/"/>
+    
+      <category term="Web" scheme="http://vickyqi.com/tags/Web/"/>
+    
+      <category term="Java学习" scheme="http://vickyqi.com/categories/Java%E5%AD%A6%E4%B9%A0/"/>
+    
+      <category term="Web开发" scheme="http://vickyqi.com/categories/Java%E5%AD%A6%E4%B9%A0/Web%E5%BC%80%E5%8F%91/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[Struts2整合Spring方法及原理]]></title>
+    <link href="http://vickyqi.com/2012/05/13/Struts2%E6%95%B4%E5%90%88Spring%E6%96%B9%E6%B3%95%E5%8F%8A%E5%8E%9F%E7%90%86/"/>
+    <id>http://vickyqi.com/2012/05/13/Struts2整合Spring方法及原理/</id>
+    <published>2012-05-13T06:44:00.000Z</published>
+    <updated>2015-10-24T10:03:04.000Z</updated>
+    <content type="html"><![CDATA[<h4 id="Struts_2框架整合Spring步骤">Struts 2框架整合Spring步骤</h4><ol>
+<li>复制文件。复制struts2-spring-plugin-x-x-x.jar和spring.jar到WEB-INF/lib目录下。其中的x对应了Spring的版本号。还需要复制commons-logging.jar文件到WEB-INF/lib目录下。</li>
+<li><p>配置struts.objectFactory属性值。在struts.properties中设置struts.objectFactory属性值：struts.objectFactory = spring<br>或者在XML文件中进行常量配置：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="title">struts</span>&gt;</span></span><br><span class="line">       <span class="tag">&lt;<span class="title">constant</span> <span class="attribute">name</span>=<span class="value">"struts.objectFactory"</span> <span class="attribute">value</span>=<span class="value">"spring"</span> /&gt;</span></span><br><span class="line">       ...</span><br><span class="line"><span class="tag">&lt;/<span class="title">struts</span>&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置Spring监听器。在web.xml文件中增加如下内容：</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;listener&gt;</span><br><span class="line">       &lt;listener-class&gt;</span><br><span class="line">org<span class="class">.springframework</span><span class="class">.web</span><span class="class">.context</span><span class="class">.ContextLoaderListener</span></span><br><span class="line">&lt;/listener-class&gt;</span><br><span class="line">&lt;/listener&gt;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Spring配置文件。默认情况下，Spring配置文件为applicationContext.xml，该文件需要保存在Web应用的WEB-INF目录下。内容示例如下所示：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="pi">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span></span><br><span class="line"><span class="doctype">&lt;!DOCTYPE beans PUBLIC</span><br><span class="line">       "-//SPRING//DTD BEAN//EN"</span><br><span class="line">       "http://www.springframework.org/dtd/spring-beans.dtd"&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">beans</span> <span class="attribute">default-autowire</span>=<span class="value">"byName"</span>&gt;</span></span><br><span class="line">       <span class="tag">&lt;<span class="title">bean</span> <span class="attribute">id</span>=<span class="value">"personManager"</span> <span class="attribute">class</span>=<span class="value">"com.acme.PersonManager"</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="title">beans</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p> 开发者实际上可以使用多个Spring配置文件，在web.xml中进行下列设置，从而使Spring的ApplicationContext通过匹配所给定模式的文件来初始化对象：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 用来定位Spring XML文件的上下文配置 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">context-param</span>&gt;</span></span><br><span class="line">       <span class="tag">&lt;<span class="title">param-name</span>&gt;</span>contextConfigLocation<span class="tag">&lt;/<span class="title">param-name</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">param-value</span>&gt;</span></span><br><span class="line">/WEB-INF/applicationContext-*.xml,classpath*:applicationContext-*.xml</span><br><span class="line"><span class="tag">&lt;/<span class="title">param-value</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="title">context-param</span>&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>修改Struts配置文件。Struts 2框架整合Spring框架，需要在Struts配置文件中有所改变，下面是一个示例：</p>
+<figure class="highlight nimrod"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&lt;!<span class="type">DOCTYPE</span> struts <span class="type">PUBLIC</span></span><br><span class="line">       <span class="string">"-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"</span></span><br><span class="line">       <span class="string">"http://struts.apache.org/dtds/struts-2.0.dtd"</span>&gt;</span><br><span class="line">&lt;struts&gt;</span><br><span class="line">       &lt;<span class="keyword">include</span> file=<span class="string">"struts-default.xml"</span>/&gt;</span><br><span class="line">       &lt;package name=<span class="string">"default"</span> extends=<span class="string">"struts-default"</span>&gt;</span><br><span class="line">           &lt;action name=<span class="string">"foo"</span> class=<span class="string">"com.acme.Foo"</span>&gt;</span><br><span class="line">               &lt;<span class="literal">result</span>&gt;foo.ftl&lt;/<span class="literal">result</span>&gt;</span><br><span class="line">           &lt;/action&gt;</span><br><span class="line">       &lt;/package&gt;</span><br><span class="line">       &lt;package name=<span class="string">"secure"</span> namespace=<span class="string">"/secure"</span> extends=<span class="string">"default"</span>&gt;</span><br><span class="line">           &lt;action name=<span class="string">"bar"</span> class=<span class="string">"bar"</span>&gt;</span><br><span class="line">               &lt;<span class="literal">result</span>&gt;bar.ftl&lt;/<span class="literal">result</span>&gt;</span><br><span class="line">           &lt;/action&gt;</span><br><span class="line">       &lt;/package&gt;</span><br><span class="line">&lt;/struts&gt;</span><br></pre></td></tr></table></figure>
+<p> 该配置文件中定义了两个Action配置：foo是一个标准的Struts 2框架Action配置，指定了Action实现类为com.acme.Foo；bar对应的class并不存在，那么框架将在Spring配置文件中查找id属性为“bar”的定义，该配置文件如下所示：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="pi">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span></span><br><span class="line"><span class="doctype">&lt;!DOCTYPE beans PUBLIC</span><br><span class="line">       "-//SPRING//DTD BEAN//EN"</span><br><span class="line">       "http://www.springframework.org/dtd/spring-beans.dtd"&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">beans</span> <span class="attribute">default-autowire</span>=<span class="value">"byName"</span>&gt;</span></span><br><span class="line">       <span class="tag">&lt;<span class="title">bean</span> <span class="attribute">id</span>=<span class="value">"bar"</span> <span class="attribute">class</span>=<span class="value">"com.my.BarClass"</span> <span class="attribute">singleton</span>=<span class="value">"false"</span>/&gt;</span></span><br><span class="line">       ...</span><br><span class="line"><span class="tag">&lt;/<span class="title">beans</span>&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h4 id="整合原理">整合原理</h4><p>Struts2与Spring的集成要用到Spring插件包struts2-spring-plugin-x-x-x.jar，这个包是同Struts2一起发布的。Spring插件是通过覆盖（override）Struts2的ObjectFactory来增强核心框架对象的创建。当创建一个对象的时候，它会用Struts2配置文件中的class属性去和Spring配置文件中的id属性进行关联，如果能找到，则由Spring创建，否则由Struts 2框架自身创建，然后由Spring来装配。Spring插件具体有如下几个作用：</p>
+<ul>
+<li>允许Spring创建Action、Interceptror和Result。</li>
+<li>由Struts创建的对象能够被Spring装配。</li>
+<li>如果没有使用Spring ObjectFactory，提供了2个拦截器来自动装配action。</li>
+<li>开发者不必在Spring中去注册action，尽管可以这么去做，通常Struts框架会自动地从action mapping中创建action对象</li>
+</ul>
+<p>struts2-spring-plugin-x-x-x.jar插件中有一个struts-plugin.xml文件，该文件内容如下所示：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="doctype">&lt;!DOCTYPE struts PUBLIC</span><br><span class="line">    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"</span><br><span class="line">    "http://struts.apache.org/dtds/struts-2.0.dtd"&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">struts</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="title">bean</span> <span class="attribute">type</span>=<span class="value">"com.opensymphony.xwork2.ObjectFactory"</span> <span class="attribute">name</span>=<span class="value">"spring"</span> <span class="attribute">class</span>=<span class="value">"org.apache.struts2.spring.StrutsSpringObjectFactory"</span> /&gt;</span></span><br><span class="line">   </span><br><span class="line">    <span class="comment">&lt;!--  设置Spring对象工厂为自动 --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="title">constant</span> <span class="attribute">name</span>=<span class="value">"struts.objectFactory"</span> <span class="attribute">value</span>=<span class="value">"spring"</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="title">package</span> <span class="attribute">name</span>=<span class="value">"spring-default"</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="title">interceptors</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="title">interceptor</span> <span class="attribute">name</span>=<span class="value">"autowiring"</span> <span class="attribute">class</span>=<span class="value">"com.opensymphony.xwork2.spring.interceptor.ActionAutowiringInterceptor"</span>/&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="title">interceptor</span> <span class="attribute">name</span>=<span class="value">"sessionAutowiring"</span> <span class="attribute">class</span>=<span class="value">"org.apache.struts2.spring.interceptor.SessionContextAutowiringInterceptor"</span>/&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="title">interceptors</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="title">package</span>&gt;</span>   </span><br><span class="line"><span class="tag">&lt;/<span class="title">struts</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>其中设置了Struts 2框架常量struts.objectFactory的值为spring，实际上，spring是org.apache.struts2.spring.StrutsSpringObjectFactory类的缩写，默认情况下所有由Struts 2框架创建的对象都是由ObjectFactory实例化的，ObjectFactory提供了与其他IoC容器如Spring、Pico等集成的方法。覆盖这个ObjectFactory的类必须继承ObjectFactory类或者它的任何子类，并且要带有一个不带参数的构造方法。在这里用org.apache.struts2.spring.StrutsSpring ObjectFactory代替了默认的ObjectFactory。<br>如果Action不是使用Spring ObjectFactory创建的话，插件提供了两个拦截器来自动装配Action，默认情况下框架使用的自动装配策略是name，也就是说框架会去Spring中寻找与Action属性名字相同的bean，可选的装配策略还有：type、auto、constructor，开发者可以通过常量struts.objectFactory.spring.autoWire来进行设置。 </p>
+<p>Struts 2框架整合Spring后，处理用户请求的Action并不是Struts框架创建的，而是由Spring插件创建的。创建实例时，不是利用配置Action时指定的class属性值，根据bean的配置id属性，从Spring容器中获得相应的实例。</p>
+<hr>
+<p><strong>声明：本文由网上一篇文章整理所得！</strong></p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<h4 id="Struts_2框架整合Spring步骤">Struts 2框架整合Spring步骤</h4><ol>
+<li>复制文件。复制struts2-spring-plugin-x-x-x.jar和spring.jar到WEB-INF/lib目录下。其中的x对应了Spri]]>
+    </summary>
+    
+      <category term="Java" scheme="http://vickyqi.com/tags/Java/"/>
+    
+      <category term="Struts2" scheme="http://vickyqi.com/tags/Struts2/"/>
+    
+      <category term="Web" scheme="http://vickyqi.com/tags/Web/"/>
+    
+      <category term="Java学习" scheme="http://vickyqi.com/categories/Java%E5%AD%A6%E4%B9%A0/"/>
+    
+      <category term="Web开发" scheme="http://vickyqi.com/categories/Java%E5%AD%A6%E4%B9%A0/Web%E5%BC%80%E5%8F%91/"/>
+    
+  </entry>
+  
+  <entry>
+    <title><![CDATA[Java多线程和同步的理解]]></title>
+    <link href="http://vickyqi.com/2012/05/12/Java%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%92%8C%E5%90%8C%E6%AD%A5%E7%9A%84%E7%90%86%E8%A7%A3/"/>
+    <id>http://vickyqi.com/2012/05/12/Java多线程和同步的理解/</id>
+    <published>2012-05-11T16:41:00.000Z</published>
+    <updated>2015-10-24T09:44:04.000Z</updated>
+    <content type="html"><![CDATA[<h4 id="进程与线程">进程与线程</h4><p>在谈论线程之前，我们先来看看什么叫进程，以及进程与线程的关系。</p>
+<h5 id="进程">进程</h5><p>我们在windows操作系统中打开任务管理器，可以看到有一项是“进程”，里面列举出了用户目前正在运行的所有进程，包括系统进程和用户应用程序进程，以及每个进程所占用的内存资源等信息。进程是操作系统结构的基础，它不仅只包括运行的程序代码，还包括当前的活动。对于每一个进程，操作系统都会为其分配一个独立的内存块，各进程间资源是不共享的。<br>划分时间片，宏观上并行，微观上串行</p>
+<h5 id="线程">线程</h5><p>一个Java程序运行之后，就会启动一个JVM实例进程，这个进程就负责处理这个程序所有的操作，直到程序结束，进程也随之结束。<br>而线程就是再在进程的内部将CPU资源进行再次划分，以满足同时处理多条语句的需要（微观上，其实也是并行执行的），这些线程在进程内部的资源是共享的（正因如此，才会有同步以及锁的出现）。<br>JVM进程启动一定会有一个主线程存在，即main方法启动的线程，这个线程是Java程序的入口，我们可以在main方法内部在定义我们自己的线程，这样就可以实现多线程了。</p>
+<h4 id="Java多线程的实现方式">Java多线程的实现方式</h4><p><strong>java.lang.Thread</strong>类的一个对象就代表一个线程<br>线程是底层OS（操作系统）维护的资源，JVM跑在OS上，在JVM中创建一个Thread对象，调用其start（）方法，底层OS会申请一个线程资源，线程对象可到底层管理一个线程，创建好线程之后，把要让线程执行的代码封装到线程对象中（覆盖run()方法）。<br>实现线程代码的方式：</p>
+<ol>
+<li><p>继承Thread类，覆盖run()方法<br>去底层申请线程并运行，对线程对象调start()方法，main方法是一个主线程<br>宏观并行，微观串行</p>
+</li>
+<li><p>实现Runnable接口<br>使用多态获得Runnable对象，成为目标对象<br>再利用目标对象构造线程对象Thread t = new Thread(target);//target为Runnable接口类型<br>对于中两种方法的具体介绍可以参考：<br><a href="http://hi.baidu.com/hi_place/blog/item/84dcf8f283d4f005b17ec51f.html" target="_blank" rel="external">http://hi.baidu.com/hi_place/blog/item/84dcf8f283d4f005b17ec51f.html</a></p>
+</li>
+</ol>
+<h4 id="线程的优先级">线程的优先级</h4><p>线程的优先级是从0-10的整数，0表示最低，5表示普通，10表示最大；JVM会自动将java线程的优先级转换为操作系统的优先级。<br>main线程的优先级是5。</p>
+<h4 id="线程的状态">线程的状态</h4><p>下面为线程中的7个非常重要的状态（有的书上也只有认为前五种状态：而将“锁池”和“等待池”都看成是“阻塞”状态的特殊情况：这种认识也是正确的，但是将“锁池”和“等待池”单独分离出来有利于对程序的理解）:</p>
+<ol>
+<li>初始状态：线程刚创建（Thread th = new Thread(target);）</li>
+<li>可运行状态：线程创建之后调用它的start()方法，此时线程状态就变更为可运行状态，但一定就会立即运行，需要等待获得CPU。</li>
+<li>运行状态：调用线程的start()方法之后，线程就会进入等待运行状态（可运行状态），此时一旦该线程获得CPU的使用权，县城就会立即进入运行状态，即执行线程的run()方法。</li>
+<li>阻塞状态：线程失去CPU的使用权，进入一种等待状态，注意不是可运行状态。有以下三种情况会使线程进入阻塞状态：<br> 4.1 待外部设备输入：如等待键盘输入，则该线程会进入阻塞状态直到输入完毕，注意：阻塞结束之后是进入可运行状态，而不是运行状态。<br> 4.2 程休眠，即调用线程的sleep()方法。Sleep()方法有一个参数，表示休眠的时间，当线程休眠的时间到达指定时间后，线程会自动结束阻塞状态而进入可运行状态，等待CPU。<br> 4.3 一个线程调用另一个线程的join()方法，join()方法指的是调用该方法的线程将进入阻塞状态直到被调用join()方法的线程运行结束之后，才会进入可运行状态。<br>例：在t2线程的run()方法内部有这样一句代码t1.join();(t1是一个线程对象)，这将意味着党线程t2执行到该语句时就会调用线程t1的join()方法，从而t2进入阻塞状态，直到t1运行结束为止。</li>
+<li>终止状态：即线程执行结束</li>
+<li>锁池状态</li>
+<li>等待队列</li>
+</ol>
+<h4 id="线程的同步">线程的同步</h4><p>之前说过同意进程中的各线程之间是资源共享的，这种资源共享的特性会带来的后果就是线程同步的问题。<br>下面看一个例子：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">publicclass Test &#123;</span><br><span class="line">   <span class="function">publicstaticvoid <span class="title">main</span><span class="params">(String args[])</span> </span>&#123;</span><br><span class="line">      Thread1 th = <span class="keyword">new</span> Thread1();</span><br><span class="line">      Thread t1 = <span class="keyword">new</span> Thread(th);</span><br><span class="line">      Thread t2 = <span class="keyword">new</span> Thread(th);</span><br><span class="line">      Thread t3 = <span class="keyword">new</span> Thread(th);</span><br><span class="line">      Thread t4 = <span class="keyword">new</span> Thread(th);</span><br><span class="line">      t1.start();</span><br><span class="line">      t2.start();</span><br><span class="line">      t3.start();</span><br><span class="line">      t4.start();</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">class</span> Thread1implements Runnable &#123;</span><br><span class="line">   privateinttickets = <span class="number">100</span>;</span><br><span class="line">   @<span class="function">Override</span><br><span class="line">   publicvoid <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">      <span class="keyword">while</span> (tickets &gt; <span class="number">0</span>) &#123;</span><br><span class="line">         <span class="keyword">try</span> &#123;</span><br><span class="line">            Thread.sleep(<span class="number">1000</span>);<span class="comment">//休眠1s</span></span><br><span class="line">         &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">         &#125;</span><br><span class="line">         System.out.println(Thread.currentThread().getName() +<span class="string">":"</span></span><br><span class="line">                + tickets--);</span><br><span class="line">      &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个程序打印出来的结果绝对不是我们想要的。这就是多线程同时操作一个数据会出现的读脏数据等现象。为避免出现这种情况就需要使用到Java线程的同步机制，即锁机制。</p>
+<p><strong>Java实现同步有两种方法：Synchronized和Lock。</strong><br>多线程同时并发访问的资源叫做临界资源。多个线程同时访问对象并要求操作相同资源时分割了原子操作就会出现问题。（原子操作，不可再分的操作）会出现数据的不一致或数据不完整，为避免这种现象采用对访问的线程做限制的方法。</p>
+<p><strong>Synchronized用法</strong><br>互斥锁机制，利用每个对象都有一个monitor(锁标记)，当线程拥有这个锁标记时才能访问这个资源，没有锁标记便进入锁池。任何一个对象系统都会为其创建一个互斥锁，这个锁是为了分配给线程的，防止打断原子操作。每个对象的锁只能分配给一个线程。<br>(1) Synchronized修饰代码块（同步代码块）<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">void</span> <span class="title">push</span><span class="params">(<span class="keyword">char</span> c)</span></span>&#123;</span><br><span class="line">	<span class="keyword">synchronized</span>(<span class="keyword">this</span>)<span class="comment">//只有持有当前对象锁标记的线程才能访问这个代码块</span></span><br><span class="line">	&#123;</span><br><span class="line">		...</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>此时Synchronized锁的是调用该方法的对象（this），也可以选择锁住任何一个对象。<br>(2)     Synchronized修饰方法（同步方法）<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="function"><span class="keyword">void</span> <span class="title">push</span><span class="params">(<span class="keyword">char</span> c)</span> </span>&#123;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>此时Synchronized锁的是调用该方法的对象，同上面的this。<br>说明：<br>A、无论Synchronized加在方法上还是对象上，它取得锁都是对象，而不是把一段代码或者函数当做锁——而且同步方法还可能会被其他线程的对象访问。<br>B、每个对象只有一个锁与之相关联。<br>C、实现同步需要很大的系统开销作为代价，甚至可能造成死锁，所以尽量避免无谓的同步控制。<br>接下来继续讨论Synchronized加在方法上和加在对象上两者的区别<br>Synchronized加在对象上：<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">void</span> <span class="title">push</span><span class="params">(<span class="keyword">char</span> c)</span></span>&#123;</span><br><span class="line">    <span class="keyword">synchronized</span>(<span class="keyword">this</span>)<span class="comment">//只有持有当前对象锁标记的线程才能访问这个代码块</span></span><br><span class="line">    &#123;</span><br><span class="line">	    ...</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>其中的this也可以是任何其他对象，而synchronized所起的作用就是锁住括号中的对象，使得当其他线程需要调用该方法时由于无法取得对括号中的对象的锁而无法继续执行，而进入锁池。<br>线程因为未拿到锁标记而发生阻塞进入锁池（lock pool）。每个对象都有自己的一个锁池的空间，用于放置等待运行的线程。由系统决定哪个线程拿到锁标记并运行。<br>当有一个明确的对象可以用来锁时，我们直接将这个对象锁起来即可，但是当没有一个明确的对象可以用来加锁时，我们可以创建一个对象来充当锁。</p>
+<p>Synchronized加在方法上：<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="function"><span class="keyword">void</span> <span class="title">push</span><span class="params">(<span class="keyword">char</span> c)</span> </span>&#123;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>此时synchronized锁住的是当前调用该方法的对象。若p1调用该方法，此p1这个对象会被锁住，那么p1在不同线程中执行该方法时会形成互斥。但是另一个对象p2却可以人任意调用该方法。</p>
+<p>Synchronized加在静态方法上：<br>我们知道静态方法是一个class所拥有的公共方法，由这个class实例化得到的所有的对象都具有对这个方法的访问权，因此我们可以想象如果将它锁住，那么其他对象是不是也不能够调用这个方法了呢？答案是是的。<br>public synchronized static void push(char c) {<br>       …<br>    }<br>对静态方法加锁，锁住的是包含这个静态方法的Class类，即字节码，因此由这份字节码生成的所有对象都将无法调用该方法。</p>
+<p><strong>Lock的用法</strong><br>  java.util.concurrent.locks中的Lock接口，有多个实现类，调用lock和unlock方法，实现和synchronized一样的功能；<br>ReadWriteLock接口，有两个获得锁的方法，读锁和写锁。<br>读写锁特征:</p>
+<ul>
+<li>如果读锁被一个线程锁住了，则其他线程可以再锁读锁，但不允许写锁<br>一个线程读操作，也允许其他线程做读操作，但不允许做写操作</li>
+<li>如果写锁被一个线程锁住了，则其他线程读锁和写锁都不可以锁锁<br>一个线程写操作，其他线程读写操作都不可以。</li>
+</ul>
+]]></content>
+    <summary type="html">
+    <![CDATA[<h4 id="进程与线程">进程与线程</h4><p>在谈论线程之前，我们先来看看什么叫进程，以及进程与线程的关系。</p>
+<h5 id="进程">进程</h5><p>我们在windows操作系统中打开任务管理器，可以看到有一项是“进程”，里面列举出了用户目前正在运行的所有进]]>
+    </summary>
+    
+      <category term="Java" scheme="http://vickyqi.com/tags/Java/"/>
+    
+      <category term="并发" scheme="http://vickyqi.com/tags/%E5%B9%B6%E5%8F%91/"/>
+    
+      <category term="Java学习" scheme="http://vickyqi.com/categories/Java%E5%AD%A6%E4%B9%A0/"/>
+    
+  </entry>
+  
 </feed>
