@@ -1,0 +1,803 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="一个不甘做屌丝的程序员" />
+
+
+
+  <meta name="keywords" content="Hadoop,Java,Linux," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="在安装Hadoop之前先确保每台机器都装有jdk，版本什么路径什么的最好一样，然后配置好master对其他slavers的SSH无密码访问(可以参考：Linux(RedHat6.0)下配置SSH无密码访问)
+确保上述条件满足之后就可以开始安装Hadoop了
+首先我的版本信息：
+
+LinuxOS：RedHat Enterprise 6.0 两台（VMWare虚拟机），一台master，两台slave">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RedHat安装Hadoop0.20.2小集群">
+<meta property="og:url" content="http://vickyqi.com/2013/09/18/RedHat安装Hadoop0.20.2小集群/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="在安装Hadoop之前先确保每台机器都装有jdk，版本什么路径什么的最好一样，然后配置好master对其他slavers的SSH无密码访问(可以参考：Linux(RedHat6.0)下配置SSH无密码访问)
+确保上述条件满足之后就可以开始安装Hadoop了
+首先我的版本信息：
+
+LinuxOS：RedHat Enterprise 6.0 两台（VMWare虚拟机），一台master，两台slave">
+<meta property="og:updated_time" content="2015-10-25T08:24:34.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="RedHat安装Hadoop0.20.2小集群">
+<meta name="twitter:description" content="在安装Hadoop之前先确保每台机器都装有jdk，版本什么路径什么的最好一样，然后配置好master对其他slavers的SSH无密码访问(可以参考：Linux(RedHat6.0)下配置SSH无密码访问)
+确保上述条件满足之后就可以开始安装Hadoop了
+首先我的版本信息：
+
+LinuxOS：RedHat Enterprise 6.0 两台（VMWare虚拟机），一台master，两台slave">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> RedHat安装Hadoop0.20.2小集群 - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              RedHat安装Hadoop0.20.2小集群
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-09-18T23:37:00+08:00" content="2013-09-18">
+            2013-09-18
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop学习/" itemprop="url" rel="index"><span itemprop="name">Hadoop学习</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/09/18/RedHat安装Hadoop0.20.2小集群/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/09/18/RedHat安装Hadoop0.20.2小集群/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>在安装Hadoop之前先确保每台机器都装有jdk，版本什么路径什么的最好一样，然后配置好master对其他slavers的SSH无密码访问(可以参考：<a href="http://127.0.0.1:4000/2013/09/18/RedHat%E5%AE%89%E8%A3%85Hadoop0.20.2%E5%B0%8F%E9%9B%86%E7%BE%A4/" target="_blank" rel="external">Linux(RedHat6.0)下配置SSH无密码访问</a>)</p>
+<p>确保上述条件满足之后就可以开始安装Hadoop了</p>
+<p>首先我的版本信息：</p>
+<pre>
+LinuxOS：RedHat Enterprise 6.0 两台（VMWare虚拟机），一台master，两台slave，master也是slave
+Hadoop：0.20.2<下载地址：http: archive.apache.org="" dist="" hadoop="" core="">
+系统配置：
+master 主机名：rh01 ip:192.168.1.8
+slave    主机名：rh02 ip:192.168.1.9
+得确保机器之间能够互相访问
+</下载地址：http:></pre>
+
+<p>下面开始Hadoop安装</p>
+<ol>
+<li>将下载hadoop文件解压，tar文件使用tar -zxvf file_name    可以在后面加上-C指定解压路径，最好放到一个固定地方，所有机器路径必须保证一直</li>
+<li>解压之后在hadoop-0.20.2(安装根目录)下会看到一个conf文件夹，所有的hadoop配置都在这个文件夹下，也是最主要的</li>
+<li><p>配置Hadoop环境变量：</p>
+ <pre>
+export JAVA_HOME=/develop/java/jdk1.7.0_25
+export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+export HADOOP_HOME=/develop/hadoop/hadoop-0.20.2
+export PATH=$PATH:$JAVA_HOME/bin:$HADOOP_HOME/bin
+</pre>
+</li>
+<li><p>配好环境变量之后可以选择重启机器让prfile文件生效，或者执行source /etc/profile也可</p>
+</li>
+<li><p>下面开始配置Hadoop配置文件，有hadoop-env.sh，core-site.xml，hdfs-site.xml，mapred-site.xml，masters，slaves6个文件需要修改</p>
+<ul>
+<li><p>hadoop-env.sh：在hadoop-env.sh后面添加JAVA_HOME值，这个值被注释掉了，可以直接去掉注释然后将值改成你jdk安装路径即可</p>
+</li>
+<li><p>core-site.xml：在configuration节点中添加，其中ip为master ip，9000为端口，注意必须是以hdfs开头，不是http。</p>
+<figure class="highlight pf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">&lt;property&gt;</span></span><br><span class="line">	<span class="variable">&lt;name&gt;</span>fs.<span class="keyword">default</span>.name<span class="variable">&lt;/name&gt;</span></span><br><span class="line">	<span class="variable">&lt;value&gt;</span>hdfs://<span class="number">192.168</span>.<span class="number">1.8</span>:<span class="number">9000</span><span class="variable">&lt;/value&gt;</span></span><br><span class="line"><span class="variable">&lt;/property&gt;</span></span><br><span class="line"><span class="variable">&lt;property&gt;</span></span><br><span class="line">	<span class="variable">&lt;name&gt;</span>hadoop.tmp.dir<span class="variable">&lt;/name&gt;</span></span><br><span class="line">	<span class="variable">&lt;value&gt;</span>/develop/hadoop/tmp<span class="variable">&lt;/value&gt;</span></span><br><span class="line"><span class="variable">&lt;/property&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>hdfs-site.xml：在configuration节点中添加，其中dfs.replication值需要注意，如果你的salves机器数&lt;3那就写1或者2，大于2就写3就可以了，我这里是两个slave，所以写2。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- dfs.replication，设置数据块的复制次数，默认是3，如果slave节点数少于3，则写成相应的1或者2 --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">property</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="title">name</span>&gt;</span>dfs.replication<span class="tag">&lt;/<span class="title">name</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="title">value</span>&gt;</span>2<span class="tag">&lt;/<span class="title">value</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="title">property</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">property</span>&gt;</span>    </span><br><span class="line">        <span class="comment">&lt;!-- DFS中存储文件命名空间信息的目录 --&gt;</span>    </span><br><span class="line">        <span class="tag">&lt;<span class="title">name</span>&gt;</span>dfs.name.dir<span class="tag">&lt;/<span class="title">name</span>&gt;</span>    </span><br><span class="line">        <span class="tag">&lt;<span class="title">value</span>&gt;</span>/develop/hadoop/dfs/name<span class="tag">&lt;/<span class="title">value</span>&gt;</span>    </span><br><span class="line"><span class="tag">&lt;/<span class="title">property</span>&gt;</span>   </span><br><span class="line"><span class="tag">&lt;<span class="title">property</span>&gt;</span>    </span><br><span class="line">	<span class="comment">&lt;!-- DFS中存储文件数据的目录 --&gt;</span>    </span><br><span class="line">	<span class="tag">&lt;<span class="title">name</span>&gt;</span>dfs.data.dir<span class="tag">&lt;/<span class="title">name</span>&gt;</span>     </span><br><span class="line">	<span class="tag">&lt;<span class="title">value</span>&gt;</span>/develop/hadoop/dfs/data<span class="tag">&lt;/<span class="title">value</span>&gt;</span>    </span><br><span class="line"><span class="tag">&lt;/<span class="title">property</span>&gt;</span>    </span><br><span class="line"><span class="tag">&lt;<span class="title">property</span>&gt;</span>    </span><br><span class="line">	<span class="comment">&lt;!-- 是否对DFS中的文件进行权限控制(测试中一般用false)--&gt;</span>    </span><br><span class="line">	<span class="tag">&lt;<span class="title">name</span>&gt;</span>dfs.permissions<span class="tag">&lt;/<span class="title">name</span>&gt;</span>    </span><br><span class="line">	<span class="tag">&lt;<span class="title">value</span>&gt;</span>false<span class="tag">&lt;/<span class="title">value</span>&gt;</span>    </span><br><span class="line"><span class="tag">&lt;/<span class="title">property</span>&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>mapred-site.xml：没有这个文件就新建一个即可，其中mapred.job.tracker 是配置jobtracker，ip为master ip，端口 9001，注意必须是以hdfs开头，不是http</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="title">configuration</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">property</span>&gt;</span>    </span><br><span class="line">        <span class="comment">&lt;!-- JobTracker节点 --&gt;</span>    </span><br><span class="line">        <span class="tag">&lt;<span class="title">name</span>&gt;</span>mapred.job.tracker<span class="tag">&lt;/<span class="title">name</span>&gt;</span>    </span><br><span class="line">        <span class="tag">&lt;<span class="title">value</span>&gt;</span>hdfs://192.168.1.8:9001<span class="tag">&lt;/<span class="title">value</span>&gt;</span>    </span><br><span class="line"><span class="tag">&lt;/<span class="title">property</span>&gt;</span>    </span><br><span class="line"><span class="tag">&lt;<span class="title">property</span>&gt;</span>    </span><br><span class="line">        <span class="comment">&lt;!-- map/reduce的系统目录（使用的HDFS的路径） --&gt;</span>    </span><br><span class="line">        <span class="tag">&lt;<span class="title">name</span>&gt;</span>mapred.system.dir<span class="tag">&lt;/<span class="title">name</span>&gt;</span>    </span><br><span class="line">        <span class="tag">&lt;<span class="title">value</span>&gt;</span>/develop/hadoop/mapred/system<span class="tag">&lt;/<span class="title">value</span>&gt;</span>    </span><br><span class="line"><span class="tag">&lt;/<span class="title">property</span>&gt;</span>    </span><br><span class="line"><span class="tag">&lt;<span class="title">property</span>&gt;</span>    </span><br><span class="line">        <span class="comment">&lt;!-- map/reduce的临时目录（可使用“,”隔开，设置多重路径来分摊磁盘IO） --&gt;</span>    </span><br><span class="line">        <span class="tag">&lt;<span class="title">name</span>&gt;</span>mapred.local.dir<span class="tag">&lt;/<span class="title">name</span>&gt;</span>    </span><br><span class="line">        <span class="tag">&lt;<span class="title">value</span>&gt;</span>/develop/hadoop/mapred/local<span class="tag">&lt;/<span class="title">value</span>&gt;</span>    </span><br><span class="line"><span class="tag">&lt;/<span class="title">property</span>&gt;</span>    </span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="title">configuration</span>&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>master：这个文件中写的是master ip（也有资料说是应该写SecondaryNameNode，新手我们就不管吧，反正只要写master ip就可以了）</p>
+  <pre>hosts第一行127.0.0.1后面不要写主机名，也就是HOSTNAME值</pre>
+</li>
+<li><p>slaves：这个文件写的是slave ip，有几个写几个，分行写，master也可以作为slave节点，同master最好都写ip，不要写hostname</p>
+</li>
+</ul>
+</li>
+<li><p>将hadoop安装目录整个copy到所有salve主机上，使用scp -r命令即可，同时也可以将/etc/profile文件也copy过去，反正profile和hadoop都得保证完全一致，路径也是</p>
+</li>
+<li>到这里配置应该就完成了，再启动hadoop前我们需要先格式化namenode：#hadoop namenode -format，这里如果如果提示没有hadoop命令，则先到profile中确认$HADOOP_HOME/bin加入到path中，其次可以进入到hadoop安装目录下使用:#bin/hadoop namenode -format试试，如果还是不行就那检查你的上面配置的文件是否<br>有错.</li>
+<li>格式化成功之后就可以启动hadoop了，可以直接启动start-all.sh（配置完全正确情况下这个命令无论在什么目录下都可以执行），之后就可以看到hadoop启动了，你会发现显示将启动日志保存到一个路径下，这些日志在hadoop安装目录的logs文件夹下，是很重要的，但是当你出错时可以清空logs下所有文件，然后重新启动机器让他生成日志，在查看日志信息，因为日志比较多，看起来就不方便，嘿嘿。如果日志没问题那就OK。</li>
+<li>在每台机器上使用：#jps 可以查看hadoop进程情况，启动成功slave应该显示：tasktracker jps datanode三个进程，master显示：jobtracker namenode sencondarynamenode jps要是master也是slave的话会多tasktracker datanode两个进程</li>
+<li>一切OK之后可以使用浏览器访问<a href="http://192.168.1.8:50030/" target="_blank" rel="external">http://192.168.1.8:50030/</a> ip是master ip，查看hadoop运行情况，之后可以试着做hadoop自带的小测试，自己去网上找吧</li>
+</ol>
+<p>我知道一次安装成功可以性很小，你是新手的话，所以会出现各种各样的问题，在这里说下可能会出现的问题吧，也是我遇到的问题<br>java.io.IOException: Call to /192.168.1.8:9000 failed on local exception: java.net.NoRouteToHostException: No route to host<br>（1）hadoop版本问题，劝新手不要一开始就是用2.0版本及以上的，首先2.0的资料较少，其他不是很稳定貌似，配置也比较繁琐，我反正弄了一周没搞好，然后果断换了0.20.2才搞定。<br>（2）如果启动失败，log中显示无法连接master什么的，那问题就出在/etc/hosts文件中，这里配置了主机信息，hosts文件配置有点怪，下面是我的master hosts和slave hosts<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">master：</span><br><span class="line"><span class="number">127.0</span><span class="number">.0</span><span class="number">.1</span> localhost localhost.localdomain localhost4 localhost4.localdomain4</span><br><span class="line">::<span class="number">1</span> localhost localhost.localdomain localhost6 localhost6.localdomain6</span><br><span class="line">HOSTNAME=rh01</span><br><span class="line"><span class="number">192.168</span><span class="number">.1</span><span class="number">.8</span> rh01</span><br><span class="line"><span class="number">192.168</span><span class="number">.1</span><span class="number">.9</span> rh02</span><br><span class="line"></span><br><span class="line">slave：</span><br><span class="line"><span class="number">127.0</span><span class="number">.0</span><span class="number">.1</span> localhost localhost.localdomain localhost4 localhost4.localdomain4</span><br><span class="line">::<span class="number">1</span> localhost localhost.localdomain localhost6 localhost6.localdomain6</span><br><span class="line">HOSTNAME=rh02</span><br><span class="line"><span class="number">192.168</span><span class="number">.1</span><span class="number">.9</span> rh02</span><br><span class="line"></span><br><span class="line"><span class="number">192.168</span><span class="number">.1</span><span class="number">.8</span> rh01</span><br></pre></td></tr></table></figure></p>
+<p>注意之处在于</p>
+<p><pre><br>（1）hosts第一行127.0.0.1后面不要写主机名，也就是HOSTNAME值<br>（2）在HOSTNAME后面写ip与主机名映射的时候一定要先写本机ip<br>（3）防火墙，这个坑爹的货在hadoop中始终是个麻烦，在启动hadoop之前需要将所有机器防火墙关闭，使用：#service iptables stop，也可以直接使用：#chkconfig iptables off命令设置防火墙不自启动，这样下次防火墙就不会自启动了<br></pre><br>我就总结出这三点可能会影响hadoop启动的，错误都是无法连接主机，要是其他错误那就好好看看conf下的那些配置文件是否有错了</p>
+<p>好了，安装吧，启动吧，开心吧，查看吧，失望吧，排错吧，绝望吧，总之坚持住你就能搞定 嘻嘻~~~</p>
+<hr>
+<p>申明有参考网上其他文章</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/Linux/" rel="tag">#Linux</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2013/09/22/windows环境下使用MyEclipse调用hadoop集群/" rel="prev">windows环境下使用MyEclipse调用hadoop集群</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2013/09/17/Linux(RedHat6.0)下配置SSH无密码访问/" rel="next">Linux(RedHat6.0)下配置SSH无密码访问</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2013/09/18/RedHat安装Hadoop0.20.2小集群/"
+     data-title="RedHat安装Hadoop0.20.2小集群"
+     data-content=""
+     data-url="http://vickyqi.com/2013/09/18/RedHat安装Hadoop0.20.2小集群/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2013/09/18/RedHat安装Hadoop0.20.2小集群/"
+                       data-title="RedHat安装Hadoop0.20.2小集群" data-url="http://vickyqi.com/2013/09/18/RedHat安装Hadoop0.20.2小集群/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/images/Vicky.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">一个不甘做屌丝的程序员</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">13</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">20</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>
