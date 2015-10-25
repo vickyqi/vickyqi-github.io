@@ -716,8 +716,8 @@
     <link href="http://vickyqi.com/2013/09/18/RedHat%E5%AE%89%E8%A3%85Hadoop0.20.2%E5%B0%8F%E9%9B%86%E7%BE%A4/"/>
     <id>http://vickyqi.com/2013/09/18/RedHat安装Hadoop0.20.2小集群/</id>
     <published>2013-09-18T15:37:00.000Z</published>
-    <updated>2015-10-25T08:24:34.000Z</updated>
-    <content type="html"><![CDATA[<p>在安装Hadoop之前先确保每台机器都装有jdk，版本什么路径什么的最好一样，然后配置好master对其他slavers的SSH无密码访问(可以参考：<a href="http://127.0.0.1:4000/2013/09/18/RedHat%E5%AE%89%E8%A3%85Hadoop0.20.2%E5%B0%8F%E9%9B%86%E7%BE%A4/" target="_blank" rel="external">Linux(RedHat6.0)下配置SSH无密码访问</a>)</p>
+    <updated>2015-10-25T08:30:40.000Z</updated>
+    <content type="html"><![CDATA[<p>在安装Hadoop之前先确保每台机器都装有jdk，版本什么路径什么的最好一样，然后配置好master对其他slavers的SSH无密码访问(可以参考：<a href="http://vickyqi.com/2013/09/18/RedHat%E5%AE%89%E8%A3%85Hadoop0.20.2%E5%B0%8F%E9%9B%86%E7%BE%A4/">Linux(RedHat6.0)下配置SSH无密码访问</a>)</p>
 <p>确保上述条件满足之后就可以开始安装Hadoop了</p>
 <p>首先我的版本信息：</p>
 <pre>
@@ -778,7 +778,7 @@ export PATH=$PATH:$JAVA_HOME/bin:$HADOOP_HOME/bin
 <p>申明有参考网上其他文章</p>
 ]]></content>
     <summary type="html">
-    <![CDATA[<p>在安装Hadoop之前先确保每台机器都装有jdk，版本什么路径什么的最好一样，然后配置好master对其他slavers的SSH无密码访问(可以参考：<a href="http://127.0.0.1:4000/2013/09/18/RedHat%E5%AE%89%E8%A]]>
+    <![CDATA[<p>在安装Hadoop之前先确保每台机器都装有jdk，版本什么路径什么的最好一样，然后配置好master对其他slavers的SSH无密码访问(可以参考：<a href="http://vickyqi.com/2013/09/18/RedHat%E5%AE%89%E8%A3%8]]>
     </summary>
     
       <category term="Hadoop" scheme="http://vickyqi.com/tags/Hadoop/"/>
