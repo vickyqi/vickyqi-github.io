@@ -207,6 +207,295 @@
           
           
             
+              <a class="post-title-link" href="/2015/10/29/JDK并发工具类源码学习系列——ConcurrentLinkedQueue/" itemprop="url">
+                JDK并发工具类源码学习系列——ConcurrentLinkedQueue
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-10-29T21:51:00+08:00" content="2015-10-29">
+            2015-10-29
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
+
+              
+              
+                ， 
+              
+
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/JDK源码学习/" itemprop="url" rel="index"><span itemprop="name">JDK源码学习</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/10/29/JDK并发工具类源码学习系列——ConcurrentLinkedQueue/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/10/29/JDK并发工具类源码学习系列——ConcurrentLinkedQueue/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <p>ConcurrentLinkedQueue是一个基于链接节点的无界线程安全队列，它采用先进先出的规则对节点进行排序，当我们添加一个元素的时候，它会添加到队列的尾部，当我们获取一个元素时，它会返回队列头部的元素。它采用了“wait－free”算法来实现，该算法在Michael &amp; Scott算法上进行了一些修改, Michael &amp; Scott算法的详细信息可以参见<a href="http://www.cs.rochester.edu/~scott/papers/1996_PODC_queues.pdf">参考资料一</a>。<br>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2015/10/29/JDK并发工具类源码学习系列——ConcurrentLinkedQueue/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2015/10/26/JDK并发工具类源码学习系列——ConcurrentHashMap/" itemprop="url">
+                JDK并发工具类源码学习系列——ConcurrentHashMap
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-10-26T18:19:11+08:00" content="2015-10-26">
+            2015-10-26
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
+
+              
+              
+                ， 
+              
+
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/JDK源码学习/" itemprop="url" rel="index"><span itemprop="name">JDK源码学习</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/10/26/JDK并发工具类源码学习系列——ConcurrentHashMap/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/10/26/JDK并发工具类源码学习系列——ConcurrentHashMap/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <p>ConcurrentHashMap类在我的开发过程中经常被使用，个人觉得如果在共享一个Map时，如果无法判断是否需要加锁，那么就干脆直接使用ConcurrentHashMap，即能保证并发安全，同时性能也不会有太多下降，因为ConcurrentHashMap可实现无锁读，不过内存会占用的多些，但是并不明显，基本可以忽略。<br>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2015/10/26/JDK并发工具类源码学习系列——ConcurrentHashMap/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2015/10/24/JDK并发工具类源码学习系列——介绍/" itemprop="url">
+                JDK并发工具类源码学习系列——介绍
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-10-24T20:32:11+08:00" content="2015-10-24">
+            2015-10-24
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
+
+              
+              
+                ， 
+              
+
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/JDK源码学习/" itemprop="url" rel="index"><span itemprop="name">JDK源码学习</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/10/24/JDK并发工具类源码学习系列——介绍/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/10/24/JDK并发工具类源码学习系列——介绍/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <span itemprop="articleBody">
+            
+            JDK并发工具类是JDK1.5引入的一大重要的功能，集中在java.util.concurrent包下，java.util.concurrent包下还包括了java.util.concurrent.atomic以及java.util.concurrent.locks两个子包。java.util.co
+            ...
+          </span>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2015/10/24/JDK并发工具类源码学习系列——介绍/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
               <a class="post-title-link" href="/2015/10/19/几种常用JSON库性能比较/" itemprop="url">
                 几种常用JSON库性能比较
               </a>
@@ -476,97 +765,6 @@
           
           
             
-              <a class="post-title-link" href="/2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/" itemprop="url">
-                JDK并发工具类源码学习系列——ConcurrentHashMap
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2015-10-19T14:19:11+08:00" content="2015-10-19">
-            2015-10-19
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            作为JDK并发工具类源码学习系列的第一个被分析的类，ConcurrentHashMap类在我的开发过程中经常被使用。个人觉得如果在共享一个Map时，如果无法判断是否需要加锁，那么就干脆直接使用ConcurrentHashMap，即能保证并发安全，同时性能也不会有太多下降，因为ConcurrentHa
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2015/10/19/JDK并发工具类源码学习系列——ConcurrentHashMap/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
               <a class="post-title-link" href="/2015/10/19/正则学习二三事/" itemprop="url">
                 正则学习二三事
               </a>
@@ -658,8 +856,8 @@
           
           
             
-              <a class="post-title-link" href="/2013/09/22/windows环境下使用MyEclipse调用hadoop集群/" itemprop="url">
-                windows环境下使用MyEclipse调用hadoop集群
+              <a class="post-title-link" href="/2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/" itemprop="url">
+                FairScheduler的任务调度机制——assignTasks（续）
               </a>
             
           
@@ -669,8 +867,8 @@
       <div class="post-meta">
         <span class="post-time">
           发表于
-          <time itemprop="dateCreated" datetime="2013-09-22T23:03:00+08:00" content="2013-09-22">
-            2013-09-22
+          <time itemprop="dateCreated" datetime="2013-12-15T20:49:00+08:00" content="2013-12-15">
+            2013-12-15
           </time>
         </span>
 
@@ -691,8 +889,8 @@
           
             <span class="post-comments-count">
               &nbsp; | &nbsp;
-              <a href="/2013/09/22/windows环境下使用MyEclipse调用hadoop集群/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2013/09/22/windows环境下使用MyEclipse调用hadoop集群/" itemprop="commentsCount"></span>
+              <a href="/2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/" itemprop="commentsCount"></span>
               </a>
             </span>
           
@@ -712,11 +910,11 @@
         
           <span itemprop="articleBody">
             
-            之前看网上说要想在windows下访问hadoop集群需要安装cygwin，但是我嫌安装这东西麻烦，所以没弄，但是今天根据linux下使用hadoop插件的eclipse建的一个项目来在Myeclipse下建了一个同样的项目，引入同样的jar包，然后执行调用Hadoop的程序竟然可以执行，大喜。不知
+            上一篇文章浅析了FairScheduler的assignTasks()方法，介绍了FairScheduler任务调度的原理。略过了最后一步通过JobScheduler获取Task时调用JobInProgress的五个方法：obtainNewNodeLocalMapTask()，obtainNewNo
             ...
           </span>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2013/09/22/windows环境下使用MyEclipse调用hadoop集群/#more" rel="contents">
+            <a class="btn" href="/2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -749,8 +947,8 @@
           
           
             
-              <a class="post-title-link" href="/2013/09/18/RedHat安装Hadoop0.20.2小集群/" itemprop="url">
-                RedHat安装Hadoop0.20.2小集群
+              <a class="post-title-link" href="/2013/12/11/FairScheduler的任务调度机制——assignTasks/" itemprop="url">
+                FairScheduler的任务调度机制——assignTasks
               </a>
             
           
@@ -760,8 +958,8 @@
       <div class="post-meta">
         <span class="post-time">
           发表于
-          <time itemprop="dateCreated" datetime="2013-09-18T23:37:00+08:00" content="2013-09-18">
-            2013-09-18
+          <time itemprop="dateCreated" datetime="2013-12-11T00:33:00+08:00" content="2013-12-11">
+            2013-12-11
           </time>
         </span>
 
@@ -782,8 +980,8 @@
           
             <span class="post-comments-count">
               &nbsp; | &nbsp;
-              <a href="/2013/09/18/RedHat安装Hadoop0.20.2小集群/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2013/09/18/RedHat安装Hadoop0.20.2小集群/" itemprop="commentsCount"></span>
+              <a href="/2013/12/11/FairScheduler的任务调度机制——assignTasks/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/11/FairScheduler的任务调度机制——assignTasks/" itemprop="commentsCount"></span>
               </a>
             </span>
           
@@ -803,15 +1001,11 @@
         
           <span itemprop="articleBody">
             
-            在安装Hadoop之前先确保每台机器都装有jdk，版本什么路径什么的最好一样，然后配置好master对其他slavers的SSH无密码访问(可以参考：Linux下配置SSH无密码访问)
-确保上述条件满足之后就可以开始安装Hadoop了
-首先我的版本信息：
-
-LinuxOS：RedHat Enterp
+            首先需要了解FairScheduler是如何在各个Pool之间分配资源，以及每个Pool如何在Job之间分配资源的。FairScheduler的分配资源发生在update()方法中，而该方法由一个线程UpdateThread每隔updateInterval（由mapred.fairscheduler
             ...
           </span>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2013/09/18/RedHat安装Hadoop0.20.2小集群/#more" rel="contents">
+            <a class="btn" href="/2013/12/11/FairScheduler的任务调度机制——assignTasks/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -844,8 +1038,8 @@ LinuxOS：RedHat Enterp
           
           
             
-              <a class="post-title-link" href="/2013/09/17/Linux下配置SSH无密码访问/" itemprop="url">
-                Linux下配置SSH无密码访问
+              <a class="post-title-link" href="/2013/11/21/FairScheduler job初始化过程源码浅析/" itemprop="url">
+                FairScheduler job初始化过程源码浅析
               </a>
             
           
@@ -855,8 +1049,8 @@ LinuxOS：RedHat Enterp
       <div class="post-meta">
         <span class="post-time">
           发表于
-          <time itemprop="dateCreated" datetime="2013-09-17T22:43:00+08:00" content="2013-09-17">
-            2013-09-17
+          <time itemprop="dateCreated" datetime="2013-11-21T22:31:00+08:00" content="2013-11-21">
+            2013-11-21
           </time>
         </span>
 
@@ -864,7 +1058,7 @@ LinuxOS：RedHat Enterp
           <span class="post-category" >
             &nbsp; | &nbsp; 分类于
             
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Linux学习/" itemprop="url" rel="index"><span itemprop="name">Linux学习</span></a></span>
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop学习/" itemprop="url" rel="index"><span itemprop="name">Hadoop学习</span></a></span>
 
               
               
@@ -877,8 +1071,8 @@ LinuxOS：RedHat Enterp
           
             <span class="post-comments-count">
               &nbsp; | &nbsp;
-              <a href="/2013/09/17/Linux下配置SSH无密码访问/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2013/09/17/Linux下配置SSH无密码访问/" itemprop="commentsCount"></span>
+              <a href="/2013/11/21/FairScheduler job初始化过程源码浅析/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/11/21/FairScheduler job初始化过程源码浅析/" itemprop="commentsCount"></span>
               </a>
             </span>
           
@@ -898,196 +1092,11 @@ LinuxOS：RedHat Enterp
         
           <span itemprop="articleBody">
             
-            网上资料很多，基本都是一样。首先确保你已安装ssh，RedHat自带有openSSH，所以不需要考虑。
-第一步：使用  #ssh-keygen -t dsa  ，使用这个命令之后会提示是否输入密码，这里不输入密码，一路enter下去就可以了，最后会在用户目录下的隐藏文件夹.ssh下生成id.dsa和
+            上一篇文章说到了jobTracker中的submitJob()方法，这个方法最终会调用listener.jobAdded(job)，将Job注册到TaskScheduler中，由其进行调度。今天接着研究hadoop中默认的TaskScheduler是JobQueueTaskScheduler，采用的
             ...
           </span>
           <div class="post-more-link text-center">
-            <a class="btn" href="/2013/09/17/Linux下配置SSH无密码访问/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2012/05/20/Java类加载器/" itemprop="url">
-                Java类加载器
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2012-05-20T22:15:00+08:00" content="2012-05-20">
-            2012-05-20
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2012/05/20/Java类加载器/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2012/05/20/Java类加载器/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            类加载器作用当JVM开始运作时需要使用当某个类时，就需要将对应类的字段吗加载到内存中，而类加载器正式负责加载这些类的工具。另外若果多次重复使用一个类的字节码时加载器不会多次加载，而是使用内存中的字节码。
-主要的类加载器我们首先看一下JVM预定义的三种类型类加载器，当一个 JVM 启动的时候，Java
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2012/05/20/Java类加载器/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2012/05/19/Java类之间的关联关系/" itemprop="url">
-                Java类之间的关联关系
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2012-05-19T20:43:00+08:00" content="2012-05-19">
-            2012-05-19
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2012/05/19/Java类之间的关联关系/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2012/05/19/Java类之间的关联关系/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            UML类图中的关系分为四种：泛化、依赖、关联、实现；关联关系又可以细化为聚合和组合。
-泛化（Generalization）泛化是父类和子类之间的关系，子类继承父类的所有结构和行为。在子类中可以增加新的结构和行为，也可以覆写父类的行为。一般用一个带空心箭头的实线表示泛化关系，UML图如下：泛化对应Ja
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2012/05/19/Java类之间的关联关系/#more" rel="contents">
+            <a class="btn" href="/2013/11/21/FairScheduler job初始化过程源码浅析/#more" rel="contents">
               阅读全文 &raquo;
             </a>
           </div>
@@ -1148,21 +1157,21 @@ LinuxOS：RedHat Enterp
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">13</span>
+              <span class="site-state-item-count">20</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
 
           <div class="site-state-item site-state-categories">
             <a href="/categories">
-              <span class="site-state-item-count">5</span>
+              <span class="site-state-item-count">6</span>
               <span class="site-state-item-name">分类</span>
               </a>
           </div>
 
           <div class="site-state-item site-state-tags">
             <a href="/tags">
-              <span class="site-state-item-count">20</span>
+              <span class="site-state-item-count">26</span>
               <span class="site-state-item-name">标签</span>
               </a>
           </div>

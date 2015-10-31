@@ -1,0 +1,766 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="一个不甘做屌丝的程序员" />
+
+
+
+  <meta name="keywords" content="Hadoop,Java,JobClient,MapReduce,源码," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="hadoop的job提交过程相对来说还是有点复杂的，所以在学习源码的时候会显得有些乱，时常看了后面忘了前面，所以在看了多遍之后决定用文章的方式记录下来，一边自己下次再看的时候能够清晰些，同时也为初次接触这方面源码的同学提供一些帮助吧。希望自己可以写的足够详细。(本文针对hadoop1.2.1)
+job.waitForCompletion：一般情况下我们提交一个job都是通过job.waitForC">
+<meta property="og:type" content="article">
+<meta property="og:title" content="hadoop job初始化源码浅析">
+<meta property="og:url" content="http://vickyqi.com/2013/11/18/hadoop job初始化源码浅析/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="hadoop的job提交过程相对来说还是有点复杂的，所以在学习源码的时候会显得有些乱，时常看了后面忘了前面，所以在看了多遍之后决定用文章的方式记录下来，一边自己下次再看的时候能够清晰些，同时也为初次接触这方面源码的同学提供一些帮助吧。希望自己可以写的足够详细。(本文针对hadoop1.2.1)
+job.waitForCompletion：一般情况下我们提交一个job都是通过job.waitForC">
+<meta property="og:updated_time" content="2015-10-31T06:37:20.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="hadoop job初始化源码浅析">
+<meta name="twitter:description" content="hadoop的job提交过程相对来说还是有点复杂的，所以在学习源码的时候会显得有些乱，时常看了后面忘了前面，所以在看了多遍之后决定用文章的方式记录下来，一边自己下次再看的时候能够清晰些，同时也为初次接触这方面源码的同学提供一些帮助吧。希望自己可以写的足够详细。(本文针对hadoop1.2.1)
+job.waitForCompletion：一般情况下我们提交一个job都是通过job.waitForC">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> hadoop job初始化源码浅析 - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              hadoop job初始化源码浅析
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-11-18T23:59:00+08:00" content="2013-11-18">
+            2013-11-18
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop学习/" itemprop="url" rel="index"><span itemprop="name">Hadoop学习</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/11/18/hadoop job初始化源码浅析/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/11/18/hadoop job初始化源码浅析/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>hadoop的job提交过程相对来说还是有点复杂的，所以在学习源码的时候会显得有些乱，时常看了后面忘了前面，所以在看了多遍之后决定用文章的方式记录下来，一边自己下次再看的时候能够清晰些，同时也为初次接触这方面源码的同学提供一些帮助吧。希望自己可以写的足够详细。(本文针对hadoop1.2.1)</p>
+<h4 id="job-waitForCompletion："><strong>job.waitForCompletion</strong>：</h4><p>一般情况下我们提交一个job都是通过job.waitForCompletion方法提交，该方法内部会调用job.submit()方法<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">boolean</span> <span class="title">waitForCompletion</span><span class="params">(<span class="keyword">boolean</span> verbose</span><br><span class="line">                                   )</span> <span class="keyword">throws</span> IOException, InterruptedException,</span><br><span class="line">                                            ClassNotFoundException </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (state == JobState.DEFINE) &#123;</span><br><span class="line">      submit();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (verbose) &#123;</span><br><span class="line">      jobClient.monitorAndPrintJob(conf, info);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      info.waitForCompletion();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">return</span> <span class="title">isSuccessful</span><span class="params">()</span></span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="job-submit()："><strong>job.submit()：</strong></h4><p>在submit中会调用setUseNewAPI()，setUseNewAPI()这个方法主要是判断是使用新的api还是旧的api，之后会调用connect()方法，该方法主要是实例化jobClient，然后会调用<code>jobClient.submitJobInternal(conf)</code>这个方法进行job的提交。<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">void</span> <span class="title">submit</span><span class="params">()</span> <span class="keyword">throws</span> IOException, InterruptedException, </span><br><span class="line">                              ClassNotFoundException </span>&#123;</span><br><span class="line">    ensureState(JobState.DEFINE);</span><br><span class="line">    setUseNewAPI();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Connect to the JobTracker and submit the job</span></span><br><span class="line">    connect();</span><br><span class="line">    info = jobClient.submitJobInternal(conf);</span><br><span class="line">    <span class="keyword">super</span>.setJobID(info.getID());</span><br><span class="line">    state = JobState.RUNNING;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="jobClient-submitJobInternal()："><strong>jobClient.submitJobInternal()：</strong></h4><p>这个方法会将job运行时所需的所有文件上传到jobTarcker文件系统（一般是hdfs）中，同时进行备份（备份数默认是10，通过mapred.submit.replication变量可以设置），这个方法需要深入进行解读。</p>
+<h4 id="JobSubmissionFiles-getStagingDir："><strong>JobSubmissionFiles.getStagingDir：</strong></h4><p>这个方法是在jobClient.submitJobInternal()最先调用的，这个方法主要是获取一个job提交的根目录，主要是通过<code>Path stagingArea = client.getStagingAreaDir();</code>方法获得，这个方法最终会调用<code>jobTracker.getStagingAreaDirInternal()</code>方法，代码如下：<br><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">String</span> getStagingAreaDirInternal(<span class="keyword">String</span> user) <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">   <span class="keyword">final</span> Path stagingRootDir =</span><br><span class="line">     <span class="keyword">new</span> Path(conf.<span class="built_in">get</span>(<span class="string">"mapreduce.jobtracker.staging.root.dir"</span>,</span><br><span class="line">           <span class="string">"/tmp/hadoop/mapred/staging"</span>));</span><br><span class="line">   <span class="keyword">final</span> FileSystem fs = stagingRootDir.getFileSystem(conf);</span><br><span class="line">   <span class="keyword">return</span> fs.makeQualified(<span class="keyword">new</span> Path(stagingRootDir,</span><br><span class="line">                             user+<span class="string">"/.staging"</span>)).toString();</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure></p>
+<p>在获取了stagingDir之后会执行<code>JobID jobId = jobSubmitClient.getNewJobId();</code>为job获取一个jobId，然后执行<code>Path submitJobDir = new Path(jobStagingArea,jobId.toString());</code>获得该job提交的路径，也就是在stagingDir目录下建一个以jobId为文件名的目录。有了submitJobDir之后就可以将job运行所需的全部文件上传到对应的目录下了，具体是调用<code>jobClient.copyAndConfigureFiles(jobCopy, submitJobDir)</code>这个方法。</p>
+<h4 id="jobClient-copyAndConfigureFiles(jobCopy,_submitJobDir)："><strong>jobClient.copyAndConfigureFiles(jobCopy, submitJobDir)：</strong></h4><p>这个方法最终调用<code>jobClient.copyAndConfigureFiles(job, jobSubmitDir, replication);</code>这个方法实现文件上传。</p>
+<h4 id="jobClient-copyAndConfigureFiles(job,_jobSubmitDir,_replication)："><strong>jobClient.copyAndConfigureFiles(job, jobSubmitDir, replication)：</strong></h4><p>这个方法首先获取用户在使用命令执行job的时候所指定的-libjars, -files, -archives文件，对应的conf配置参数是tmpfiles tmpjars tmparchives，这个过程是在ToolRunner.run()的时候进行解析的，当用户指定了这三个参数之后，会将这三个参数对应的文件都上传到hdfs上，下面我们具体看一个参数的处理：tmpfiles（其他两个基本相同）</p>
+<h4 id="jobClient处理tmpfiles："><strong>jobClient处理tmpfiles：</strong></h4><p>该方法会将tmpfiles参数值按‘，’分割，然后将每一个文件上传到hdfs，其中如何文件的路径本身就在hdfs中，那么将不进行上传操作，上传操作只针对文件不在hdfs中的文件。调用的方法是：<code>Path newPath = copyRemoteFiles(fs,filesDir, tmp, job, replication)</code>，该方法内部使用的是<code>FileUtil.copy(remoteFs, originalPath, jtFs, newPath, false, job)</code>方法将文件上传至hdfs，注意此处的remoteFs和jtFs，remoteFs就是需上传文件的原始文件系统，jtFs则是jobTracker的文件系统（hdfs）。在文件上传至hdfs之后，会执行<code>DistributedCache.createSymlink(job)</code>这个方法，这个方法是创建一个别名(好像是这么个名字)，这里需要注意的是tmpfiles和tmparchives都会创建别名，而tmpjars则不会，个人认为tmpjars则jar文件，不是用户在job运行期间调用，所以不需要别名，而tmpfiles和tmparchives则在job运行期间用户可能会调用，所以使用别名可以方便用户调用。<br>将这三个参数指定的文件上传到hdfs之后，需要将job的jar文件上传到hdfs，名称为submitJobDir/job.jar，使用<code>fs.copyFromLocalFile(originalJarFile, submitJarFile)</code>上传即可。<br>到这里<code>jobClient.copyAndConfigureFiles(jobCopy,submitJobDir)</code>方法就完成了，期间丢了<br><code>jobClient.copyAndConfigureFiles(jobCopy,submitJobDir)</code>;<br><code>TrackerDistributedCacheManager.determineTimestampsAndCacheVisibilities(job)</code>;<br><code>TrackerDistributedCacheManager.getDelegationTokens(job,job.getCredentials())</code><br>三个方法，这三个方法是进行一些cached archives and files的校验和保存其时间戳和权限内容。</p>
+<p>继续我们的<code>jobClient.submitJobInternal()</code>方法，这之后会根据我们设置的outputFormat类执行<code>output.checkOutputSpecs(context)</code>，进行输出路径的检验，主要是保证输出路径不存在，存在会抛出异常。这之后就是对输入文件进行分片操作了，<code>writeSplits(context, submitJobDir)</code>。</p>
+<h4 id="jobClient-writeSplits()："><strong>jobClient.writeSplits()：</strong></h4><p>这个方法内部会根据我们之前判断的使用new-api还是old-api分别进行分片操作，我们只看new-api的分片操作。</p>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">int</span> <span class="title">writeSplits</span><span class="params">(org.apache.hadoop.mapreduce.JobContext job,</span><br><span class="line">      Path jobSubmitDir)</span> <span class="keyword">throws</span> IOException,</span><br><span class="line">      InterruptedException, ClassNotFoundException </span>&#123;</span><br><span class="line">    JobConf jConf = (JobConf)job.getConfiguration();</span><br><span class="line">    <span class="keyword">int</span> maps;</span><br><span class="line">    <span class="keyword">if</span> (jConf.getUseNewMapper()) &#123;</span><br><span class="line">      maps = writeNewSplits(job, jobSubmitDir);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      maps = writeOldSplits(jConf, jobSubmitDir);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> maps;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<h4 id="jobClient-writeNewSplits()："><strong>jobClient.writeNewSplits()：</strong></h4><p>这个方法主要是根据我们设置的inputFormat.class通过反射获得inputFormat对象，然后调用inputFormat对象的getSplits方法，当获得分片信息之后调用JobSplitWriter.createSplitFiles方法将分片的信息写入到submitJobDir/job.split文件中。<br><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> &lt;T extends InputSplit&gt;</span><br><span class="line"> int writeNewSplits(JobContext job, Path jobSubmitDir) throws IOException,</span><br><span class="line">     InterruptedException, ClassNotFoundException &#123;</span><br><span class="line">   Configuration conf = job.getConfiguration();</span><br><span class="line">   InputFormat<span class="preprocessor">&lt;?</span>, <span class="preprocessor">?&gt;</span> input =</span><br><span class="line">     ReflectionUtils.newInstance(job.getInputFormatClass(), conf);</span><br><span class="line"></span><br><span class="line">   <span class="keyword">List</span>&lt;InputSplit&gt; splits = input.getSplits(job);</span><br><span class="line">   T[] <span class="keyword">array</span> = (T[]) splits.toArray(<span class="keyword">new</span> InputSplit[splits.size()]);</span><br><span class="line"></span><br><span class="line">   <span class="comment">// sort the splits into order based on size, so that the biggest</span></span><br><span class="line">   <span class="comment">// go first</span></span><br><span class="line">   Arrays.sort(<span class="keyword">array</span>, <span class="keyword">new</span> SplitComparator());</span><br><span class="line">   JobSplitWriter.createSplitFiles(jobSubmitDir, conf,</span><br><span class="line">       jobSubmitDir.getFileSystem(conf), <span class="keyword">array</span>);</span><br><span class="line">   <span class="keyword">return</span> <span class="keyword">array</span>.length;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="JobSplitWriter-createSplitFiles："><strong>JobSplitWriter.createSplitFiles：</strong></h4><p>这个方法的作用就是讲分片信息写入到submitJobDir/job.split文件中，方法内部调用JobSplitWriter.writeNewSplits进行写操作</p>
+<h4 id="JobSplitWriter-writeNewSplits："><strong>JobSplitWriter.writeNewSplits：</strong></h4><p>该方法具体对每一个InputSplit对象进行序列化写入到输出流中，具体每个InputSplit对象写入的信息包括：<code>split.getClass().getName()，serializer.serialize(split)</code>将整个对象序列化。然后将InputSplit对象的locations信息放入SplitMetaInfo对象中，同时还包括InputSpilt元信息在job.split文件中的偏移量，该InputSplit的长度，再将SplitMetaInfo对象。然后调用<code>JobSplitWriter.writeJobSplitMetaInfo()</code>方法将SplitMetaInfo对象写入submitJobDir/job.splitmetainfo文件中。</p>
+<h4 id="JobSplitWriter-writeJobSplitMetaInfo()："><strong>JobSplitWriter.writeJobSplitMetaInfo()：</strong></h4><p>将SplitMetaInfo对象写入submitJobDir/job.splitmetainfo文件中，具体写入的信息包括：JobSplit.META_SPLIT_FILE_HEADER，splitVersion，allSplitMetaInfo.length（SplitMetaInfo对象的个数，一个split对应一个SplitMetaInfo），然后分别将所有的SplitMetaInfo对象序列化到输出流中，到此文件的分片工作完成。</p>
+<h4 id="继续回头看jobClient-submitJobInternal()方法："><strong>继续回头看jobClient.submitJobInternal()方法：</strong></h4><p>在上一步进行分片操作之后，或返回切片的数目，据此设定map的数量，所以在job中设置的map数量是没有用的。</p>
+<h4 id="继续往下走："><strong>继续往下走：</strong></h4><figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">String</span> <span class="built_in">queue</span> = jobCopy<span class="built_in">.</span>getQueueName();</span><br><span class="line">          AccessControlList acl = jobSubmitClient<span class="built_in">.</span>getQueueAdmins(<span class="built_in">queue</span>);</span><br><span class="line">          jobCopy<span class="built_in">.</span><span class="built_in">set</span>(QueueManager<span class="built_in">.</span>toFullPropertyName(<span class="built_in">queue</span>,</span><br><span class="line">              QueueACL<span class="built_in">.</span>ADMINISTER_JOBS<span class="built_in">.</span>getAclName()), acl<span class="built_in">.</span>getACLString());</span><br></pre></td></tr></table></figure>
+<p>这三句话是获得job对应的任务队列信息，这里涉及到hadoop的作业调度内容，就不深入研究了</p>
+<h4 id="继续："><strong>继续：</strong></h4><p>下面就是讲job的配置文件信息(jobConf对象)写入到xml文件中，以便用户查看，具体文件是：submitJobDir/job.xml，通过jobCopy.writeXml(out)方法，<br>方法比较简单，就是写xml文件。下面就进入到jobTracker提交任务环节了，status = jobSubmitClient.submitJob(jobId, submitJobDir.toString(), jobCopy.getCredentials())，<br>就到这吧，后面下次再慢慢研究。<br>总结下：在用户提交job之后，第一步主要是jobClient对job进行一些必要的文件上传操作，主要包括：</p>
+<pre><code><span class="number">1.</span> 为job生成一个jobId，然后获得job提交的stagingDir，根据jobId获得submitJobDir，之后所有的job运行时文件豆浆保存在此目录下
+<span class="number">2.</span> 将用户在命令行通过-libjars, -files, -archives指定的文件上传到jobTracker的文件系统中，并将job.jar上传到hdfs中
+<span class="number">3.</span> 校验输出路径
+<span class="number">4.</span> 进行输入文件的分片操作，并将分片信息写入submitJobDir下的相应文件中，有两个文件：job.split以及job.splitmetainfo
+<span class="number">5.</span> 将job的配置参数(jobConf对象)写入到job.xml文件中
+</code></pre><hr>
+<p>这就是jobClient提交job的全部过程，如有遗漏下面评论指出，谢谢</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/JobClient/" rel="tag">#JobClient</a>
+          
+            <a href="/tags/MapReduce/" rel="tag">#MapReduce</a>
+          
+            <a href="/tags/源码/" rel="tag">#源码</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2013/11/20/Hadoop JobTracker提交job源码浅析/" rel="prev">Hadoop JobTracker提交job源码浅析</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2013/09/22/windows环境下使用MyEclipse调用hadoop集群/" rel="next">windows环境下使用MyEclipse调用hadoop集群</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2013/11/18/hadoop job初始化源码浅析/"
+     data-title="hadoop job初始化源码浅析"
+     data-content=""
+     data-url="http://vickyqi.com/2013/11/18/hadoop job初始化源码浅析/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2013/11/18/hadoop job初始化源码浅析/"
+                       data-title="hadoop job初始化源码浅析" data-url="http://vickyqi.com/2013/11/18/hadoop job初始化源码浅析/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/images/Vicky.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">一个不甘做屌丝的程序员</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">20</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">26</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#job-waitForCompletion："><span class="nav-number">1.</span> <span class="nav-text">job.waitForCompletion：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#job-submit()："><span class="nav-number">2.</span> <span class="nav-text">job.submit()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#jobClient-submitJobInternal()："><span class="nav-number">3.</span> <span class="nav-text">jobClient.submitJobInternal()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobSubmissionFiles-getStagingDir："><span class="nav-number">4.</span> <span class="nav-text">JobSubmissionFiles.getStagingDir：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#jobClient-copyAndConfigureFiles(jobCopy,_submitJobDir)："><span class="nav-number">5.</span> <span class="nav-text">jobClient.copyAndConfigureFiles(jobCopy, submitJobDir)：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#jobClient-copyAndConfigureFiles(job,_jobSubmitDir,_replication)："><span class="nav-number">6.</span> <span class="nav-text">jobClient.copyAndConfigureFiles(job, jobSubmitDir, replication)：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#jobClient处理tmpfiles："><span class="nav-number">7.</span> <span class="nav-text">jobClient处理tmpfiles：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#jobClient-writeSplits()："><span class="nav-number">8.</span> <span class="nav-text">jobClient.writeSplits()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#jobClient-writeNewSplits()："><span class="nav-number">9.</span> <span class="nav-text">jobClient.writeNewSplits()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobSplitWriter-createSplitFiles："><span class="nav-number">10.</span> <span class="nav-text">JobSplitWriter.createSplitFiles：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobSplitWriter-writeNewSplits："><span class="nav-number">11.</span> <span class="nav-text">JobSplitWriter.writeNewSplits：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobSplitWriter-writeJobSplitMetaInfo()："><span class="nav-number">12.</span> <span class="nav-text">JobSplitWriter.writeJobSplitMetaInfo()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#继续回头看jobClient-submitJobInternal()方法："><span class="nav-number">13.</span> <span class="nav-text">继续回头看jobClient.submitJobInternal()方法：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#继续往下走："><span class="nav-number">14.</span> <span class="nav-text">继续往下走：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#继续："><span class="nav-number">15.</span> <span class="nav-text">继续：</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>

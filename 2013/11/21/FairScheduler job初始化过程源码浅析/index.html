@@ -1,0 +1,760 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="一个不甘做屌丝的程序员" />
+
+
+
+  <meta name="keywords" content="FairScheduler,Hadoop,Java,MapReduce,任务调度,源码," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="上一篇文章说到了jobTracker中的submitJob()方法，这个方法最终会调用listener.jobAdded(job)，将Job注册到TaskScheduler中，由其进行调度。今天接着研究hadoop中默认的TaskScheduler是JobQueueTaskScheduler，采用的是FIFO(先进先出)原则进行调度，还有FiarScheduler和CapacityTaskSche">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FairScheduler job初始化过程源码浅析">
+<meta property="og:url" content="http://vickyqi.com/2013/11/21/FairScheduler job初始化过程源码浅析/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="上一篇文章说到了jobTracker中的submitJob()方法，这个方法最终会调用listener.jobAdded(job)，将Job注册到TaskScheduler中，由其进行调度。今天接着研究hadoop中默认的TaskScheduler是JobQueueTaskScheduler，采用的是FIFO(先进先出)原则进行调度，还有FiarScheduler和CapacityTaskSche">
+<meta property="og:updated_time" content="2015-10-31T06:58:44.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="FairScheduler job初始化过程源码浅析">
+<meta name="twitter:description" content="上一篇文章说到了jobTracker中的submitJob()方法，这个方法最终会调用listener.jobAdded(job)，将Job注册到TaskScheduler中，由其进行调度。今天接着研究hadoop中默认的TaskScheduler是JobQueueTaskScheduler，采用的是FIFO(先进先出)原则进行调度，还有FiarScheduler和CapacityTaskSche">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> FairScheduler job初始化过程源码浅析 - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              FairScheduler job初始化过程源码浅析
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-11-21T22:31:00+08:00" content="2013-11-21">
+            2013-11-21
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop学习/" itemprop="url" rel="index"><span itemprop="name">Hadoop学习</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/11/21/FairScheduler job初始化过程源码浅析/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/11/21/FairScheduler job初始化过程源码浅析/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p><a href="http://vickyqi.com/2013/11/18/Hadoop%20JobTracker%E6%8F%90%E4%BA%A4job%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">上一篇文章说到了jobTracker中的submitJob()方法</a>，这个方法最终会调用listener.jobAdded(job)，将Job注册到TaskScheduler中，由其进行调度。<br>今天接着研究hadoop中默认的TaskScheduler是JobQueueTaskScheduler，采用的是FIFO(先进先出)原则进行调度，还有FiarScheduler和CapacityTaskScheduler两种调度类（非hadoop自带，不过hadoop也把他们加入到类库中），这两个类可以在hadoop目录下的lib包下找到，源码在src/contrib下可以找到。主要对FairScheduler进行解读。<br>上文提到jobTracker最终将job注册到jobListener中，下面就来看看FairScheduler的JobListener。</p>
+<h4 id="FairScheduler-JobListener-addJob()："><strong>FairScheduler.JobListener.addJob()：</strong></h4><p>这个方法比较简单，<code>JobSchedulable mapSched = ReflectionUtils.newInstance(conf.getClass(“mapred.jobtracker.jobSchedulable”, JobSchedulable.class, JobSchedulable.class), conf)</code>这里通过反射获得两个JobSchedulable对象，也就是默认的FairScheduler.JobSchedulable对象，一个是mapSched，一个是redSched，然后进行JobSchedulable的初始化，比较简单。infos.put(job, info)将job添加到infos（存放所有的jobInPorgress对象）中，同时将job添加到PoolScheduable中，主要是根据配置的poolName获取对应的pool。下面的是重点，update()方法，下面看看这个方法。<br><figure class="highlight roboconf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="component">public void jobAdded(JobInProgress job) &#123;</span><br><span class="line">      synchronized (FairScheduler<span class="string">.this)</span> &#123;</span><br><span class="line">        eventLog<span class="string">.log("JOB_ADDED"</span>, job<span class="string">.getJobID())</span>;</span><br><span class="line">        JobSchedulable mapSched = ReflectionUtils<span class="string">.newInstance(</span></span><br><span class="line">            conf<span class="string">.getClass("mapred.jobtracker.jobSchedulable"</span>, JobSchedulable<span class="string">.class</span>,</span><br><span class="line">                JobSchedulable<span class="string">.class)</span>, conf);</span><br><span class="line">        mapSched<span class="string">.init(FairScheduler.this</span>, job, TaskType<span class="string">.MAP)</span>;</span><br><span class="line"></span><br><span class="line">        JobSchedulable redSched = ReflectionUtils<span class="string">.newInstance(</span></span><br><span class="line">            conf<span class="string">.getClass("mapred.jobtracker.jobSchedulable"</span>, JobSchedulable<span class="string">.class</span>,</span><br><span class="line">                JobSchedulable<span class="string">.class)</span>, conf);</span><br><span class="line">        redSched<span class="string">.init(FairScheduler.this</span>, job, TaskType<span class="string">.REDUCE)</span>;</span><br><span class="line"></span><br><span class="line">        JobInfo info = new JobInfo(mapSched, redSched);</span><br><span class="line">        infos<span class="string">.put(job</span>, info);</span><br><span class="line">        poolMgr<span class="string">.addJob(job)</span>; // Also adds job into the right PoolScheduable</span><br><span class="line">        update();</span><br><span class="line">      &#125;</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="FairScheduler-update()："><strong>FairScheduler.update()：</strong></h4><p>跳过看不懂的，直接看<code>poolMgr.reloadAllocsIfNecessary()</code>，这个方法主要是读取FairScheduler的配置文件（fair-scheduler.xml），由mapred.fairscheduler.allocation.file参数设置，这里是根据配置文件的最后修改时间+ALLOC_RELOAD_INTERVAL决定是否重新加载配置文件，加载文件的时候就是简单地读取xml文件。接着看update方法，加载完配置文件之后会遍历infos（保存了FairScheduler所有的jobInProgress），遍历的时候去除成功了的job和失败了的job以及被kill掉的job，同时也会从pool中去掉该job。接下来就是updateRunnability()，这个方法会根据userMaxJob以及poolMaxJob数量进行判断是否启动job。<br><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">List&lt;JobInProgress&gt; toRemove = <span class="keyword">new</span> ArrayList&lt;JobInProgress&gt;();</span><br><span class="line">     <span class="keyword">for</span> (JobInProgress <span class="string">job:</span> infos.keySet()) &#123; </span><br><span class="line">       <span class="typename">int</span> runState = job.getStatus().getRunState();</span><br><span class="line">       <span class="keyword">if</span> (runState == JobStatus.SUCCEEDED || runState == JobStatus.FAILED</span><br><span class="line">         || runState == JobStatus.KILLED) &#123;</span><br><span class="line">           toRemove.add(job);</span><br><span class="line">       &#125;</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">for</span> (JobInProgress <span class="string">job:</span> toRemove) &#123;</span><br><span class="line">       jobNoLongerRunning(job);</span><br><span class="line">     &#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="FairScheduler-updateRunnability()："><strong>FairScheduler.updateRunnability()：</strong></h4><p>第一步将所有infos中剩余的job（成功以及失败的任务会在update时清除）状态全部设为notrunning。接着对infos中的job进行排序，<code>Collections.sort(jobs, new FifoJobComparator())</code>，排序规则是FIFO原则（奇怪，不懂）。然后接着对jobs进行遍历，同时根据该job的提交用户和提交的pool的最大提交job数量决定是否将其添加到任务队列中（就是两个list），如果该job状态=RUNNING，则jobinfo.running=true，如果job状态=PREP（准备中），则对其进行初始化（注意这里只对job状态=RUNNING和PREP的job进行操作）。<code>jobInitializer.initJob(jobInfo, job)</code>进行job初始化，这里使用到jdk的threadPool（其实就是将thread加入到线程池中，由线程池绝对什么时候对其进行执行，总之都会调用thread的run方法），看看thread的run方法。run方法中调用ttm.initJob(job)，此处的ttm就是jobTracker，现在回到jobTracker去。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (userCount &lt; poolMgr.getUserMaxJobs(user) &amp;&amp;</span><br><span class="line">         poolCount &lt; poolMgr.getPoolMaxJobs(pool)) &#123;</span><br><span class="line">       <span class="keyword">if</span> (job.getStatus().getRunState() == JobStatus.RUNNING ||</span><br><span class="line">           job.getStatus().getRunState() == JobStatus.PREP) &#123;</span><br><span class="line">         userJobs.put(user, userCount + <span class="number">1</span>);</span><br><span class="line">         poolJobs.put(pool, poolCount + <span class="number">1</span>);</span><br><span class="line">         JobInfo jobInfo = infos.get(job);</span><br><span class="line">         <span class="keyword">if</span> (job.getStatus().getRunState() == JobStatus.RUNNING) &#123;</span><br><span class="line">           jobInfo.runnable = <span class="literal">true</span>;</span><br><span class="line">         &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">           <span class="comment">// The job is in the PREP state. Give it to the job initializer</span></span><br><span class="line">           <span class="comment">// for initialization if we have not already done it.</span></span><br><span class="line">           <span class="keyword">if</span> (jobInfo.needsInitializing) &#123;</span><br><span class="line">             jobInfo.needsInitializing = <span class="literal">false</span>;</span><br><span class="line">             jobInitializer.initJob(jobInfo, job);</span><br><span class="line">           &#125;</span><br><span class="line">         &#125;</span><br><span class="line">       &#125;</span><br><span class="line">     &#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="JobTracker-initJob()："><strong>JobTracker.initJob()：</strong></h4><p>主要调用job.initTasks()，下面进入到<code>JobInProgress.initTasks()</code>。</p>
+<h4 id="JobInProgress-initTasks()："><strong>JobInProgress.initTasks()：</strong></h4><p>为job对象设置优先级setPriority(this.priority)，接着读取分片信息文件获取分片信息，<code>SplitMetaInfoReader.readSplitMetaInfo()</code>这个方就是jobInPorgress用来读取分分片信息的，读取过程与写入过程相对应，具体还是较简单的。读取了分片信息之后，根据分片数量创建相应数量的mapTask（TaskInProgress对象），接下来会执行<code>nonRunningMapCache = createCache(splits, maxLevel)</code>，这个方法是根据每个分片的location信息，然后根据location的host判断每个host上所有的job，并放入cache中。接着根据设置的reduce数量新建对应的reduceTask（TaskInProgress对象），并加入到nonRunningReduces队列中，并根据mapred.reduce.slowstart.completed.maps（百分比，默认是5%）参数的值计算completedMapsForReduceSlowstart（多少map任务完成的时候启动reduce任务）。之后就是分别新建两个setUp任务和cheanUp任务，分别对应map和reduce task。到此initTask完成，initTask完成JobTracker的initJob也就差不多完成了，接着FairScheduler的updateRunnability()也就完成了。回到FairScheduler.update()。</p>
+<h4 id="FairScheduler-update()：-1"><strong>FairScheduler.update()：</strong></h4><figure class="highlight dns"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">for (Pool pool: poolMgr.getPools()) &#123;</span><br><span class="line">        pool.getMapSchedulable().updateDemand()<span class="comment">;</span></span><br><span class="line">        pool.getReduceSchedulable().updateDemand()<span class="comment">;</span></span><br><span class="line">      &#125;</span><br><span class="line">      </span><br><span class="line">      // Compute fair shares based on updated demands</span><br><span class="line">      List&lt;PoolSchedulable&gt; mapScheds = getPoolSchedulables(TaskType.MAP)<span class="comment">;</span></span><br><span class="line">      List&lt;PoolSchedulable&gt; reduceScheds = getPoolSchedulables(TaskType.REDUCE)<span class="comment">;</span></span><br><span class="line">      SchedulingAlgorithms.computeFairShares(</span><br><span class="line">          mapScheds, clusterStatus.getMaxMapTasks())<span class="comment">;</span></span><br><span class="line">      SchedulingAlgorithms.computeFairShares(</span><br><span class="line">          reduceScheds, clusterStatus.getMaxReduceTasks())<span class="comment">;</span></span><br><span class="line">      </span><br><span class="line">      // Use the computed shares to assign shares within each pool</span><br><span class="line">      for (Pool pool: poolMgr.getPools()) &#123;</span><br><span class="line">        pool.getMapSchedulable().redistributeShare()<span class="comment">;</span></span><br><span class="line">        pool.getReduceSchedulable().redistributeShare()<span class="comment">;</span></span><br><span class="line">      &#125;</span><br><span class="line">      </span><br><span class="line">      if (preemptionEnabled)</span><br><span class="line">        updatePreemptionVariables()<span class="comment">;</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>看不懂，先到这吧，等下次慢慢研究吧，今天就到这了，好累。</p>
+<hr>
+<p>今天把上次遗留的问题继续研究一下。<br><figure class="highlight sml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">for (<span class="type">Pool</span> pool: poolMgr.getPools<span class="literal">()</span>) &#123;</span><br><span class="line">        pool.getMapSchedulable<span class="literal">()</span>.updateDemand<span class="literal">()</span>;</span><br><span class="line">        pool.getReduceSchedulable<span class="literal">()</span>.updateDemand<span class="literal">()</span>;</span><br><span class="line">      &#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里是更新每个pool的slot需求情况，下面来看看，<code>pool.getMapSchedulable().updateDemand()</code>，<code>pool.getReduceSchedulable().updateDemand()</code>两个基本相同。</p>
+<h4 id="PoolSchedulable-updateDemand()："><strong>PoolSchedulable.updateDemand()：</strong></h4><p>第一句<code>poolMgr.getMaxSlots(pool.getName(), taskType)</code>是获取pool的最大slot数量，从配置文件获取，配置文件是之前加载过的，前面有说到。每个PoolSchedulable中都会存在多个JobSchedulable对象，在JobListener.addJob()时添加。一个JobSchedulable对应一个jobInProgress对象。然后调用JobSchedulable.updateDemand()更新每个JobSchedulable的slot的需求。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">updateDemand</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// limit the demand to maxTasks</span></span><br><span class="line">    <span class="keyword">int</span> maxTasks = poolMgr.getMaxSlots(pool.getName(), taskType);</span><br><span class="line">    demand = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (JobSchedulable sched: jobScheds) &#123;</span><br><span class="line">      sched.updateDemand();</span><br><span class="line">      demand += sched.getDemand();</span><br><span class="line">      <span class="keyword">if</span> (demand &gt;= maxTasks) &#123;</span><br><span class="line">        demand = maxTasks;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (LOG.isDebugEnabled()) &#123;</span><br><span class="line">      LOG.debug(<span class="string">"The pool "</span> + pool.getName() + <span class="string">" demand is "</span> + demand</span><br><span class="line">          + <span class="string">"; maxTasks is "</span> + maxTasks);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="JobSchedulable-updateDemand()："><strong>JobSchedulable.updateDemand()：</strong></h4><p>首先第一步就是判断该JobSchedulable的job是否已运行(RUNNING)，没有运行则不分配slot。然后判断该JobSchedulable是Map还是Reduce，如果是Reduce则需先判断完成的Map数量(finishedMapTasks)数量+失败的Map(failedMapTIPs)数量&gt;=completedMapsForReduceSlowstart（由”mapred.reduce.slowstart.completed.maps参数值*numMapTasks），满足则表示Reduce任务可以启动，否则不可启动。而对于Map任务直接计算其slot需求。<code>TaskInProgress[] tips = (taskType == TaskType.MAP ? job.getTasks(TaskType.MAP) : job.getTasks(TaskType.REDUCE))</code>，获取对应的taskInPorgress数量(tip)，<code>boolean speculationEnabled = (taskType == TaskType.MAP ?job.getMapSpeculativeExecution() : job.getReduceSpeculativeExecution())</code>判断是否启用推测执行，<code>double avgProgress = (taskType == TaskType.MAP ?job.getStatus().mapProgress() : job.getStatus().reduceProgress())</code>获取map/reduce任务的进度，即map/reduce已完成多少，之后计算每个taskInProgress的slot需求。如果taskInProgress未完成则正在运行中，则<code>demand += tip.getActiveTasks().size()</code>计算出所需的slot数量，而tip的ActiveTasks则是任务调用的时候，即调用tip.addRunningTask()方法时添加的，而该方法的调用者则是FairScheduler的assignTasks()方法，即方法调度。获取到tip的activeTasks数量，则就是该tip所需要的slot数量，同时如果启用了推测执行，则还需多加一个slot用于推测执行任务，这样就获得了一个JobSchedulable所需的总slot数量，求和即为这个pool所需的总slot数量，当所需数量大于maxTasks（该pool所拥有的最大slot数），则返回。继续回到FairScheduler.update()方法。</p>
+<h4 id="FairScheduler-update()：-2"><strong>FairScheduler.update()：</strong></h4><figure class="highlight dns"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">List&lt;PoolSchedulable&gt; mapScheds = getPoolSchedulables(TaskType.MAP)<span class="comment">;</span></span><br><span class="line">      List&lt;PoolSchedulable&gt; reduceScheds = getPoolSchedulables(TaskType.REDUCE)<span class="comment">;</span></span><br><span class="line">      SchedulingAlgorithms.computeFairShares(</span><br><span class="line">          mapScheds, clusterStatus.getMaxMapTasks())<span class="comment">;</span></span><br><span class="line">      SchedulingAlgorithms.computeFairShares(</span><br><span class="line">          reduceScheds, clusterStatus.getMaxReduceTasks())<span class="comment">;</span></span><br><span class="line">      </span><br><span class="line">      // Use the computed shares to assign shares within each pool</span><br><span class="line">      for (Pool pool: poolMgr.getPools()) &#123;</span><br><span class="line">        pool.getMapSchedulable().redistributeShare()<span class="comment">;</span></span><br><span class="line">        pool.getReduceSchedulable().redistributeShare()<span class="comment">;</span></span><br><span class="line">      &#125;</span><br><span class="line">      </span><br><span class="line">      if (preemptionEnabled)</span><br><span class="line">        updatePreemptionVariables()<span class="comment">;</span></span><br></pre></td></tr></table></figure>
+<p>这里涉及的就是FairScheduler的核心之处——资源分配算法。先看看前两句，前两句就是获取所有的MapPoolSchedulable和ReducePoolSchedulable，一个pool中分别包含一个MapPoolSchedulable和ReducePoolSchedulable。下面两句就是具体的资源分配，调用的是SchedulingAlgorithms类进行资源分配的。</p>
+<h4 id="SchedulingAlgorithms-computeFairShares()："><strong>SchedulingAlgorithms.computeFairShares()：</strong></h4><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="function"><span class="keyword">double</span> <span class="title">slotsUsedWithWeightToSlotRatio</span><span class="params">(<span class="keyword">double</span> w2sRatio,</span><br><span class="line">      Collection&lt;? <span class="keyword">extends</span> Schedulable&gt; schedulables)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">double</span> slotsTaken = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (Schedulable sched: schedulables) &#123;</span><br><span class="line">      <span class="keyword">double</span> share = computeShare(sched, w2sRatio);</span><br><span class="line">      slotsTaken += share;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> slotsTaken;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>调用computeShare()方法根据job的weight和w2sRatio（相当于总权重，1.0）计算每个Schedulable根据权重应该获得slot数量。</p>
+<h4 id="SchedulingAlgorithms-computeShare()："><strong>SchedulingAlgorithms.computeShare()：</strong></h4><p>第一句<code>double share = sched.getWeight() <em> w2sRatio</em></code>，获取Pool的权重，该权重是在fair-scheduler.xml中设置pool时为pool设置了weigth，默认是1.0。获得job权重之后，根据weigthw2sRatio获得一个share值，然后<code>share=Math.max(share, sched.getMinShare())</code>（minShare默认是0），<code>share = Math.min(share, sched.getDemand())</code>，即获得share值。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">double</span> <span class="title">getJobWeight</span><span class="params">(JobInProgress job, TaskType taskType)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!isRunnable(job)) &#123;</span><br><span class="line">      <span class="comment">// Job won't launch tasks, but don't return 0 to avoid division errors</span></span><br><span class="line">      <span class="keyword">return</span> <span class="number">1.0</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="keyword">double</span> weight = <span class="number">1.0</span>;</span><br><span class="line">      <span class="keyword">if</span> (sizeBasedWeight) &#123;</span><br><span class="line">        <span class="comment">// Set weight based on runnable tasks</span></span><br><span class="line">        JobInfo info = infos.get(job);</span><br><span class="line">        <span class="keyword">int</span> runnableTasks = (taskType == TaskType.MAP) ?</span><br><span class="line">            info.mapSchedulable.getDemand() : </span><br><span class="line">            info.reduceSchedulable.getDemand();</span><br><span class="line">        weight = Math.log1p(runnableTasks) / Math.<span class="built_in">log</span>(<span class="number">2</span>);</span><br><span class="line">      &#125;</span><br><span class="line">      weight *= getPriorityFactor(job.getPriority());</span><br><span class="line">      <span class="keyword">if</span> (weightAdjuster != null) &#123;</span><br><span class="line">        <span class="comment">// Run weight through the user-supplied weightAdjuster</span></span><br><span class="line">        weight = weightAdjuster.adjustWeight(job, taskType, weight);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> weight;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">double</span> <span class="title">computeShare</span><span class="params">(Schedulable sched, <span class="keyword">double</span> w2sRatio)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">double</span> share = sched.getWeight() * w2sRatio;</span><br><span class="line">    share = Math.max(share, sched.getMinShare());</span><br><span class="line">    share = Math.min(share, sched.getDemand());</span><br><span class="line">    <span class="keyword">return</span> share;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="SchedulingAlgorithms-computeFairShares："><strong>SchedulingAlgorithms.computeFairShares：</strong></h4><p>返回到该方法，全总体来看其实这里是一个算法（好吧，这个类本身就是一个算法类），这个算法旨在找出一个合适的fairShare值，使得所有job的权重<em>fairShare之和最接近cap值（Math.min(totalDemand, totalSlots)），这是一个二分查找算法，至于这样做的原因可以参见SchedulingAlgorithms.computeFairShares的注释，大致的意思好像是这个值叫做weighted fair sharing，We call R the weight-to-slots ratio because it converts a Schedulable’s weight to the number of slots it is assigned。也就是这个可以根据这个值</em>pool的权重得到该pool所分配到的slot数量。就到这，英语不好看不太懂，等别人解释吧。最后<code>sched.setFairShare(computeShare(sched, right))</code>将这个值设置到PoolSchedulable中。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (Schedulable sched: schedulables) &#123;</span><br><span class="line">      totalDemand += sched.getDemand();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">double</span> cap = Math.min(totalDemand, totalSlots);</span><br><span class="line">    <span class="keyword">double</span> rMax = <span class="number">1.0</span>;</span><br><span class="line">    <span class="keyword">while</span> (slotsUsedWithWeightToSlotRatio(rMax, schedulables) &lt; cap) &#123;</span><br><span class="line">      rMax *= <span class="number">2.0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// Perform the binary search for up to COMPUTE_FAIR_SHARES_ITERATIONS steps</span></span><br><span class="line">    <span class="keyword">double</span> left = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">double</span> right = rMax;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; COMPUTE_FAIR_SHARES_ITERATIONS; i++) &#123;</span><br><span class="line">      <span class="keyword">double</span> mid = (left + right) / <span class="number">2.0</span>;</span><br><span class="line">      <span class="keyword">if</span> (slotsUsedWithWeightToSlotRatio(mid, schedulables) &lt; cap) &#123;</span><br><span class="line">        left = mid;</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        right = mid;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="FairScheduler-update()：-3"><strong>FairScheduler.update()：</strong></h4><p>后面是对每个JobSchedulable使用同上方法计算一个fairShare值，意义是为pool中的每个job的可分配的slot数量。这里同样会计算job的weigth,job的权重是由FairScheduler计算得到的，在计算权重时，可以选择是否开启根据job长度调整权重（由mapred.fairscheduler.sizebasedweight参数控制，默认false），然后根据job的优先级判断相应的权重，其对应关系：优先级：VERY_HIGH-权重：4.0/HIGH：2.0/NORMAL：1.0/LOW：0.5，最后根据weightAdjuster进行调整job的权重，需要手动实现，由mapred.fairscheduler.weightadjuster参数设置，如果你自定义了一个weightAdjuster类，则可以通过重写adjustWeight()方法控制job的权重。总之默认情况下一个job的权重只是取决于该Job优先级。后面的跳过，不是太懂</p>
+<h4 id="FairScheduler-update()：-4"><strong>FairScheduler.update()：</strong></h4><p>最后是判断是否支持抢占机制，即当一个资源池资源有剩余是否允许将剩余资源共享给其他资源池。具体是判断每个资源池中正在运行的任务是否小于资源池本身最小资源量或者需求量，同时还判断该资源池是否急于将资源共享给其他资源，即资源使用量低于共享量的一半。<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">private void <span class="function"><span class="title">updatePreemptionVariables</span></span>() &#123;</span><br><span class="line">   long now = clock.getTime();</span><br><span class="line">   lastPreemptionUpdateTime = now;</span><br><span class="line">   <span class="keyword">for</span> (TaskType <span class="built_in">type</span>: MAP_AND_REDUCE) &#123;</span><br><span class="line">     <span class="keyword">for</span> (PoolSchedulable <span class="built_in">sched</span>: getPoolSchedulables(<span class="built_in">type</span>)) &#123;</span><br><span class="line">       <span class="keyword">if</span> (!isStarvedForM<span class="keyword">in</span>Share(<span class="built_in">sched</span>)) &#123;</span><br><span class="line">         sched.setLastTimeAtM<span class="keyword">in</span>Share(now);</span><br><span class="line">       &#125;</span><br><span class="line">       <span class="keyword">if</span> (!isStarvedForFairShare(<span class="built_in">sched</span>)) &#123;</span><br><span class="line">         sched.setLastTimeAtHalfFairShare(now);</span><br><span class="line">       &#125;</span><br><span class="line">       eventLog.log(<span class="string">"PREEMPT_VARS"</span>, sched.getName(), <span class="built_in">type</span>,</span><br><span class="line">           now - sched.getLastTimeAtM<span class="keyword">in</span>Share(),</span><br><span class="line">           now - sched.getLastTimeAtHalfFairShare());</span><br><span class="line">     &#125;</span><br><span class="line">   &#125;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure></p>
+<p>到此，整个FairScheduler的任务初始化操作或者说JobListener的jobAdded()方法完成了，分析的有遗漏，也许还有错误，如您发现请不吝赐教，谢谢</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/FairScheduler/" rel="tag">#FairScheduler</a>
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/MapReduce/" rel="tag">#MapReduce</a>
+          
+            <a href="/tags/任务调度/" rel="tag">#任务调度</a>
+          
+            <a href="/tags/源码/" rel="tag">#源码</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2013/12/11/FairScheduler的任务调度机制——assignTasks/" rel="prev">FairScheduler的任务调度机制——assignTasks</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2013/11/20/Hadoop JobTracker提交job源码浅析/" rel="next">Hadoop JobTracker提交job源码浅析</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2013/11/21/FairScheduler job初始化过程源码浅析/"
+     data-title="FairScheduler job初始化过程源码浅析"
+     data-content=""
+     data-url="http://vickyqi.com/2013/11/21/FairScheduler job初始化过程源码浅析/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2013/11/21/FairScheduler job初始化过程源码浅析/"
+                       data-title="FairScheduler job初始化过程源码浅析" data-url="http://vickyqi.com/2013/11/21/FairScheduler job初始化过程源码浅析/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/images/Vicky.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">一个不甘做屌丝的程序员</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">20</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">26</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#FairScheduler-JobListener-addJob()："><span class="nav-number">1.</span> <span class="nav-text">FairScheduler.JobListener.addJob()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FairScheduler-update()："><span class="nav-number">2.</span> <span class="nav-text">FairScheduler.update()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FairScheduler-updateRunnability()："><span class="nav-number">3.</span> <span class="nav-text">FairScheduler.updateRunnability()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobTracker-initJob()："><span class="nav-number">4.</span> <span class="nav-text">JobTracker.initJob()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobInProgress-initTasks()："><span class="nav-number">5.</span> <span class="nav-text">JobInProgress.initTasks()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FairScheduler-update()：-1"><span class="nav-number">6.</span> <span class="nav-text">FairScheduler.update()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#PoolSchedulable-updateDemand()："><span class="nav-number">7.</span> <span class="nav-text">PoolSchedulable.updateDemand()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobSchedulable-updateDemand()："><span class="nav-number">8.</span> <span class="nav-text">JobSchedulable.updateDemand()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FairScheduler-update()：-2"><span class="nav-number">9.</span> <span class="nav-text">FairScheduler.update()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SchedulingAlgorithms-computeFairShares()："><span class="nav-number">10.</span> <span class="nav-text">SchedulingAlgorithms.computeFairShares()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SchedulingAlgorithms-computeShare()："><span class="nav-number">11.</span> <span class="nav-text">SchedulingAlgorithms.computeShare()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SchedulingAlgorithms-computeFairShares："><span class="nav-number">12.</span> <span class="nav-text">SchedulingAlgorithms.computeFairShares：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FairScheduler-update()：-3"><span class="nav-number">13.</span> <span class="nav-text">FairScheduler.update()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#FairScheduler-update()：-4"><span class="nav-number">14.</span> <span class="nav-text">FairScheduler.update()：</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>

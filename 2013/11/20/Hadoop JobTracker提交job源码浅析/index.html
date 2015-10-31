@@ -1,0 +1,755 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="一个不甘做屌丝的程序员" />
+
+
+
+  <meta name="keywords" content="Hadoop,Java,JobTracker,MapReduce,源码," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="上一篇文章说到jobClient提交job的过程，这篇文章是接着上一篇文章继续写的。
+上一篇说到jobSubmitClient.submitJob( jobId, submitJobDir.toString(), jobCopy.getCredentials())这里，这里就是jobTracker进行job的提交过程，还有一个JobSubmissionProtocol的实现是LocalJobRun">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hadoop JobTracker提交job源码浅析">
+<meta property="og:url" content="http://vickyqi.com/2013/11/20/Hadoop JobTracker提交job源码浅析/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="上一篇文章说到jobClient提交job的过程，这篇文章是接着上一篇文章继续写的。
+上一篇说到jobSubmitClient.submitJob( jobId, submitJobDir.toString(), jobCopy.getCredentials())这里，这里就是jobTracker进行job的提交过程，还有一个JobSubmissionProtocol的实现是LocalJobRun">
+<meta property="og:updated_time" content="2015-10-31T06:46:48.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hadoop JobTracker提交job源码浅析">
+<meta name="twitter:description" content="上一篇文章说到jobClient提交job的过程，这篇文章是接着上一篇文章继续写的。
+上一篇说到jobSubmitClient.submitJob( jobId, submitJobDir.toString(), jobCopy.getCredentials())这里，这里就是jobTracker进行job的提交过程，还有一个JobSubmissionProtocol的实现是LocalJobRun">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> Hadoop JobTracker提交job源码浅析 - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              Hadoop JobTracker提交job源码浅析
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-11-20T00:29:00+08:00" content="2013-11-20">
+            2013-11-20
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop学习/" itemprop="url" rel="index"><span itemprop="name">Hadoop学习</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/11/20/Hadoop JobTracker提交job源码浅析/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/11/20/Hadoop JobTracker提交job源码浅析/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p><a href="http://vickyqi.com/2013/11/18/hadoop%20job%E5%88%9D%E5%A7%8B%E5%8C%96%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/">上一篇文章说</a>到jobClient提交job的过程，这篇文章是接着上一篇文章继续写的。</p>
+<p>上一篇说到<code>jobSubmitClient.submitJob( jobId, submitJobDir.toString(), jobCopy.getCredentials())</code>这里，这里就是jobTracker进行job的提交过程，还有一个JobSubmissionProtocol的实现是LocalJobRunner，这是本地执行的时候使用的，真正集群运行Job还是使用的jobTracker，所以只看jobTracker类的submitJob。</p>
+<h4 id="jobTracker-submitJob()："><strong>jobTracker.submitJob()：</strong></h4><p>第一句就是checkJobTrackerState()这个是检查jobTracker状态，是否运行中，这里说一句，jobTracker是在hadoop集群启动的时候启动的，也就是在执行start-all或者start-mapred的时候启动，启动的时候会调用JobTracker的main方法，然后在jps的时候就可以看见一个jobTracker的进程了。下面来看一下JobTracker.main()方法。</p>
+<h4 id="JobTracker-main()："><strong>JobTracker.main()：</strong></h4><p>第一句是JobTracker tracker = startTracker(new JobConf())，这是实例化一个jobTracke实例。</p>
+<h4 id="JobTracker-startTracker()："><strong>JobTracker.startTracker()：</strong></h4><p>result = new JobTracker(conf, identifier)，实例化一个jobTracker对象，在实例化的时候会做很多事，所以还是进去瞅瞅。</p>
+<h4 id="JobTracker-JobTracker()："><strong>JobTracker.JobTracker()：</strong></h4><p>实例化的时候会初始化很多参数，记也记不住，主要看下实例化taskScheduler的内容：<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">Class</span>&lt;? extends TaskScheduler&gt; schedulerClass     =<span class="keyword">conf</span>.getClass(<span class="string">"mapred.jobtracker.taskScheduler"</span>,JobQueueTaskScheduler.<span class="keyword">class</span>, TaskScheduler.<span class="keyword">class</span>);</span><br><span class="line">taskScheduler = (TaskScheduler) ReflectionUtils.newInstance(schedulerClass, <span class="keyword">conf</span>)</span><br></pre></td></tr></table></figure></p>
+<p>这两句就是根据配置文件设置的taskScheduler类名，通过反射获得对应的taskScheduler对象，在实例化的时候虽然不同的TaskScheduler具体操作不一样，但是统一的都会初始化一个JobListener对象，这个对象就是后面将要监听job的listener。剩下的内容就不说了。回到JobTracker.startTracker()方法。</p>
+<h4 id="JobTracker-JobTracker()：-1"><strong>JobTracker.JobTracker()：</strong></h4><p>在实例化jobTracker之后，会执行<code>result.taskScheduler.setTaskTrackerManager(result)</code>，这个就是将jobTracker对象设置给taskScheduler。后面就什么了，现在可以回到main方法了<br><figure class="highlight nimrod"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">public <span class="keyword">static</span> <span class="type">JobTracker</span> startTracker(<span class="type">JobConf</span> conf, <span class="type">String</span> identifier, boolean initialize) </span><br><span class="line">  throws <span class="type">IOException</span>, <span class="type">InterruptedException</span> &#123;</span><br><span class="line">    <span class="type">DefaultMetricsSystem</span>.initialize(<span class="string">"JobTracker"</span>);</span><br><span class="line">    <span class="type">JobTracker</span> <span class="literal">result</span> = null;</span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="literal">result</span> = new <span class="type">JobTracker</span>(conf, identifier);</span><br><span class="line">        <span class="literal">result</span>.taskScheduler.setTaskTrackerManager(<span class="literal">result</span>);</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      &#125; catch (<span class="type">VersionMismatch</span> e) &#123;</span><br><span class="line">        throw e;</span><br><span class="line">      &#125; catch (<span class="type">BindException</span> e) &#123;</span><br><span class="line">        throw e;</span><br><span class="line">      &#125; catch (<span class="type">UnknownHostException</span> e) &#123;</span><br><span class="line">        throw e;</span><br><span class="line">      &#125; catch (<span class="type">AccessControlException</span> ace) &#123;</span><br><span class="line">        // <span class="keyword">in</span> <span class="keyword">case</span> <span class="keyword">of</span> jobtracker <span class="keyword">not</span> having right access</span><br><span class="line">        // bail <span class="keyword">out</span></span><br><span class="line">        throw ace;</span><br><span class="line">      &#125; catch (<span class="type">IOException</span> e) &#123;</span><br><span class="line">        <span class="type">LOG</span>.warn(<span class="string">"Error starting tracker: "</span> + </span><br><span class="line">                 <span class="type">StringUtils</span>.stringifyException(e));</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="type">Thread</span>.sleep(<span class="number">1000</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">result</span> != null) &#123;</span><br><span class="line">      <span class="type">JobEndNotifier</span>.startNotifier();</span><br><span class="line">      <span class="type">MBeans</span>.register(<span class="string">"JobTracker"</span>, <span class="string">"JobTrackerInfo"</span>, <span class="literal">result</span>);</span><br><span class="line">      <span class="keyword">if</span>(initialize == <span class="literal">true</span>) &#123;</span><br><span class="line">        <span class="literal">result</span>.setSafeModeInternal(<span class="type">SafeModeAction</span>.<span class="type">SAFEMODE_ENTER</span>);</span><br><span class="line">        <span class="literal">result</span>.initializeFilesystem();</span><br><span class="line">        <span class="literal">result</span>.setSafeModeInternal(<span class="type">SafeModeAction</span>.<span class="type">SAFEMODE_LEAVE</span>);</span><br><span class="line">        <span class="literal">result</span>.initialize();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">result</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="JobTracker-main()：-1"><strong>JobTracker.main()：</strong></h4><p>在实例化jobTracker之后，会调用tracker.offerService()方法，之后main方法就没什么了，下面看看tracker.offerService()这个方法。<br><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> main(<span class="keyword">String</span> argv[]</span><br><span class="line">                          ) <span class="keyword">throws</span> IOException, InterruptedException &#123;</span><br><span class="line">    StringUtils.startupShutdownMessage(JobTracker.class, argv, LOG);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">if</span>(argv.length == <span class="number">0</span>) &#123;</span><br><span class="line">        JobTracker tracker = startTracker(<span class="keyword">new</span> JobConf());</span><br><span class="line">        tracker.offerService();</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="string">"-dumpConfiguration"</span>.equals(argv[<span class="number">0</span>]) &amp;&amp; argv.length == <span class="number">1</span>) &#123;</span><br><span class="line">          dumpConfiguration(<span class="keyword">new</span> PrintWriter(System.out));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">          System.out.<span class="built_in">println</span>(<span class="string">"usage: JobTracker [-dumpConfiguration]"</span>);</span><br><span class="line">          System.<span class="built_in">exit</span>(-<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (Throwable e) &#123;</span><br><span class="line">      LOG.fatal(StringUtils.stringifyException(e));</span><br><span class="line">      System.<span class="built_in">exit</span>(-<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<h4 id="JobTracker-offerService()："><strong>JobTracker.offerService()：</strong></h4><p>这个方法中有一些其他东西，略掉，只看taskScheduler.start()这个方法，因为这里只是想分析下JobTracker提交job的过程，所以省去很多复杂的东西。</p>
+<h4 id="taskScheduler-start()："><strong>taskScheduler.start()：</strong></h4><p>这个方法就是启动TaskScheduler，这个方法不同taskScheduler也不同，但是统一的还是会有一个<code>taskTrackerManager.addJobInProgressListener(jobListener)</code>这个操作，taskTrackerManager就是jobTracker（第5步），这句的意思是为jobTracker添加jobListener，用来监听job的。这句的内部就是调用jobTracker的jobInProgressListeners集合的add(listener)方法。<br>到这里可以说看完了整个JobTracker的启动过程，虽然很浅显，但是对于后面将要分析的内容，这些就够了。下面来看看job的提交过程，也就是jobTracker的submit()方法。</p>
+<h4 id="jobTracker-submit()："><strong>jobTracker.submit()：</strong></h4><p>第一步是checkSafeMode()，检查是否在安全模式，在安全模式则抛出异常。然后执行<code>jobInfo = new JobInfo(jobId, new Text(ugi.getShortUserName()),new Path(jobSubmitDir)</code>，生成一个jobInfo对象，jobInfo主要保存job的id,user,jobSubmitDir（也就是job的任务目录，上一篇文章提到）。接着是判断job是否可被recovered（job失败的时候尝试再次执行），如果允许的话(默认允许)，则将jobInfo对象序列化到job-info文件中。接着到达最关键的地方，<code>job = new JobInProgress(this, this.conf, jobInfo, 0, ts)</code>，为job实例化一个JobInProgress对象，这个对象将会对job以后的所有情况进行负责，如初始化，执行等。下面看看JobInProgress对象的初始化操作。</p>
+<h4 id="JobInProgress："><strong>JobInProgress：</strong></h4><p>这里看下将job.xml下载到本地的操作。然后就是job的队列信息，默认的队列名是default，<code>Queue queue = this.jobtracker.getQueueManager().getQueue(queueName)</code>，这个主要是根据hadoop所使用的taskScheduler有关，具体不研究。剩下的是一些参数的初始化，如map的数目，reduce的数目等。这里还有个设置job的优先级的，默认是normal。<code>this.priority = conf.getJobPriority();this.status.setJobPriority(this.priority);</code>还有检查taskLimit的操作，就是检查map+reduce的任务数是否超出mapred.jobtracker.maxtasks.per.job设置的值，默认是-1，就是没有限制的意思。回到jobTracker.submit()方法<br><figure class="highlight ceylon"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">this</span>.localJobFile = <span class="annotation">default</span><span class="number">_</span>conf.getLocalPath(JobTracker.SUBDIR</span><br><span class="line">          +<span class="string">"/"</span>+jobId + <span class="string">".xml"</span>);</span><br><span class="line">      Path jobFilePath = JobSubmissionFiles.getJobConfPath(jobSubmitDir);</span><br><span class="line">      jobFile = jobFilePath.toString();</span><br><span class="line">      fs.copyToLocalFile(jobFilePath, localJobFile);</span><br><span class="line">      conf = <span class="keyword">new</span> JobConf(localJobFile);</span><br></pre></td></tr></table></figure></p>
+<h4 id="jobTracker-submit()：-1"><strong>jobTracker.submit()：</strong></h4><p>实例化JobInProgress之后，会根据jobProfile获取job的队列信息，并判断相应的队列是否在运行中，不在则任务失败。然后检查内存情况checkMemoryRequirements(job)，再调用taskScheduler的<code>taskScheduler.checkJobSubmission(job)</code>检查任务提交情况（具体是啥玩意，不太情况）。接下来就是执行status = addJob(jobId, job)，为Job设置listener。</p>
+<h4 id="jobTracker-addJob()："><strong>jobTracker.addJob()：</strong></h4><p>前面说过，在初始化jobTracker的时候会实例化taskScheduler，然后调用taskScheduler的start()方法，为jobTracker添加JobListener对象，所以这里的JobInProgressListener对象就是相应的taskScheduler的JobListener，这里为job添加了JobListener。<br><figure class="highlight sml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">private synchronized <span class="type">JobStatus</span> addJob(<span class="type">JobID</span> jobId, <span class="type">JobInProgress</span> job) </span><br><span class="line">  throws <span class="type">IOException</span> &#123;</span><br><span class="line">    totalSubmissions++;</span><br><span class="line"></span><br><span class="line">    synchronized (jobs) &#123;</span><br><span class="line">      synchronized (taskScheduler) &#123;</span><br><span class="line">        jobs.put(job.getProfile<span class="literal">()</span>.getJobID<span class="literal">()</span>, job);</span><br><span class="line">        for (<span class="type">JobInProgressListener</span> listener : jobInProgressListeners) &#123;</span><br><span class="line">          listener.jobAdded(job);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    myInstrumentation.submitJob(job.getJobConf<span class="literal">()</span>, jobId);</span><br><span class="line">    job.getQueueMetrics<span class="literal">()</span>.submitJob(job.getJobConf<span class="literal">()</span>, jobId);</span><br><span class="line"></span><br><span class="line">    <span class="type">LOG</span>.info(<span class="string">"Job "</span> + jobId + <span class="string">" added successfully for user '"</span> </span><br><span class="line">             + job.getJobConf<span class="literal">()</span>.getUser<span class="literal">()</span> + <span class="string">"' to queue '"</span> </span><br><span class="line">             + job.getJobConf<span class="literal">()</span>.getQueueName<span class="literal">()</span> + <span class="string">"'"</span>);</span><br><span class="line">    <span class="type">AuditLogger</span>.logSuccess(job.getUser<span class="literal">()</span>, </span><br><span class="line">        <span class="type">Operation</span>.<span class="type">SUBMIT_JOB</span>.name<span class="literal">()</span>, jobId.toString<span class="literal">()</span>);</span><br><span class="line">    return job.getStatus<span class="literal">()</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>到这里整个JobTracker的job提交过程就结束了，中间很多东西没有深入去研究，只是浅显的了解了下，如有错误，请指出，谢谢</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/JobTracker/" rel="tag">#JobTracker</a>
+          
+            <a href="/tags/MapReduce/" rel="tag">#MapReduce</a>
+          
+            <a href="/tags/源码/" rel="tag">#源码</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2013/11/21/FairScheduler job初始化过程源码浅析/" rel="prev">FairScheduler job初始化过程源码浅析</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2013/11/18/hadoop job初始化源码浅析/" rel="next">hadoop job初始化源码浅析</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2013/11/20/Hadoop JobTracker提交job源码浅析/"
+     data-title="Hadoop JobTracker提交job源码浅析"
+     data-content=""
+     data-url="http://vickyqi.com/2013/11/20/Hadoop JobTracker提交job源码浅析/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2013/11/20/Hadoop JobTracker提交job源码浅析/"
+                       data-title="Hadoop JobTracker提交job源码浅析" data-url="http://vickyqi.com/2013/11/20/Hadoop JobTracker提交job源码浅析/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/images/Vicky.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">一个不甘做屌丝的程序员</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">20</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">26</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#jobTracker-submitJob()："><span class="nav-number">1.</span> <span class="nav-text">jobTracker.submitJob()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobTracker-main()："><span class="nav-number">2.</span> <span class="nav-text">JobTracker.main()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobTracker-startTracker()："><span class="nav-number">3.</span> <span class="nav-text">JobTracker.startTracker()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobTracker-JobTracker()："><span class="nav-number">4.</span> <span class="nav-text">JobTracker.JobTracker()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobTracker-JobTracker()：-1"><span class="nav-number">5.</span> <span class="nav-text">JobTracker.JobTracker()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobTracker-main()：-1"><span class="nav-number">6.</span> <span class="nav-text">JobTracker.main()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobTracker-offerService()："><span class="nav-number">7.</span> <span class="nav-text">JobTracker.offerService()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#taskScheduler-start()："><span class="nav-number">8.</span> <span class="nav-text">taskScheduler.start()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#jobTracker-submit()："><span class="nav-number">9.</span> <span class="nav-text">jobTracker.submit()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobInProgress："><span class="nav-number">10.</span> <span class="nav-text">JobInProgress：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#jobTracker-submit()：-1"><span class="nav-number">11.</span> <span class="nav-text">jobTracker.submit()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#jobTracker-addJob()："><span class="nav-number">12.</span> <span class="nav-text">jobTracker.addJob()：</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>

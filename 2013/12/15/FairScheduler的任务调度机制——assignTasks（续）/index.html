@@ -1,0 +1,779 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="一个不甘做屌丝的程序员" />
+
+
+
+  <meta name="keywords" content="FairScheduler,Hadoop,Java,MapReduce,任务调度,源码," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="上一篇文章浅析了FairScheduler的assignTasks()方法，介绍了FairScheduler任务调度的原理。略过了最后一步通过JobScheduler获取Task时调用JobInProgress的五个方法：obtainNewNodeLocalMapTask()，obtainNewNodeOrRackLocalMapTask()，obtainNewMapTask()，obtainNe">
+<meta property="og:type" content="article">
+<meta property="og:title" content="FairScheduler的任务调度机制——assignTasks（续）">
+<meta property="og:url" content="http://vickyqi.com/2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="上一篇文章浅析了FairScheduler的assignTasks()方法，介绍了FairScheduler任务调度的原理。略过了最后一步通过JobScheduler获取Task时调用JobInProgress的五个方法：obtainNewNodeLocalMapTask()，obtainNewNodeOrRackLocalMapTask()，obtainNewMapTask()，obtainNe">
+<meta property="og:updated_time" content="2015-10-31T07:15:36.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="FairScheduler的任务调度机制——assignTasks（续）">
+<meta name="twitter:description" content="上一篇文章浅析了FairScheduler的assignTasks()方法，介绍了FairScheduler任务调度的原理。略过了最后一步通过JobScheduler获取Task时调用JobInProgress的五个方法：obtainNewNodeLocalMapTask()，obtainNewNodeOrRackLocalMapTask()，obtainNewMapTask()，obtainNe">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> FairScheduler的任务调度机制——assignTasks（续） - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              FairScheduler的任务调度机制——assignTasks（续）
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-12-15T20:49:00+08:00" content="2013-12-15">
+            2013-12-15
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop学习/" itemprop="url" rel="index"><span itemprop="name">Hadoop学习</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p><a href="http://vickyqi.com/2013/12/11/FairScheduler%E7%9A%84%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6%E6%9C%BA%E5%88%B6%E2%80%94%E2%80%94assignTasks/">上一篇文章浅析了FairScheduler的assignTasks()方法</a>，介绍了FairScheduler任务调度的原理。略过了最后一步通过JobScheduler获取Task时调用JobInProgress的五个方法：<strong>obtainNewNodeLocalMapTask()，obtainNewNodeOrRackLocalMapTask()，obtainNewMapTask()，obtainNewReduceTask()</strong>。这篇文章将对这四个方法进行简单的源代码解析。<strong>obtainNewNodeLocalMapTask()，obtainNewNodeOrRackLocalMapTask()，obtainNewMapTask()</strong>这三个方法都是选择一个Map任务，其内部调用的方法也是一样的，都是obtainNewMapTaskCommon()方法，不同的只是maxCacheLevel参数值不同：</p>
+<pre>
+obtainNewNodeLocalMapTask()：maxCacheLevel==1；
+obtainNewNodeOrRackLocalMapTask：maxCacheLevel==maxLevel；
+obtainNewMapTask：maxCacheLevel==anyCacheLevel（maxLevel+1）。
+</pre>
+
+<p>下面着重分析obtainNewMapTaskCommon()方法。</p>
+<h4 id="JobInProgress-obtainNewMapTaskCommon()："><strong>JobInProgress.obtainNewMapTaskCommon()：</strong></h4><figure class="highlight nimrod"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">public synchronized <span class="type">Task</span> obtainNewMapTaskCommon(</span><br><span class="line">      <span class="type">TaskTrackerStatus</span> tts, <span class="type">int</span> clusterSize, <span class="type">int</span> numUniqueHosts, </span><br><span class="line">      <span class="type">int</span> maxCacheLevel) throws <span class="type">IOException</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (!tasksInited) &#123;</span><br><span class="line">      <span class="type">LOG</span>.info(<span class="string">"Cannot create task split for "</span> + profile.getJobID());</span><br><span class="line">      <span class="keyword">try</span> &#123; throw new <span class="type">IOException</span>(<span class="string">"state = "</span> + status.getRunState()); &#125;</span><br><span class="line">      catch (<span class="type">IOException</span> ioe) &#123;ioe.printStackTrace();&#125;</span><br><span class="line">      <span class="keyword">return</span> null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> target = findNewMapTask(tts, clusterSize, numUniqueHosts, maxCacheLevel, </span><br><span class="line">                                status.mapProgress());</span><br><span class="line">    <span class="keyword">if</span> (target == -<span class="number">1</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">Task</span> <span class="literal">result</span> = maps[target].getTaskToRun(tts.getTrackerName());</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">result</span> != null) &#123;</span><br><span class="line">      addRunningTaskToTIP(maps[target], <span class="literal">result</span>.getTaskID(), tts, <span class="literal">true</span>);</span><br><span class="line">      // <span class="type">DO</span> <span class="type">NOT</span> reset <span class="keyword">for</span> off-switch!</span><br><span class="line">      <span class="keyword">if</span> (maxCacheLevel != <span class="type">NON_LOCAL_CACHE_LEVEL</span>) &#123;</span><br><span class="line">        resetSchedulingOpportunities();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">result</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>首先判断Job是否初始化，即tasksInited是否为true，未初始化则不调度任务。接着调用findNewMapTask()方法获取一个新的Map任务，同时将maxCacheLevel参数传递过去，该参数的作用是选择不同LocalLevel的Map任务。下面看看findNewMapTask()方法。</p>
+<h4 id="JobInProgress-findNewMapTask()："><strong>JobInProgress.findNewMapTask()：</strong></h4><p>首先介绍下该方法的返回值，该方法不是直接返回一个MapTask，而是返回一个maps[]数组的索引值，这个maps[]数组在Job初始化时创建，存放该Job所有的Map任务，根据索引值就可以知道对应的MapTask。<br><figure class="highlight autoit"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (numMapTasks == <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="keyword">if</span>(<span class="built_in">LOG</span>.isDebugEnabled()) &#123;</span><br><span class="line">        <span class="built_in">LOG</span>.debug(<span class="string">"No maps to schedule for "</span> + profile.getJobID())<span class="comment">;</span></span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> -<span class="number">1</span><span class="comment">;</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>首先判断该Job的Map任务数是否为0，numMapTasks是在Job进行初始化（initTasks()方法）时根据输入文件的分片数确定的，即一个Split对应一个Map任务。该值为0表示该Job没有Map任务，所以返回-1，即没有满足条件的Map任务。<br><figure class="highlight dart"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">String</span> taskTracker = tts.getTrackerName();</span><br><span class="line">    TaskInProgress tip = <span class="keyword">null</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// Update the last-known clusterSize</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="keyword">this</span>.clusterSize = clusterSize;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!shouldRunOnTaskTracker(taskTracker)) &#123;</span><br><span class="line">      <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>判断是否能够在该TT上运行任务，主要根据该Job在该TT上是否有过失败的任务来判断。下面看看该方法。</p>
+<h4 id="JobInProgress-shouldRunOnTaskTracker()："><strong>JobInProgress.shouldRunOnTaskTracker()：</strong></h4><figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="built_in">boolean</span> shouldRunOnTaskTracker(<span class="built_in">String</span> taskTracker) &#123;</span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// Check if too many tasks of this job have failed on this</span></span><br><span class="line">    <span class="comment">// tasktracker prior to assigning it a new one.</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    int taskTrackerFailedTasks = getTrackerTaskFailures(taskTracker);</span><br><span class="line">    <span class="keyword">if</span> ((flakyTaskTrackers &lt; (clusterSize * CLUSTER_BLACKLIST_PERCENT)) <span class="subst">&amp;&amp;</span> </span><br><span class="line">        taskTrackerFailedTasks &gt;= maxTaskFailuresPerTracker) &#123;</span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">LOG</span><span class="built_in">.</span>isDebugEnabled()) &#123;</span><br><span class="line">        <span class="built_in">String</span> flakyTracker = convertTrackerNameToHostName(taskTracker); </span><br><span class="line">        <span class="keyword">LOG</span><span class="built_in">.</span>debug(<span class="string">"Ignoring the black-listed tasktracker: '"</span> + flakyTracker </span><br><span class="line">                  + <span class="string">"' for assigning a new task"</span>);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">private</span> int getTrackerTaskFailures(<span class="built_in">String</span> trackerName) &#123;</span><br><span class="line">    <span class="built_in">String</span> trackerHostName = convertTrackerNameToHostName(trackerName);</span><br><span class="line">    <span class="built_in">Integer</span> failedTasks = trackerToFailuresMap<span class="built_in">.</span>get(trackerHostName);</span><br><span class="line">    <span class="keyword">return</span> (failedTasks != <span class="built_in">null</span>) ? failedTasks<span class="built_in">.</span>intValue() : <span class="number">0</span>; </span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>该方法从Job中保存的trackerToFailuresMap队列中获取该TT上所有的失败任务数。提一下，trackerToFailuresMap队列信息也是在TT通过心跳向JT时更新的，即updateTaskStatus()方法。flakyTaskTrackers值记录该Job在多少个TT上面失败的任务数大于maxTaskFailuresPerTracker（即一个Job在一个TT上可允许失败的最大数），当一个Job在一个TT上拥有的失败任务数大于maxTaskFailuresPerTracker时则表示该Job不可再在该TT上执行任何任务，但是当一个Job在超过（clusterSize * CLUSTER_BLACKLIST_PERCENT）个TT上失败的话，则不去考虑该Job是否在该TT上失败，因为可能是Job自身的问题，而非单个TT的问题。总之该方法根据Job的失败任务信息来判断是否应该在一个TT上执行任务。<br>接着返回到JobInProgress.findNewMapTask()方法。</p>
+<h4 id="JobInProgress-findNewMapTask()：-1"><strong>JobInProgress.findNewMapTask()：</strong></h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Check to ensure this TaskTracker has enough resources to </span></span><br><span class="line">    <span class="comment">// run tasks from this job</span></span><br><span class="line">    <span class="keyword">long</span> outSize = resourceEstimator.getEstimatedMapOutputSize();</span><br><span class="line">    <span class="keyword">long</span> availSpace = tts.getResourceStatus().getAvailableSpace();</span><br><span class="line">    <span class="keyword">if</span>(availSpace &lt; outSize) &#123;</span><br><span class="line">      LOG.warn(<span class="string">"No room for map task. Node "</span> + tts.getHost() + </span><br><span class="line">               <span class="string">" has "</span> + availSpace + </span><br><span class="line">               <span class="string">" bytes free; but we expect map to take "</span> + outSize);</span><br><span class="line"></span><br><span class="line">      <span class="keyword">return</span> -<span class="number">1</span>; <span class="comment">//see if a different TIP might work better. </span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>判断该TT是否有够该Job的Map任务使用的资源，主要是根据该Job已完成的Map任务的输出情况来估算一个Map任务可能的输出大小。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">long</span> <span class="title">getEstimatedMapOutputSize</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">long</span> estimate = <span class="number">0L</span>;</span><br><span class="line">    <span class="keyword">if</span> (job.desiredMaps() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">      estimate = getEstimatedTotalMapOutputSize()  / job.desiredMaps();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> estimate;</span><br><span class="line">  &#125;</span><br><span class="line"><span class="function"><span class="keyword">protected</span> synchronized <span class="keyword">long</span> <span class="title">getEstimatedTotalMapOutputSize</span><span class="params">()</span>  </span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(completedMapsUpdates &lt; threshholdToUse) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="keyword">long</span> inputSize = job.getInputLength() + job.desiredMaps(); </span><br><span class="line">      <span class="comment">//add desiredMaps() so that randomwriter case doesn't blow up</span></span><br><span class="line">      <span class="comment">//the multiplication might lead to overflow, casting it with</span></span><br><span class="line">      <span class="comment">//double prevents it</span></span><br><span class="line">      <span class="keyword">long</span> estimate = Math.round(((<span class="keyword">double</span>)inputSize * </span><br><span class="line">          completedMapsOutputSize * <span class="number">2.0</span>)/completedMapsInputSize);</span><br><span class="line">      <span class="keyword">if</span> (LOG.isDebugEnabled()) &#123;</span><br><span class="line">        LOG.debug(<span class="string">"estimate total map output will be "</span> + estimate);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> estimate;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>具体估算方法是根据（该Job的输入大小/已完成的Map任务的输入大小）<em>（该Job已完成的所有Map任务的总输出大小）</em>2估算出该Job全部Map任务大概的输出大小，然后除以该Job的Map数量即一个Map任务的可能输出大小（至于这些值的跟新基本都是通过心跳通信）。如果TT上可使用的资源小于该Job一个Map任务可能的输出大小则不能在该TT上执行Map任务。</p>
+<h4 id="JobInProgress-findNewMapTask()：-2"><strong>JobInProgress.findNewMapTask()：</strong></h4><p>接下来就是该方法的关键部分，首先看下作者们对该部分的一个注释：<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">// When scheduling a map task:</span><br><span class="line">    //  0) Schedule a failed task without considering locality</span><br><span class="line">    //  1) Schedule non-running tasks</span><br><span class="line">    //  2) Schedule speculative tasks</span><br><span class="line">    //  3) Schedule tasks with no location information</span><br><span class="line"></span><br><span class="line">    // First a look up is done on the non-running <span class="operator"><span class="keyword">cache</span> <span class="keyword">and</span> <span class="keyword">on</span> a miss, a look </span><br><span class="line">    // up <span class="keyword">is</span> done <span class="keyword">on</span> the running <span class="keyword">cache</span>. The <span class="keyword">order</span> <span class="keyword">for</span> lookup <span class="keyword">within</span> the <span class="keyword">cache</span>:</span><br><span class="line">    //   <span class="number">1.</span> <span class="keyword">from</span> <span class="keyword">local</span> node <span class="keyword">to</span> root [bottom up]</span><br><span class="line">    //   <span class="number">2.</span> breadth wise <span class="keyword">for</span> all the <span class="keyword">parent</span> nodes <span class="keyword">at</span> <span class="keyword">max</span> <span class="keyword">level</span></span><br><span class="line">    // We fall <span class="keyword">to</span> linear <span class="keyword">scan</span> <span class="keyword">of</span> the <span class="keyword">list</span> ((<span class="number">3</span>) above) <span class="keyword">if</span> we have misses <span class="keyword">in</span> the </span><br><span class="line">    // above caches</span></span><br></pre></td></tr></table></figure></p>
+<p>第一部分主要是说明选择任务的顺序：失败的Task（不去考虑本地性），未运行的任务，推测执行的任务，输入文件没有对应的Location信息的任务。第二部分是说明在选择每个任务时对集群上所有节点的遍历方式：自下往上一次遍历以及从根节点横向遍历。<br>下面来看第一中选择方式：从失败的任务中选择。<br> <figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 0) Schedule the task with the most failures, unless failure was on this</span></span><br><span class="line">   <span class="comment">//    machine</span></span><br><span class="line">   tip = findTaskFromList(failedMaps, tts, numUniqueHosts, <span class="keyword">false</span>);</span><br><span class="line">   <span class="keyword">if</span> (tip != <span class="keyword">null</span>) &#123;</span><br><span class="line">     <span class="comment">// Add to the running list</span></span><br><span class="line">     scheduleMap(tip);</span><br><span class="line">     LOG.info(<span class="string">"Choosing a failed task "</span> + tip.getTIPId());</span><br><span class="line">     <span class="function"><span class="keyword">return</span> tip.<span class="title">getIdWithinJob</span><span class="params">()</span></span>;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<p>failedMaps中存放着所有的失败任务信息，直接调用findTaskFromList()方法从failedMaps中选择一个任务。下面三种方式也都是调用该方法，不同的只是传入的List不同，所以看下findTaskFromList()方法。</p>
+<h4 id="JobInProgress-findTaskFromList()："><strong>JobInProgress.findTaskFromList()：</strong></h4><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">synchronized</span> <span class="function">TaskInProgress <span class="title">findTaskFromList</span><span class="params">(</span><br><span class="line">      Collection&lt;TaskInProgress&gt; tips, TaskTrackerStatus ttStatus,</span><br><span class="line">      <span class="keyword">int</span> numUniqueHosts,</span><br><span class="line">      <span class="keyword">boolean</span> removeFailedTip)</span> </span>&#123;</span><br><span class="line">    Iterator&lt;TaskInProgress&gt; iter = tips.iterator();</span><br><span class="line">    <span class="keyword">while</span> (iter.hasNext()) &#123;</span><br><span class="line">      TaskInProgress tip = iter.next();</span><br><span class="line"></span><br><span class="line">      <span class="comment">// Select a tip if</span></span><br><span class="line">      <span class="comment">//   1. runnable   : still needs to be run and is not completed</span></span><br><span class="line">      <span class="comment">//   2. ~running   : no other node is running it</span></span><br><span class="line">      <span class="comment">//   3. earlier attempt failed : has not failed on this host</span></span><br><span class="line">      <span class="comment">//                               and has failed on all the other hosts</span></span><br><span class="line">      <span class="comment">// A TIP is removed from the list if </span></span><br><span class="line">      <span class="comment">// (1) this tip is scheduled</span></span><br><span class="line">      <span class="comment">// (2) if the passed list is a level 0 (host) cache</span></span><br><span class="line">      <span class="comment">// (3) when the TIP is non-schedulable (running, killed, complete)</span></span><br><span class="line">      <span class="keyword">if</span> (tip.isRunnable() &amp;&amp; !tip.isRunning()) &#123;</span><br><span class="line">        <span class="comment">// check if the tip has failed on this host</span></span><br><span class="line">        <span class="keyword">if</span> (!tip.hasFailedOnMachine(ttStatus.getHost()) || </span><br><span class="line">             tip.getNumberOfFailedMachines() &gt;= numUniqueHosts) &#123;</span><br><span class="line">          <span class="comment">// check if the tip has failed on all the nodes</span></span><br><span class="line">          iter.remove();</span><br><span class="line">          <span class="keyword">return</span> tip;</span><br><span class="line">        &#125; <span class="function"><span class="keyword">else</span> <span class="title">if</span> <span class="params">(removeFailedTip)</span> </span>&#123; </span><br><span class="line">          <span class="comment">// the case where we want to remove a failed tip from the host cache</span></span><br><span class="line">          <span class="comment">// point#3 in the TIP removal logic above</span></span><br><span class="line">          iter.remove();</span><br><span class="line">        &#125;</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// see point#3 in the comment above for TIP removal logic</span></span><br><span class="line">        iter.remove();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>该方法的作用是从一个TaskInProgress列表中选择一个适合在TT上执行的Task》从代码中的注释可以看出选择的前提是Task是可运行的（!failed &amp;&amp; (completes == 0)，即未失败也未完成），且非正在运行中（no other node is running it），且该Task没有在该TT所在的HOST上有过失败任务（一个Task会存在多个TaskAttempt任务，TaskAttempt听名字就可以知道是一个Task的多次尝试执行，失败了就再来一次，再失败再来，直到超出一个限度才会标志这个Task失败），或者该Task的失败次数大于等于集群中所有的HOST数量（表示该Task在所有HOST都失败过），满足上面三个条件的Task即可返回。后面就是判断是否将该Task从队列中移除，注释给出了三种会移除的情况：该Task已被调度，即被选中；选择的Task的本地化等级是NODE；该Task处于不可运行状态（运行中，或者完成，或者被kill掉了）。了解了该方法的原理则后面的内容就简单了。下面回到JobInProgress.findNewMapTask()方法。</p>
+<h4 id="JobInProgress-findNewMapTask()：-3"><strong>JobInProgress.findNewMapTask()：</strong></h4><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">tip = findTaskFromList(failedMaps, tts, numUniqueHosts, <span class="keyword">false</span>);</span><br><span class="line">    <span class="keyword">if</span> (tip != <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="comment">// Add to the running list</span></span><br><span class="line">      scheduleMap(tip);</span><br><span class="line">      LOG.info(<span class="string">"Choosing a failed task "</span> + tip.getTIPId());</span><br><span class="line">      <span class="function"><span class="keyword">return</span> tip.<span class="title">getIdWithinJob</span><span class="params">()</span></span>;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>依旧看这段代码，当findTaskFromList()方法成功返回一个Task后，需要将该Task添加到运行中的队列去，<br><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> scheduleMap(TaskInProgress tip) &#123;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (runningMapCache == <span class="keyword">null</span>) &#123;</span><br><span class="line">      LOG.warn(<span class="string">"Running cache for maps is missing!! "</span> </span><br><span class="line">               + <span class="string">"Job details are missing."</span>);</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">String</span>[] splitLocations = tip.getSplitLocations();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Add the TIP to the list of non-local running TIPs</span></span><br><span class="line">    <span class="keyword">if</span> (splitLocations == <span class="keyword">null</span> || splitLocations.length == <span class="number">0</span>) &#123;</span><br><span class="line">      nonLocalRunningMaps.<span class="built_in">add</span>(tip);</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">String</span> host: splitLocations) &#123;</span><br><span class="line">      Node node = jobtracker.getNode(host);</span><br><span class="line"></span><br><span class="line">      <span class="keyword">for</span> (<span class="built_in">int</span> j = <span class="number">0</span>; j &lt; maxLevel; ++j) &#123;</span><br><span class="line">        Set&lt;TaskInProgress&gt; hostMaps = runningMapCache.<span class="built_in">get</span>(node);</span><br><span class="line">        <span class="keyword">if</span> (hostMaps == <span class="keyword">null</span>) &#123;</span><br><span class="line">          <span class="comment">// create a cache if needed</span></span><br><span class="line">          hostMaps = <span class="keyword">new</span> LinkedHashSet&lt;TaskInProgress&gt;();</span><br><span class="line">          runningMapCache.put(node, hostMaps);</span><br><span class="line">        &#125;</span><br><span class="line">        hostMaps.<span class="built_in">add</span>(tip);</span><br><span class="line">        node = node.getParent();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>该方法主要将被选中的Task（这里任务都是Map任务）添加到Job中保存运行中任务信息的队列中（nonLocalRunningMaps和runningMapCache），nonLocalRunningMaps保存那些输入文件没有Location信息的Task，而runningMapCache则保存输入文件存在Location的Task。runningMapCache是一个Map，key是Node，而value是一个TaskInProgress对象的集合，说明该Map保持的是一个Node–&gt;其上运行的所有Task的一个映射关系，这里的Node是拥有该Task的输入文件块的所有节点。当有一个Task需要添加到runningMapCache时不仅需要为其建立到Task的输入文件所在的所有Node到该Task的关系，而且分别为其建立输入文件所在Node的父节点到该Task的关系，循环知道遍历的深度等于maxLevel。这样做的好处是可以很方便的知道一个Node上运行的所有Task信息，包括其子节点上运行的Task。继续返回到JobInProgress.findNewMapTask()方法。<br>接下来就是简单地返回该Task在maps[]数组中的索引值。到这里第一种选择Task的方式完成了，下面看看后面几种方式。</p>
+<h4 id="JobInProgress-findNewMapTask()：-4"><strong>JobInProgress.findNewMapTask()：</strong></h4><p><code>Node node = jobtracker.getNode(tts.getHost());</code><br>获取该TT所在的HOST对应的Node对象。<br><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. check from local node to the root [bottom up cache lookup]</span></span><br><span class="line">    <span class="comment">//    i.e if the cache is available and the host has been resolved</span></span><br><span class="line">    <span class="comment">//    (node!=null)</span></span><br><span class="line">    <span class="keyword">if</span> (node != <span class="keyword">null</span>) &#123;</span><br><span class="line">      Node <span class="variable">key</span> = node;</span><br><span class="line">      <span class="built_in">int</span> level = <span class="number">0</span>;</span><br><span class="line">      <span class="comment">// maxCacheLevel might be greater than this.maxLevel if findNewMapTask is</span></span><br><span class="line">      <span class="comment">// called to schedule any task (local, rack-local, off-switch or</span></span><br><span class="line">      <span class="comment">// speculative) tasks or it might be NON_LOCAL_CACHE_LEVEL (i.e. -1) if</span></span><br><span class="line">      <span class="comment">// findNewMapTask is (i.e. -1) if findNewMapTask is to only schedule</span></span><br><span class="line">      <span class="comment">// off-switch/speculative tasks</span></span><br><span class="line">      <span class="built_in">int</span> maxLevelToSchedule = Math.<span class="built_in">min</span>(maxCacheLevel, maxLevel);</span><br><span class="line">      <span class="keyword">for</span> (level = <span class="number">0</span>;level &lt; maxLevelToSchedule; ++level) &#123;</span><br><span class="line">        List &lt;TaskInProgress&gt; cacheForLevel = nonRunningMapCache.<span class="built_in">get</span>(<span class="variable">key</span>);</span><br><span class="line">        <span class="keyword">if</span> (cacheForLevel != <span class="keyword">null</span>) &#123;</span><br><span class="line">          tip = findTaskFromList(cacheForLevel, tts, </span><br><span class="line">              numUniqueHosts,level == <span class="number">0</span>);</span><br><span class="line">          <span class="keyword">if</span> (tip != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="comment">// Add to running cache</span></span><br><span class="line">            scheduleMap(tip);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// remove the cache if its empty</span></span><br><span class="line">            <span class="keyword">if</span> (cacheForLevel.<span class="built_in">size</span>() == <span class="number">0</span>) &#123;</span><br><span class="line">              nonRunningMapCache.remove(<span class="variable">key</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> tip.getIdWithinJob();</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="variable">key</span> = <span class="variable">key</span>.getParent();</span><br><span class="line">      &#125;</span><br><span class="line">      </span><br><span class="line">      <span class="comment">// Check if we need to only schedule a local task (node-local/rack-local)</span></span><br><span class="line">      <span class="keyword">if</span> (level == maxCacheLevel) &#123;</span><br><span class="line">        <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>这一部分是从未运行的Map任务中选择一个可执行的Map任务。首先计算maxLevelToSchedule，该值是maxCacheLevel和maxLevel的较小的值，注释给出的解释是maxCacheLevel（调用该方法传入的参数值）可能会比该Job的maxLevel属性值大，所以选择两者之中最小的值作为选择的最大本地等级值（maxLevelToSchedule）。接下来就是自下往上寻找满足条件的Map任务，知道遍历深度达到maxLevelToSchedule。方法较简单，只是从nonRunningMapCache中选择出对应的Node上所有的未执行的Map任务集合，然后调用同上面一样的findTaskFromList()方法从TaskInProgress集合中选择一个适合在该TT上执行的Map任务，选择一个Map任务之后还是一样的步骤调用scheduleMap()方法将其添加到运行中的队列中。当循环结束之后，如果未选择出一个Map任务，则到下面判断如果level==maxCacheLevel，这里level是循环结束时的值，即level==maxLevelToSchedule，而maxLevelToSchedule==Math.min(maxCacheLevel, maxLevel)，那么如果要使level==maxCacheLevel，则maxCacheLevel必须是小于等于maxLevel，从前面三个方法内部调用obtainNewMapTaskCommon()方法时传的maxCacheLevel参数值可以看出，obtainNewNodeLocalMapTask()传的值是1，obtainNewNodeOrRackLocalMapTask()传的值是maxLevel，而obtainNewMapTask传的值是anyCacheLevel（=maxLevel+1），所以这里满足level==maxCacheLevel条件的是obtainNewNodeLocalMapTask和obtainNewNodeOrRackLocalMapTask两个方法，即选择Node级别和TackNode级别的Map任务。而对于这两个任务是不需要进行下面两种方式选择Map任务的：推测执行任务和NoLocal任务，因为这两个方式选择的任务都不满足Node级别和TackNode级别，而是Any级别的，即也就只有obtainNewMapTask()这一个方法（其实还有一个方法obtainNewNonLocalMapTask()，传的maxCacheLevel参数值是NON_LOCAL_CACHE_LEVEL，即-1，这个方法会跳过注视中的1）方式）。下面继续看如何从根节点横向选择Map任务。<br><figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//2. Search breadth-wise across parents at max level for non-running </span></span><br><span class="line">    <span class="comment">//   TIP if</span></span><br><span class="line">    <span class="comment">//     - cache exists and there is a cache miss </span></span><br><span class="line">    <span class="comment">//     - node information for the tracker is missing (tracker's topology</span></span><br><span class="line">    <span class="comment">//       info not obtained yet)</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// collection of node at max level in the cache structure</span></span><br><span class="line">    Collection&lt;Node&gt; nodesAtMaxLevel = jobtracker<span class="built_in">.</span>getNodesAtMaxLevel();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// get the node parent at max level</span></span><br><span class="line">    Node nodeParentAtMaxLevel = </span><br><span class="line">      (node == <span class="built_in">null</span>) ? <span class="built_in">null</span> : JobTracker<span class="built_in">.</span>getParentNode(node, maxLevel - <span class="number">1</span>);</span><br><span class="line">    </span><br><span class="line">    f<span class="subst">or</span> (Node <span class="keyword">parent</span> : nodesAtMaxLevel) &#123;</span><br><span class="line"></span><br><span class="line">      <span class="comment">// skip the parent that has already been scanned</span></span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">parent</span> == nodeParentAtMaxLevel) &#123;</span><br><span class="line">        continue;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="built_in">List</span>&lt;TaskInProgress&gt; <span class="keyword">cache</span> = nonRunningMapCache<span class="built_in">.</span>get(<span class="keyword">parent</span>);</span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">cache</span> != <span class="built_in">null</span>) &#123;</span><br><span class="line">        tip = findTaskFromList(<span class="keyword">cache</span>, tts, numUniqueHosts, <span class="literal">false</span>);</span><br><span class="line">        <span class="keyword">if</span> (tip != <span class="built_in">null</span>) &#123;</span><br><span class="line">          <span class="comment">// Add to the running cache</span></span><br><span class="line">          scheduleMap(tip);</span><br><span class="line"></span><br><span class="line">          <span class="comment">// remove the cache if empty</span></span><br><span class="line">          <span class="keyword">if</span> (<span class="keyword">cache</span><span class="built_in">.</span>size() == <span class="number">0</span>) &#123;</span><br><span class="line">            nonRunningMapCache<span class="built_in">.</span>remove(<span class="keyword">parent</span>);</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">LOG</span><span class="built_in">.</span>info(<span class="string">"Choosing a non-local task "</span> + tip<span class="built_in">.</span>getTIPId());</span><br><span class="line">          <span class="keyword">return</span> tip<span class="built_in">.</span>getIdWithinJob();</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>这一种方式直接从根节点集合中选择任务，JT中nodesAtMaxLevel集合保存着所有没有父节点的Node信息，即在集群中处于最高级等的Node，下面就是直接遍历nodesAtMaxLevel中所有的节点选择满足条件的Map任务。同上一步也是从nonRunningMapCache集合中选择出对应Node上所有的未运行的Map任务，该方法基本同上一步一样，只是选择的Node不同。上一种方式是从TT所在的Node开始，自下而上选择Map任务，而此处则直接选择最高等级的Node上的Map任务。显然这一步不考虑任何的Map任务本地化因素。下面再看如何选择No-Local任务。<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 3. Search non-local tips for a new task</span></span><br><span class="line">    tip = findTaskFromList(nonLocalMaps, tts, numUniqueHosts, <span class="keyword">false</span>);</span><br><span class="line">    <span class="keyword">if</span> (tip != <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="comment">// Add to the running list</span></span><br><span class="line">      scheduleMap(tip);</span><br><span class="line"></span><br><span class="line">      LOG.info(<span class="string">"Choosing a non-local task "</span> + tip.getTIPId());</span><br><span class="line">      <span class="function"><span class="keyword">return</span> tip.<span class="title">getIdWithinJob</span><span class="params">()</span></span>;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>这一种方式是从nonLocalMaps中选择一个Map任务，nonLocalMaps保存的任务是那些在任务初始化时未找到输入文件所在的Location信息的任务，这些任务是无法放到nonRunningMapCache中的。<br>以上三种方式其实都是一种方式——对应注释上的1）——选择未运行的任务，只是这里分成三种不同的选择方式：1）从TT所在节点自下而上选择满足Node和RackNode本地化要求的任务，2）直接从所有最高等级的Node上选择任务，3）选择那些输入文件没有Location信息的No-Local任务。下面接着看注释中提到的第三种选择方式——选择推测执行任务。</p>
+<h4 id="JobInProgress-findNewMapTask()：-5"><strong>JobInProgress.findNewMapTask()：</strong></h4><p>这一中方式同上面一种方式一样，也分为三个不同的选择方式（同上）。当然，这一中方法发生的条件是hasSpeculativeMaps==true，即该Job拥有推测执行任务，或者说可以启用推测执行任务，该参数由mapred.map.tasks.speculative.execution参数值决定，默认是true。下面分别看看三种方式。<br><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. Check bottom up for speculative tasks from the running cache</span></span><br><span class="line">      <span class="keyword">if</span> (node != <span class="keyword">null</span>) &#123;</span><br><span class="line">        Node <span class="variable">key</span> = node;</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> level = <span class="number">0</span>; level &lt; maxLevel; ++level) &#123;</span><br><span class="line">          Set&lt;TaskInProgress&gt; cacheForLevel = runningMapCache.<span class="built_in">get</span>(<span class="variable">key</span>);</span><br><span class="line">          <span class="keyword">if</span> (cacheForLevel != <span class="keyword">null</span>) &#123;</span><br><span class="line">            tip = findSpeculativeTask(cacheForLevel, tts, </span><br><span class="line">                                      avgProgress, currentTime, level == <span class="number">0</span>);</span><br><span class="line">            <span class="keyword">if</span> (tip != <span class="keyword">null</span>) &#123;</span><br><span class="line">              <span class="keyword">if</span> (cacheForLevel.<span class="built_in">size</span>() == <span class="number">0</span>) &#123;</span><br><span class="line">                runningMapCache.remove(<span class="variable">key</span>);</span><br><span class="line">              &#125;</span><br><span class="line">              <span class="keyword">return</span> tip.getIdWithinJob();</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="variable">key</span> = <span class="variable">key</span>.getParent();</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br></pre></td></tr></table></figure></p>
+<p>第一种方式同上一种方式一样，依然是选择本地化Map任务（推测任务），不同的是这里是从runningMapCache中选择出Node上所有正在运行中的Task集合，从中选择一个Map任务对其启动推测执行任务。下面看看findSpeculativeTask()方法。</p>
+<h4 id="JobInProgress-findSpeculativeTask()："><strong>JobInProgress.findSpeculativeTask()：</strong></h4><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="keyword">synchronized</span> <span class="function">TaskInProgress <span class="title">findSpeculativeTask</span><span class="params">(</span><br><span class="line">      Collection&lt;TaskInProgress&gt; list, TaskTrackerStatus ttStatus,</span><br><span class="line">      <span class="keyword">double</span> avgProgress, <span class="keyword">long</span> currentTime, <span class="keyword">boolean</span> shouldRemove)</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">    Iterator&lt;TaskInProgress&gt; iter = list.iterator();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (iter.hasNext()) &#123;</span><br><span class="line">      TaskInProgress tip = iter.next();</span><br><span class="line">      <span class="comment">// should never be true! (since we delete completed/failed tasks)</span></span><br><span class="line">      <span class="keyword">if</span> (!tip.isRunning() || !tip.isRunnable()) &#123;</span><br><span class="line">        iter.remove();</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (tip.hasSpeculativeTask(currentTime, avgProgress)) &#123;</span><br><span class="line">        <span class="comment">// Check if this tip can be removed from the list.</span></span><br><span class="line">        <span class="comment">// If the list is shared then we should not remove.</span></span><br><span class="line">        <span class="keyword">if</span>(shouldRemove)&#123;</span><br><span class="line">          iter.remove();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (!tip.hasRunOnMachine(ttStatus.getHost(),</span><br><span class="line">                               ttStatus.getTrackerName())) &#123;</span><br><span class="line">          <span class="keyword">return</span> tip;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (shouldRemove &amp;&amp; tip.hasRunOnMachine(ttStatus.getHost(),</span><br><span class="line">                                         ttStatus.getTrackerName())) &#123;</span><br><span class="line">          iter.remove();</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>选择依据是!tip.isRunning() || !tip.isRunnable()，即该Task处于运行中，且未完成，才能对此启动推测执行任务。<br>这里简单介绍下推测执行任务，推测执行任务是Hadoop的一种容错机制，即如果一个Task运行的时间同其他同类的Task所需的时间长很多（且还未完成）时，则根据实际情况考虑启动一个同样的Task，这时集群中就有两个同样的任务同时运行，哪个先完成则提交哪个Task，而kill掉另外一个Task。推测执行任务虽然能够能够更好的保证一个Task在正常时间内完成，但是代价是需要消耗更多的资源。<br>下面是调用hasSpeculativeTask()方法判断该Task是否可以启动一个推测执行任务。<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">boolean</span> <span class="title">hasSpeculativeTask</span><span class="params">(<span class="keyword">long</span> currentTime, <span class="keyword">double</span> averageProgress)</span> </span>&#123;</span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="comment">// REMIND - mjc - these constants should be examined</span></span><br><span class="line">    <span class="comment">// in more depth eventually...</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">      </span><br><span class="line">    <span class="keyword">if</span> (!skipping &amp;&amp; activeTasks.size() &lt;= MAX_TASK_EXECS &amp;&amp;</span><br><span class="line">        (averageProgress - progress &gt;= SPECULATIVE_GAP) &amp;&amp;</span><br><span class="line">        (currentTime - startTime &gt;= SPECULATIVE_LAG) </span><br><span class="line">        &amp;&amp; completes == <span class="number">0</span> &amp;&amp; !isOnlyCommitPending()) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>判断条件有点多，主要是：1）skipping==false，即未开启跳过模式；2）该Task正在运行的任务数是否大于MAX_TASK_EXECS（1），大于MAX_TASK_EXECS则表示已经有一个推测执行的任务在运行了；3）averageProgress（Map任务或者Reduce任务完成的进度）是否大于SPECULATIVE_GAP（20%）；4）任务运行的时间是否已超过SPECULATIVE_LAG（60*1000）；5）Task的完成数==0；6）Task是否处于等待提交状态。<br>最后调用TaskInProgress的hasRunOnMachine()方法判断该Task是否在该TT上有正在运行中的TaskAttempt，且在该TT上是否有失败过。到这里findSpeculativeTask()方法就完成了。该方法首先根据Task的运行状态判断是否满足推测执行的条件，然后根据Task的一系列属性判断是否开启推测执行，最后根据该Task在该TT是否有正在运行的TaskAttempt以及是否有过失败记录最终决定是否在该TT上运行该Task的推测执行任务。继续回到JobInProgress.findNewMapTask()。</p>
+<h4 id="JobInProgress-findNewMapTask()：-6"><strong>JobInProgress.findNewMapTask()：</strong></h4><figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 2. Check breadth-wise for speculative tasks</span></span><br><span class="line">      </span><br><span class="line">      f<span class="subst">or</span> (Node <span class="keyword">parent</span> : nodesAtMaxLevel) &#123;</span><br><span class="line">        <span class="comment">// ignore the parent which is already scanned</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">parent</span> == nodeParentAtMaxLevel) &#123;</span><br><span class="line">          continue;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">Set</span>&lt;TaskInProgress&gt; <span class="keyword">cache</span> = runningMapCache<span class="built_in">.</span>get(<span class="keyword">parent</span>);</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">cache</span> != <span class="built_in">null</span>) &#123;</span><br><span class="line">          tip = findSpeculativeTask(<span class="keyword">cache</span>, tts, avgProgress, </span><br><span class="line">                                    currentTime, <span class="literal">false</span>);</span><br><span class="line">          <span class="keyword">if</span> (tip != <span class="built_in">null</span>) &#123;</span><br><span class="line">            <span class="comment">// remove empty cache entries</span></span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">cache</span><span class="built_in">.</span>size() == <span class="number">0</span>) &#123;</span><br><span class="line">              runningMapCache<span class="built_in">.</span>remove(<span class="keyword">parent</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">LOG</span><span class="built_in">.</span>info(<span class="string">"Choosing a non-local task "</span> + tip<span class="built_in">.</span>getTIPId() </span><br><span class="line">                     + <span class="string">" for speculation"</span>);</span><br><span class="line">            <span class="keyword">return</span> tip<span class="built_in">.</span>getIdWithinJob();</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="comment">// 3. Check non-local tips for speculation</span></span><br><span class="line">      tip = findSpeculativeTask(nonLocalRunningMaps, tts, avgProgress, </span><br><span class="line">                                currentTime, <span class="literal">false</span>);</span><br><span class="line">      <span class="keyword">if</span> (tip != <span class="built_in">null</span>) &#123;</span><br><span class="line">        <span class="keyword">LOG</span><span class="built_in">.</span>info(<span class="string">"Choosing a non-local task "</span> + tip<span class="built_in">.</span>getTIPId() </span><br><span class="line">                 + <span class="string">" for speculation"</span>);</span><br><span class="line">        <span class="keyword">return</span> tip<span class="built_in">.</span>getIdWithinJob();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>这里的两种方式其实跟上面一样，无需过多的解释。<br>到这里findNewMapTask()就完成了，下面回到obtainNewMapTaskCommon()方法。</p>
+<h4 id="JbInProgress-obtainNewMapTaskCommon()："><strong>JbInProgress.obtainNewMapTaskCommon()：</strong></h4><figure class="highlight nimrod"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> target = findNewMapTask(tts, clusterSize, numUniqueHosts, maxCacheLevel, </span><br><span class="line">                                status.mapProgress());</span><br><span class="line">    <span class="keyword">if</span> (target == -<span class="number">1</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> null;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">Task</span> <span class="literal">result</span> = maps[target].getTaskToRun(tts.getTrackerName());</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">result</span> != null) &#123;</span><br><span class="line">      addRunningTaskToTIP(maps[target], <span class="literal">result</span>.getTaskID(), tts, <span class="literal">true</span>);</span><br><span class="line">      // <span class="type">DO</span> <span class="type">NOT</span> reset <span class="keyword">for</span> off-switch!</span><br><span class="line">      <span class="keyword">if</span> (maxCacheLevel != <span class="type">NON_LOCAL_CACHE_LEVEL</span>) &#123;</span><br><span class="line">        resetSchedulingOpportunities();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">result</span>;</span><br></pre></td></tr></table></figure>
+<p>当调用findNewMapTask()方法得到一个maps[]数组的索引之后，就可以从maps[]数组中获取对应的Map任务。这里调用了一个TaskInProgress的getTaskToRun()方法，为Task生成一个唯一的AttemptId，然后调用addRunningTask()方法创建一个Task对象，方法内部还是比较简单的，主要是new一个Task对象，并为其创建一个TaskStatus对象，以及初始化一些参数值。<br>如果Task！=null，则调用addRunningTaskToTIP()方法处理一些记录值，如记录Task的locality值，以及是否第一个TaskAttempt对象，等等。<br>到此obtainNewMapTaskCommon()方法就完成了，则obtainNewNodeLocalMapTask()，obtainNewNodeOrRackLocalMapTask()，obtainNewMapTask()三个方法也就都完成了。而obtainNewReduceTask()该方法基本和前面三个方法大同小异，也就不需要过多的解释，不同的只是Reduce任务不需要考虑本地性，选择相对更简单些。<br>以上就是一个Job如何选择一个Map/Reduce任务来执行的过程，总体上来看对于Map任务需要考虑Map任务的本地性，以提高执行效率。而任务的选择顺序依次是：失败的任务&gt;未运行的任务&gt;推测执行任务。而对于Map任务第二三种任务（未运行的任务&gt;推测执行任务）又分成从TT所在的Node自下而上选择、从根节点横向选择、选择No-Local任务三种不同的方式。</p>
+<hr>
+<p>OK，以上如有错误之处还望指出，谢谢！</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/FairScheduler/" rel="tag">#FairScheduler</a>
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/MapReduce/" rel="tag">#MapReduce</a>
+          
+            <a href="/tags/任务调度/" rel="tag">#任务调度</a>
+          
+            <a href="/tags/源码/" rel="tag">#源码</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/10/19/正则学习二三事/" rel="prev">正则学习二三事</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2013/12/11/FairScheduler的任务调度机制——assignTasks/" rel="next">FairScheduler的任务调度机制——assignTasks</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/"
+     data-title="FairScheduler的任务调度机制——assignTasks（续）"
+     data-content=""
+     data-url="http://vickyqi.com/2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/"
+                       data-title="FairScheduler的任务调度机制——assignTasks（续）" data-url="http://vickyqi.com/2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/images/Vicky.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">一个不甘做屌丝的程序员</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">20</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">26</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#JobInProgress-obtainNewMapTaskCommon()："><span class="nav-number">1.</span> <span class="nav-text">JobInProgress.obtainNewMapTaskCommon()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobInProgress-findNewMapTask()："><span class="nav-number">2.</span> <span class="nav-text">JobInProgress.findNewMapTask()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobInProgress-shouldRunOnTaskTracker()："><span class="nav-number">3.</span> <span class="nav-text">JobInProgress.shouldRunOnTaskTracker()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobInProgress-findNewMapTask()：-1"><span class="nav-number">4.</span> <span class="nav-text">JobInProgress.findNewMapTask()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobInProgress-findNewMapTask()：-2"><span class="nav-number">5.</span> <span class="nav-text">JobInProgress.findNewMapTask()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobInProgress-findTaskFromList()："><span class="nav-number">6.</span> <span class="nav-text">JobInProgress.findTaskFromList()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobInProgress-findNewMapTask()：-3"><span class="nav-number">7.</span> <span class="nav-text">JobInProgress.findNewMapTask()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobInProgress-findNewMapTask()：-4"><span class="nav-number">8.</span> <span class="nav-text">JobInProgress.findNewMapTask()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobInProgress-findNewMapTask()：-5"><span class="nav-number">9.</span> <span class="nav-text">JobInProgress.findNewMapTask()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobInProgress-findSpeculativeTask()："><span class="nav-number">10.</span> <span class="nav-text">JobInProgress.findSpeculativeTask()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JobInProgress-findNewMapTask()：-6"><span class="nav-number">11.</span> <span class="nav-text">JobInProgress.findNewMapTask()：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#JbInProgress-obtainNewMapTaskCommon()："><span class="nav-number">12.</span> <span class="nav-text">JbInProgress.obtainNewMapTaskCommon()：</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,857 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="一个不甘做屌丝的程序员" />
+
+
+
+  <meta name="keywords" content="ConcurrentLinkedQueue,JDK,Java,并发,源码," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="ConcurrentLinkedQueue是一个基于链接节点的无界线程安全队列，它采用先进先出的规则对节点进行排序，当我们添加一个元素的时候，它会添加到队列的尾部，当我们获取一个元素时，它会返回队列头部的元素。它采用了“wait－free”算法来实现，该算法在Michael &amp;amp; Scott算法上进行了一些修改, Michael &amp;amp; Scott算法的详细信息可以参见参考资料一。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JDK并发工具类源码学习系列——ConcurrentLinkedQueue">
+<meta property="og:url" content="http://vickyqi.com/2015/10/29/JDK并发工具类源码学习系列——ConcurrentLinkedQueue/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="ConcurrentLinkedQueue是一个基于链接节点的无界线程安全队列，它采用先进先出的规则对节点进行排序，当我们添加一个元素的时候，它会添加到队列的尾部，当我们获取一个元素时，它会返回队列头部的元素。它采用了“wait－free”算法来实现，该算法在Michael &amp;amp; Scott算法上进行了一些修改, Michael &amp;amp; Scott算法的详细信息可以参见参考资料一。">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blogConcurrentLinkedQueue%E7%BB%93%E6%9E%84%E5%9B%BE.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/ConcurrentLinkedQueue%E5%85%A5%E9%98%9F%E6%B5%81%E7%A8%8B%E5%9B%BE.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/ConcurrentLinkedQueue%E9%98%9F%E5%88%97%E6%97%B6%E5%BA%8F%E5%9B%BE.png">
+<meta property="og:updated_time" content="2015-10-29T13:59:30.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JDK并发工具类源码学习系列——ConcurrentLinkedQueue">
+<meta name="twitter:description" content="ConcurrentLinkedQueue是一个基于链接节点的无界线程安全队列，它采用先进先出的规则对节点进行排序，当我们添加一个元素的时候，它会添加到队列的尾部，当我们获取一个元素时，它会返回队列头部的元素。它采用了“wait－free”算法来实现，该算法在Michael &amp;amp; Scott算法上进行了一些修改, Michael &amp;amp; Scott算法的详细信息可以参见参考资料一。">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> JDK并发工具类源码学习系列——ConcurrentLinkedQueue - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              JDK并发工具类源码学习系列——ConcurrentLinkedQueue
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-10-29T21:51:00+08:00" content="2015-10-29">
+            2015-10-29
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
+
+              
+              
+                ， 
+              
+
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/JDK源码学习/" itemprop="url" rel="index"><span itemprop="name">JDK源码学习</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/10/29/JDK并发工具类源码学习系列——ConcurrentLinkedQueue/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/10/29/JDK并发工具类源码学习系列——ConcurrentLinkedQueue/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>ConcurrentLinkedQueue是一个基于链接节点的无界线程安全队列，它采用先进先出的规则对节点进行排序，当我们添加一个元素的时候，它会添加到队列的尾部，当我们获取一个元素时，它会返回队列头部的元素。它采用了“wait－free”算法来实现，该算法在Michael &amp; Scott算法上进行了一些修改, Michael &amp; Scott算法的详细信息可以参见<a href="http://www.cs.rochester.edu/~scott/papers/1996_PODC_queues.pdf" target="_blank" rel="external">参考资料一</a>。<br><a id="more"></a><br>上一篇文章介绍了JDK java.util.concurrent包下很重要的一个类：<a href="http://vickyqi.com/2015/10/26/JDK%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94ConcurrentHashMap/">ConcurrentHashMap</a>，今天来看下另一个重要的类——ConcurrentLinkedQueue。<br>在多线程编程环境下并发安全队列是不可或缺的一个重要工具类，为了实现并发安全可以有两种方式：一种是阻塞式的，例如：LinkedBlockingQueue；另一种即是我们将要探讨的非阻塞式，例如：ConcurrentLinkedQueue。相比较于阻塞式，非阻塞的最显著的优点就是性能，非阻塞式算法使用CAS来原子性的更新数据，避免了加锁的时间，同时也保证了数据的一致性。</p>
+<h4 id="简单介绍"><strong>简单介绍</strong></h4><p>ConcurrentLinkedQueue是一个基于链接节点的无界线程安全队列，它采用先进先出的规则对节点进行排序，当我们添加一个元素的时候，它会添加到队列的尾部，当我们获取一个元素时，它会返回队列头部的元素。它采用了“wait－free”算法来实现，该算法在Michael &amp; Scott算法上进行了一些修改, Michael &amp; Scott算法的详细信息可以参见<a href="http://www.cs.rochester.edu/~scott/papers/1996_PODC_queues.pdf" target="_blank" rel="external">参考资料一</a>。</p>
+<h4 id="结构预览"><strong>结构预览</strong></h4><p>首先看看结构图：</p>
+<p><strong>图1：ConcurrentLinkedQueue结构图：</strong><br><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blogConcurrentLinkedQueue%E7%BB%93%E6%9E%84%E5%9B%BE.png" alt="ConcurrentLinkedQueue结构图"><br>从图中可以看到ConcurrentLinkedQueue中包含两个内部类：Node&lt;E&gt;和Itr。Node&lt;E&gt;用来表示ConcurrentLinkedQueue链表中的一个节点，通过Node&lt;E&gt;的next字段指向下一个节点，从而形成一个链表结构；Itr实现Iterator&lt;E&gt;接口，用来遍历ConcurrentLinkedQueue。ConcurrentLinkedQueue中的方法不多，其中最主要的两个方法是：offer(E)和poll()，分别实现队列的两个重要的操作：入队和出队。</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>offer(E)</td>
+<td>插入一个元素到队列尾部</td>
+</tr>
+<tr>
+<td>poll()</td>
+<td>从队列头部取出一个元素</td>
+</tr>
+<tr>
+<td>add(E)</td>
+<td>同offer(E)</td>
+</tr>
+<tr>
+<td>peek()</td>
+<td>获取头部元素，但不删除</td>
+</tr>
+<tr>
+<td>isEmpty()</td>
+<td>判断队列是否为空</td>
+</tr>
+<tr>
+<td>size()</td>
+<td>获取队列长度(元素个数)</td>
+</tr>
+<tr>
+<td>contains(Object)</td>
+<td>判断队列是否包含指定元素</td>
+</tr>
+<tr>
+<td>remove(Object)</td>
+<td>删除队列中指定元素</td>
+</tr>
+<tr>
+<td>toArray(T[])</td>
+<td>将队列的元素复制到一个数组</td>
+</tr>
+<tr>
+<td>iterator()</td>
+<td>返回一个可遍历该队列的迭代器</td>
+</tr>
+</tbody>
+</table>
+<p>下面会着重分析offer(E)和poll()两个方法，同时会讲解remove(Object)和iterator()方法。</p>
+<h4 id="常用方法解读"><strong>常用方法解读</strong></h4><h5 id="入队——offer"><strong>入队——offer</strong></h5><p>首先看看入队操作，由于是无阻塞的队列，所以整个入队操作是在无锁模式下进行的，下面来分析下JDK到底是如何实现无锁并保证安全性的。<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * Inserts the specified element at the tail of this queue.</span><br><span class="line"> *</span><br><span class="line"> * <span class="doctag">@return</span> &lt;tt&gt;true&lt;/tt&gt; (as specified by &#123;<span class="doctag">@link</span> Queue#offer&#125;)</span><br><span class="line"> * <span class="doctag">@throws</span> NullPointerException if the specified element is null</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">boolean</span> <span class="title">offer</span><span class="params">(E e)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (e == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();</span><br><span class="line">    Node&lt;E&gt; n = <span class="keyword">new</span> Node&lt;E&gt;(e, <span class="keyword">null</span>);</span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;<span class="comment">//①</span></span><br><span class="line">        Node&lt;E&gt; t = tail;<span class="comment">//②</span></span><br><span class="line">        Node&lt;E&gt; s = t.getNext();<span class="comment">//②</span></span><br><span class="line">        <span class="keyword">if</span> (t == tail) &#123;<span class="comment">//③</span></span><br><span class="line">            <span class="keyword">if</span> (s == <span class="keyword">null</span>) &#123;<span class="comment">//④</span></span><br><span class="line">                <span class="keyword">if</span> (t.casNext(s, n)) &#123;<span class="comment">//⑥</span></span><br><span class="line">                    casTail(t, n);<span class="comment">//⑦</span></span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                casTail(t, s);<span class="comment">//⑤</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>代码不长，但是思路还是很巧妙的，下面我们逐句深入分析每一行代码。<code>if (e == null) throw new NullPointerException(); Node<e> n = new Node<e>(e, null);</e></e></code>检查NULL，避免NullPointerException，然后创建一个Node，该Node的item为传入的参数e，next为NULL。<code>for (;;) {}</code>接着是一个死循环，死循环保证该入队操作能够一直重试直至入队成功。<code>Node<e> t = tail; Node<e> s = t.getNext();</e></e></code>使用局部变量t引用tail节点，同时获取tail节点的next节点，赋予变量s。<code>if (t == tail) {}</code>只有在t==tail的情况下才会执行入队操作，否则进行下一轮循环，直到t==tail，因为是无锁模式，所以如果同时有多个线程在执行入队操作，那么在一个线程读取了tail之后，很可能会有其他线程已经修改了tail（<strong>此处的修改是指将tail指向另一个节点，所以t还引用着原来的节点，导致t!=tail，而并非是修改了tail所指向的节点的值</strong>），此处的判断避免了一开始的错误，但是并不能保证后续的执行过程中不会插入其他线程的操作，其实ConcurrentLinkedQueue的设计使得if内的代码即使在有其他线程插入的情况下依旧能够很好地执行，下面我们接着分析。</p>
+<p><code>if (s == null) {} else { casTail(t, s); }</code>这里判断s（tail的next是否为NULL），如果不为NULL，则直接将tail指向s。这里需要说明一下：由于tail指向的是队列的尾部，所以tail的next应该始终是NULL，那么当发生tail的next不为NULL，则说明当前队列处于不一致状态，这时当前线程需要帮助队列进入一致性状态，这就是ConcurrentLinkedQueue设计的巧妙之处！那么如果帮助队列进入一致性状态呢？这个问题我们先留着，继续看什么情况下会导致队列进入不一致状态！<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (t.casNext(s, <span class="keyword">n</span>)) &#123;</span><br><span class="line">	casTail(t, <span class="keyword">n</span>);</span><br><span class="line">    <span class="keyword">return</span> true;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这几句代码完成了入队的操作，第一步CAS的设置t（指向tail）的next为n（新创建的节点），该更新操作能够完成的前提是t的next值==s，即tail的next值在该线程首次读取期间并未发生变化。此处的CAS操作保证了tail的next值更新的原子性，所以不会出现不一致情况。当成功更新了tail的next节点之后，接下来就是原子性的更新tail为n，此处如果更新成功，则入队顺利完成完成，但是奇怪的是如果此处更新失败，入队依旧是成功的！为什么呢？看下文。</p>
+<p>我们试想如果一个线程成功的原子性更新了tail的next值为新创建的节点，由于Node的next是volatile修饰的，所以会立即被之后的所有线程可见，那么就会出现tail未变化但是tail的next已经不是NULL了，此时就会出现上面提到的tail的next不为NULL的情况了，现在我们再来看看上面是如何处理这种情况的，<code>casTail(t, s);</code>，从这句可以看出当一个线程看到tail的next不为NULL时就会直接将tail更新成s（tail的next所指向的节点），即将tail指向其next节点，当然这里的更新也是CAS保证的原子性更新。为什么敢这么大胆，正是因为如果当前线程（T1）看到tail的next不为NULL，那么必然是有一个线程（T2）处于入队操作中，且成功执行了<code>t.casNext(s, n)</code>（将新创建的节点赋到tail的next上），正准备执行<code>casTail(t, n);</code>（将tail执行其next指向的节点），那么T1直接将T2准备做的工作完成，然后再进入循环重新进行入队操作，而T2也不在乎自己这一步是否顺利完成，反正只要有人完成了就行，所以T2就直接返回入队成功，最终T1帮助T2顺利完成了入队操作，并且全程无锁，此设计真的是巧妙啊~~~</p>
+<p>下面我们使用流程图形象的描绘下入队过程，整个入队方法被划分成7步（见上面的代码中的注释）。说明：虽然入队是在无锁模式下进行，但是由于使用CAS进行原子性更新，所以很多地方其实还是实现了线程安全的，除了⑥-&gt;⑦，下面的图描绘的也正是⑥-&gt;⑦这一步可能出现的冲突情况。</p>
+<p><strong>图2：ConcurrentLinkedQueue入队流程图：</strong><br><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/ConcurrentLinkedQueue%E5%85%A5%E9%98%9F%E6%B5%81%E7%A8%8B%E5%9B%BE.png" alt="ConcurrentLinkedQueue入队流程图"></p>
+<p>上面介绍了ConcurrentLinkedQueue是如何实现无锁入队的，但是我们只说明了多个线程同时入队操作是线程安全的，但是如果多个线程同时进行入队和出队，以及删除操作呢？这个问题在下面分析另外两个方法时会提到，同时最后也会进行一个总结，下面我们先看看删除操作是如何实现的。</p>
+<h5 id="删除——remove"><strong>删除——remove</strong></h5><p>先介绍删除，是因为出队操作有个地方需要在这里提前介绍下。<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">boolean</span> <span class="title">remove</span><span class="params">(Object o)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (o == <span class="keyword">null</span>) <span class="keyword">return</span> <span class="keyword">false</span>;<span class="comment">// ①</span></span><br><span class="line">    <span class="keyword">for</span> (Node&lt;E&gt; p = first(); p != <span class="keyword">null</span>; p = p.getNext()) &#123;<span class="comment">// ②</span></span><br><span class="line">        E item = p.getItem();<span class="comment">// ③</span></span><br><span class="line">        <span class="keyword">if</span> (item != <span class="keyword">null</span> &amp;&amp;</span><br><span class="line">            o.equals(item) &amp;&amp;</span><br><span class="line">            p.casItem(item, <span class="keyword">null</span>))<span class="comment">// ④</span></span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>源码中的注释申明了remove方法会使用equals()判断两个节点的值与待删除的值是否相同，同时如果队列有多个与待删除值相同的节点则只删除最前面的一个节点。</p>
+<p>同样remove()方法也是无锁模式，①判断是否为NULL，②从队列头部开始查找，③获取每个节点的item值，用于跟o进行equals比较，前面三步都很平常，重点在④，<code>if (item != null &amp;&amp; o.equals(item) &amp;&amp; p.casItem(item, null))</code>这里首先判断item不为NULL，然后判断item与o相等，前面两个都满足的话，那说明已经查找到一个节点的值与待删除的值一样，后面就是删除该节点，这里删除其实并非真的删除，而只是原子性的将节点的item值设置为NULL。从上面的分析可以看出ConcurrentLinkedQueue的删除只是将队列中的某个节点值置为NULL，由于Node的item是volatile的，所以不存在线程安全问题，同时由于remove并未修改队列的结构，所以多个线程同时进行remove，或者同其他方法一起进行也不会发生线程安全性问题。</p>
+<h5 id="出队——poll"><strong>出队——poll</strong></h5><p>出队从逻辑上来说就是从队列的头部往外取出数据并删除，下面看看ConcurrentLinkedQueue是如何实现无锁出队的。<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">public <span class="keyword">E</span> poll() &#123;</span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;<span class="comment">// ①</span></span><br><span class="line">        Node&lt;<span class="keyword">E</span>&gt; <span class="keyword">h</span> = head;<span class="comment">// ②</span></span><br><span class="line">        Node&lt;<span class="keyword">E</span>&gt; t = tail;<span class="comment">// ②</span></span><br><span class="line">        Node&lt;<span class="keyword">E</span>&gt; first = <span class="keyword">h</span>.getNext();<span class="comment">// ②</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">h</span> == head) &#123;<span class="comment">// ③</span></span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">h</span> == t) &#123;<span class="comment">// ④</span></span><br><span class="line">                <span class="keyword">if</span> (first == null)<span class="comment">// ⑤</span></span><br><span class="line">                    <span class="keyword">return</span> null;</span><br><span class="line">                <span class="keyword">else</span></span><br><span class="line">                    casTail(t, first);<span class="comment">// ⑥</span></span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (casHead(<span class="keyword">h</span>, first)) &#123;<span class="comment">// ⑦</span></span><br><span class="line">                <span class="keyword">E</span> item = first.getItem();<span class="comment">// ⑧</span></span><br><span class="line">                <span class="keyword">if</span> (item != null) &#123;<span class="comment">// ⑨</span></span><br><span class="line">                    first.setItem(null);<span class="comment">// ⑩</span></span><br><span class="line">                    <span class="keyword">return</span> item;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="comment">// else skip over deleted item, continue loop,</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>出队的步骤略多些，不过理解了也就很简单了。首先①是一个死循环；②的三步分别是获取head/tail/head.next三个节点；③判断h==head，避免操作过程中已有其他线程移动了head；④判断head是否等于tail，即队列是否为NULL，说到这里我们先来看看head和tail在队列中到底处于什么位置。我们用一个队列入队出队的时序图来描绘下在入队和出队过程中head和tail到底是如何变化的。</p>
+<p><strong>图3：ConcurrentLinkedQueue队列时序图：</strong><br><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/ConcurrentLinkedQueue%E9%98%9F%E5%88%97%E6%97%B6%E5%BA%8F%E5%9B%BE.png" alt="ConcurrentLinkedQueue队列"><br>从图中我们可以看出head的next指向的是队列的第一个元素，我们出队也是将head的next指向的元素出队，同时head==tail说明队列已经没有元素了。明白了这两点我们再接着④分析，如果④这里为真，说明队列已经为NULL，接着⑤判断f（head的next指向的节点）是否为NULL，不为NULL则执行⑥将tail指向f，到这里如果理解了上面入队操作，那么应该是可以理解这一步的用意的——帮助其他线程执行入队操作，跟入队时的⑤是一样的，因为head==tail，head的next不为NULL，则说明tail的next不为NULL，所以要将tail重新指向他的next，帮助正在执行入队的线程完成入队工作。理解了这一步那么出队操作就已经理解了一大半了，下面继续看⑦⑧⑨⑩。</p>
+<p>如果head!=tail，则队列不为NULL，那么直接将head指向下一个节点，将当前节点踢出队列即可，当然需要CAS保证原子性更新，然后将踢出队列的节点的item取出返回，并置为NULL即完成了出队操作。这里需要注意的是如果被踢出队列的节点的item是NULL，说明该节点已经被删除了（因为remove()方法只是将节点的item设置为NULL，而不将节点踢出队列），那就只能再次循环了。再提一点，为什么⑦⑧⑨⑩能够被线程安全的执行，因为在⑦这一步是原子更新的，而且更新之后这个节点就立即不会被其他任何线程访问到了，所以后面⑧⑨⑩想怎么处理都是安全的。</p>
+<p>到这里出队操作应该很清楚了，下面就来综合分析下为什么针对ConcurrentLinkedQueue的整个入队/出队/删除都是不需要锁的。</p>
+<ol>
+<li>上面已经分析了如果多个线程同时访问其中任一个方法（offer/poll/remove）都是无需加锁而且线程安全的</li>
+<li>由于remove方法不修改ConcurrentLinkedQueue的结构，所以跟其他两个方法都不会有冲突</li>
+<li>如果同时两个线程，一个入队，一个出队，在队列不为NULL的情况下是不是有任何问题的，因为一个操作tail，一个操作head，完全不相关。但是如果队列为NULL时还是会发生冲突的，因为tail==head。这里我们在分析出队时也提到了，如果出队线程发现tail的next不为NULL，那么就会感知到当前有一个线程在执行入队操作，所以出队线程就会帮助入队线程完成入队操作，而且每个操作都是通过CAS保证原子性更新，所以就算同时两个线程，一个入队，一个出队也不会发生冲突。</li>
+</ol>
+<p>综上，ConcurrentLinkedQueue最终实现了无锁队列。</p>
+<h4 id="使用场景"><strong>使用场景</strong></h4><p>ConcurrentLinkedQueue适合在对性能要求相对较高，同时对队列的读写存在多个线程同时进行的场景，即如果对队列加锁的成本较高则适合使用无锁的ConcurrentLinkedQueue来替代。下面我们来简单对比下ConcurrentLinkedQueue与我们常用的阻塞队列LinkedBlockingQueue的性能。<br><strong>表1：入队性能对比</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">线程数</th>
+<th style="text-align:left">ConcurrentLinkedQueue耗时(ms)</th>
+<th style="text-align:left">LinkedBlockingQueue耗时(ms)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left">22</td>
+<td style="text-align:left">29</td>
+</tr>
+<tr>
+<td style="text-align:left">10</td>
+<td style="text-align:left">50</td>
+<td style="text-align:left">59</td>
+</tr>
+<tr>
+<td style="text-align:left">20</td>
+<td style="text-align:left">99</td>
+<td style="text-align:left">112</td>
+</tr>
+<tr>
+<td style="text-align:left">30</td>
+<td style="text-align:left">139</td>
+<td style="text-align:left">171</td>
+</tr>
+</tbody>
+</table>
+<p>测试数据：N个线程，每个线程入队10000个元素。</p>
+<hr>
+<h4 id="参考文章"><strong>参考文章</strong></h4><p><a href="http://www.infoq.com/cn/articles/ConcurrentLinkedQueue" target="_blank" rel="external">聊聊并发（六）——ConcurrentLinkedQueue的实现原理分析</a><br><a href="http://www.ibm.com/developerworks/cn/java/j-lo-concurrent/index.html" target="_blank" rel="external">非阻塞算法在并发容器中的实现</a></p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/ConcurrentLinkedQueue/" rel="tag">#ConcurrentLinkedQueue</a>
+          
+            <a href="/tags/JDK/" rel="tag">#JDK</a>
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/并发/" rel="tag">#并发</a>
+          
+            <a href="/tags/源码/" rel="tag">#源码</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/10/26/JDK并发工具类源码学习系列——ConcurrentHashMap/" rel="next">JDK并发工具类源码学习系列——ConcurrentHashMap</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2015/10/29/JDK并发工具类源码学习系列——ConcurrentLinkedQueue/"
+     data-title="JDK并发工具类源码学习系列——ConcurrentLinkedQueue"
+     data-content=""
+     data-url="http://vickyqi.com/2015/10/29/JDK并发工具类源码学习系列——ConcurrentLinkedQueue/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2015/10/29/JDK并发工具类源码学习系列——ConcurrentLinkedQueue/"
+                       data-title="JDK并发工具类源码学习系列——ConcurrentLinkedQueue" data-url="http://vickyqi.com/2015/10/29/JDK并发工具类源码学习系列——ConcurrentLinkedQueue/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/images/Vicky.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">一个不甘做屌丝的程序员</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">20</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">26</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#简单介绍"><span class="nav-number">1.</span> <span class="nav-text">简单介绍</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#结构预览"><span class="nav-number">2.</span> <span class="nav-text">结构预览</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#常用方法解读"><span class="nav-number">3.</span> <span class="nav-text">常用方法解读</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#入队——offer"><span class="nav-number">3.1.</span> <span class="nav-text">入队——offer</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#删除——remove"><span class="nav-number">3.2.</span> <span class="nav-text">删除——remove</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#出队——poll"><span class="nav-number">3.3.</span> <span class="nav-text">出队——poll</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用场景"><span class="nav-number">4.</span> <span class="nav-text">使用场景</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#参考文章"><span class="nav-number">5.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>

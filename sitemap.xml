@@ -2,6 +2,46 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://vickyqi.com/2013/12/15/FairScheduler%E7%9A%84%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6%E6%9C%BA%E5%88%B6%E2%80%94%E2%80%94assignTasks%EF%BC%88%E7%BB%AD%EF%BC%89/</loc>
+    <lastmod>2015-10-31T07:15:36.000Z</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://vickyqi.com/2013/12/11/FairScheduler%E7%9A%84%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6%E6%9C%BA%E5%88%B6%E2%80%94%E2%80%94assignTasks/</loc>
+    <lastmod>2015-10-31T07:08:30.000Z</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://vickyqi.com/2013/11/21/FairScheduler%20job%E5%88%9D%E5%A7%8B%E5%8C%96%E8%BF%87%E7%A8%8B%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/</loc>
+    <lastmod>2015-10-31T06:58:44.000Z</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://vickyqi.com/2013/11/20/Hadoop%20JobTracker%E6%8F%90%E4%BA%A4job%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/</loc>
+    <lastmod>2015-10-31T06:46:48.000Z</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://vickyqi.com/2015/10/24/JDK%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94%E4%BB%8B%E7%BB%8D/</loc>
+    <lastmod>2015-10-31T06:38:20.000Z</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://vickyqi.com/2013/11/18/hadoop%20job%E5%88%9D%E5%A7%8B%E5%8C%96%E6%BA%90%E7%A0%81%E6%B5%85%E6%9E%90/</loc>
+    <lastmod>2015-10-31T06:37:20.000Z</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://vickyqi.com/2015/10/29/JDK%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94ConcurrentLinkedQueue/</loc>
+    <lastmod>2015-10-29T13:59:30.000Z</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://vickyqi.com/2015/10/26/JDK%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94ConcurrentHashMap/</loc>
+    <lastmod>2015-10-26T10:02:46.000Z</lastmod>
+  </url>
+  
+  <url>
     <loc>http://vickyqi.com/2013/09/17/Linux%E4%B8%8B%E9%85%8D%E7%BD%AESSH%E6%97%A0%E5%AF%86%E7%A0%81%E8%AE%BF%E9%97%AE/</loc>
     <lastmod>2015-10-25T08:40:44.000Z</lastmod>
   </url>
@@ -74,11 +114,6 @@
   <url>
     <loc>http://vickyqi.com/2015/10/19/%E4%BD%BF%E7%94%A8Apache%20Commons%20CLI%E5%BC%80%E5%8F%91%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%B7%A5%E5%85%B7/</loc>
     <lastmod>2015-10-20T05:11:24.000Z</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://vickyqi.com/2015/10/19/JDK%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94ConcurrentHashMap/</loc>
-    <lastmod>2015-10-20T05:09:24.000Z</lastmod>
   </url>
   
   <url>
