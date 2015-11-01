@@ -45,7 +45,7 @@
 <meta property="og:url" content="http://vickyqi.com/2013/11/21/FairScheduler job初始化过程源码浅析/index.html">
 <meta property="og:site_name" content="Vicky's Blog">
 <meta property="og:description" content="上一篇文章说到了jobTracker中的submitJob()方法，这个方法最终会调用listener.jobAdded(job)，将Job注册到TaskScheduler中，由其进行调度。今天接着研究hadoop中默认的TaskScheduler是JobQueueTaskScheduler，采用的是FIFO(先进先出)原则进行调度，还有FiarScheduler和CapacityTaskSche">
-<meta property="og:updated_time" content="2015-10-31T06:58:44.000Z">
+<meta property="og:updated_time" content="2015-11-01T08:09:22.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="FairScheduler job初始化过程源码浅析">
 <meta name="twitter:description" content="上一篇文章说到了jobTracker中的submitJob()方法，这个方法最终会调用listener.jobAdded(job)，将Job注册到TaskScheduler中，由其进行调度。今天接着研究hadoop中默认的TaskScheduler是JobQueueTaskScheduler，采用的是FIFO(先进先出)原则进行调度，还有FiarScheduler和CapacityTaskSche">
@@ -224,7 +224,7 @@
           <span class="post-category" >
             &nbsp; | &nbsp; 分类于
             
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop学习/" itemprop="url" rel="index"><span itemprop="name">Hadoop学习</span></a></span>
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
 
               
               
@@ -308,7 +308,7 @@
         <div class="post-nav">
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2013/12/11/FairScheduler的任务调度机制——assignTasks/" rel="prev">FairScheduler的任务调度机制——assignTasks</a>
+              <a href="/2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/" rel="prev">Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化</a>
             
           </div>
 
@@ -400,7 +400,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">20</span>
+              <span class="site-state-item-count">24</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -414,7 +414,7 @@
 
           <div class="site-state-item site-state-tags">
             <a href="/tags">
-              <span class="site-state-item-count">26</span>
+              <span class="site-state-item-count">27</span>
               <span class="site-state-item-name">标签</span>
               </a>
           </div>

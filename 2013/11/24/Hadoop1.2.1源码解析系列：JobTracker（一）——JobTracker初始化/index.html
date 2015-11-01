@@ -1,0 +1,773 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="一个不甘做屌丝的程序员" />
+
+
+
+  <meta name="keywords" content="Hadoop,Java,JobTracker,MapReduce,源码," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="JobTracker是hadoop的mapreduce框架中最重要的一个类，这个类负责整个集群的作业控制和资源管理。JobTracker的启动是在用户启动hadoop集群时启动的，也就是在hadoop启动完之后使用jps命令看到的jobTracker进程，启动代码是在start-mapred.sh中。启动JobTracker是通过调用JobTracker的main()方法启动。下面一步一步慢慢分析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化">
+<meta property="og:url" content="http://vickyqi.com/2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="JobTracker是hadoop的mapreduce框架中最重要的一个类，这个类负责整个集群的作业控制和资源管理。JobTracker的启动是在用户启动hadoop集群时启动的，也就是在hadoop启动完之后使用jps命令看到的jobTracker进程，启动代码是在start-mapred.sh中。启动JobTracker是通过调用JobTracker的main()方法启动。下面一步一步慢慢分析">
+<meta property="og:updated_time" content="2015-11-01T08:09:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化">
+<meta name="twitter:description" content="JobTracker是hadoop的mapreduce框架中最重要的一个类，这个类负责整个集群的作业控制和资源管理。JobTracker的启动是在用户启动hadoop集群时启动的，也就是在hadoop启动完之后使用jps命令看到的jobTracker进程，启动代码是在start-mapred.sh中。启动JobTracker是通过调用JobTracker的main()方法启动。下面一步一步慢慢分析">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化 - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-11-24T23:52:00+08:00" content="2013-11-24">
+            2013-11-24
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>JobTracker是hadoop的mapreduce框架中最重要的一个类，这个类负责整个集群的作业控制和资源管理。<br>JobTracker的启动是在用户启动hadoop集群时启动的，也就是在hadoop启动完之后使用jps命令看到的jobTracker进程，启动代码是在start-mapred.sh中。启动JobTracker是通过调用JobTracker的main()方法启动。下面一步一步慢慢分析JobTracker整个类的代码，先从启动开始。</p>
+<h5 id="JobTracker-main()："><strong>JobTracker.main()：</strong></h5><p><code>JobTracker tracker = startTracker(new JobConf())启动JobTracker</code>。</p>
+<h5 id="JobTracker-startTracker()："><strong>JobTracker.startTracker()：</strong></h5><p>最终调用的是<code>startTracker(JobConf conf, String identifier, boolean initialize)</code>这个方法，这里注意下initialize传过来的是false。调用<code>result = new JobTracker(conf, identifier)</code>获得一个JobTracker对象。在实例化时最终调用的是<code>JobTracker(final JobConf conf, String identifier, Clock clock, QueueManager qm) </code><br>这个构造函数，qm是简单的<code>new QueueManager(new Configuration(conf))</code>得到的。下面看一下QueueManager。</p>
+<h5 id="QueueManager："><strong>QueueManager：</strong></h5><figure class="highlight pf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">public QueueManager(Configuration conf) &#123;</span><br><span class="line">    checkDeprecation(conf);</span><br><span class="line">    conf.addResource(QUEUE_ACLS_FILE_NAME);</span><br><span class="line">    </span><br><span class="line">    // Get configured ACLs and <span class="keyword">state</span> <span class="keyword">for</span> each queue</span><br><span class="line">    aclsEnabled = conf.getBoolean(<span class="string">"mapred.acls.enabled"</span>, false);</span><br><span class="line"></span><br><span class="line">    queues.putAll(parseQueues(conf)); </span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>checkDeprecation(conf)这个方法主要检查在mapred-site.xml、hdfs-site.xml、core-site.xml中是否出现有关queue的配置，有则发出警告。接着conf.addResource(QUEUE_ACLS_FILE_NAME)为configuration添加mapred-queue-acls.xml配置文件，这个才是正确配置有关queue的参数的地方，所有有关queue的配置都应放入该文件。aclsEnabled = conf.getBoolean(“mapred.acls.enabled”, false)读取配置文件判断是否启用acl功能，即访问控制功能，默认是false。parseQueues(conf)从配置文件解析每个queue的信息，queue的权限包括作业提交权限和作业管理权限，分别由mapred.queue.queueName.acl-submit-job参数和mapred.queue.queueName.acl-administer-jobs参数决定，参数中的值是用户名或者用户组名。parseQueues(conf)就是解析每个queue哪有用户拥有作业提交权限和哪些用户拥有作业管理权限，具体是根据逗号分隔mapred.queue.queueName.acl-submit-job参数和mapred.queue.queueName.acl-administer-jobs参数值。最后所有的队列权限信息都被添加到queues对象中。</p>
+<h5 id="JobTracker()："><strong>JobTracker()：</strong></h5><p>回到JobTracker构造函数。<code>InetSocketAddress addr = getAddress(conf)</code>这句是获得配置文件中的mapred.job.tracker值，并根据该值新建一个InetSocketAddress对象。<code>SecurityUtil.login(conf, JT_KEYTAB_FILE, JT_USER_NAME, localMachine)</code>这句有点像是使用ssh登陆jobTracker所在主机，这里应该就是在搭建hadoop集群时需要设置ssh无密码访问的原因。<code>secretManager = new DelegationTokenSecretManage()</code>是新建一个MapReduce安全管理相关的类。<code>secretManager.startThreads()</code>以后台线程的方法启动secretManager。接下来是一堆参数，略过。其中有些参数后面会用过，TASKTRACKER_EXPIRY_INTERVAL（作业终止间隔），RETIRE_JOB_INTERVAL（作业完成清除间隔），RETIRE_JOB_CHECK_INTERVAL（作业完成清除任务检查间隔），retiredJobsCacheSize（保留的已完成作业数量），MAX_COMPLETE_USER_JOBS_IN_MEMORY（是否将完成的任务保留在hdfs中），这些参数会在后面说到。initializeTaskMemoryRelatedConfig()方法是初始化一些有关内存的参数值。<code>this.hostsReader = new HostsFileReader(conf.get(“mapred.hosts”, “”),conf.get(“mapred.hosts.exclude”, “”))</code>(Read the hosts/exclude files to restrict access to the jobtracker)，涉及到两个参数：mapred.hosts和mapred.hosts.exclude，看以参考mapred-default.xml关于这两个参数的描述，大致意思是这两个参数决定哪些node能够访问jobTracker以及哪些node不能访问jobTracker，null则无任何限制，这是一种安全策略，可以防止非法机器访问jobTracker。<code>aclsManager = new ACLsManager(conf, new JobACLsManager(conf), queueManager)</code>，新建一个作业级别和队列级别的管理和访问权限控制对象，所以将queueManager对象传递给aclsManager，同时new一个JobACLsManager对象，queueManager负责队列级别的管理和访问权限控制，而JobACLsManager对象负责作业级别的管理和访问权限控制。</p>
+<h5 id="JobTracker()：-1"><strong>JobTracker()：</strong></h5><p>继续分析JobTracker构造函数。<code>clusterMap = (NetworkTopology) ReflectionUtils.newInstance(conf.getClass(“net.topology.impl”, NetworkTopology.class,<br>NetworkTopology.class), conf)</code>，根据注释”Create network topology”可以看出是用来构建网络拓扑结构的。接下来是创建一个taskScheduler对象，</p>
+<p><pre><br>Class&lt;? extends TaskScheduler&gt; schedulerClass = conf.getClass(“mapred.jobtracker.taskScheduler”,JobQueueTaskScheduler.class, TaskScheduler.class);<br>taskScheduler = (TaskScheduler) ReflectionUtils.newInstance(schedulerClass, conf)<br></pre><br>，具体使用的任务调度方案则是由mapred.jobtracker.taskScheduler设置，hadoop默认的作业调度器是JobQueueTaskScheduler，也就是遵循FIFO原则的作业调度器，同时hadoop还自带了FairScheduler和CapacityScheduler两个调度器，在我的另一篇文章中已经介绍了调度器的启动（针对FairScheduler的），这里不进行叙述了。<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="keyword">conf</span>.getBoolean(</span><br><span class="line">          ServiceAuthorizationManager.SERVICE_AUTHORIZATION_CONFIG, false)) &#123;</span><br><span class="line">      PolicyProvider policyProvider = </span><br><span class="line">          (PolicyProvider)(ReflectionUtils.newInstance(</span><br><span class="line">              <span class="keyword">conf</span>.getClass(PolicyProvider.POLICY_PROVIDER_CONFIG, </span><br><span class="line">                  MapReducePolicyProvider.<span class="keyword">class</span>, PolicyProvider.<span class="keyword">class</span>), </span><br><span class="line">              <span class="keyword">conf</span>));</span><br><span class="line">        ServiceAuthorizationManager.refresh(<span class="keyword">conf</span>, policyProvider);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>根据其上的注释感觉有点像是服务级别的安全策略，默认是关闭的。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> handlerCount = conf.getInt(<span class="string">"mapred.job.tracker.handler.count"</span>, <span class="number">10</span>);</span><br><span class="line">    <span class="keyword">this</span>.interTrackerServer = </span><br><span class="line">      RPC.getServer(<span class="keyword">this</span>, addr.getHostName(), addr.getPort(), handlerCount, </span><br><span class="line">          <span class="literal">false</span>, conf, secretManager)</span><br></pre></td></tr></table></figure></p>
+<p>这个mapred.job.tracker.handler.count决定jobTracker启动多少个handler用来接收rpc请求，默认是10，这里是一个hadoop的优化点。下面看看RPC.getServer()方法。</p>
+<h5 id="RPC-getServer()："><strong>RPC.getServer()：</strong></h5><p>调用new Server(instance, conf, bindAddress, port, numHandlers, verbose, secretManager)获得一个Server对象，在新建Server对象时会新建一个listener = new Listener()和一个responder = new Responder()对象，用于监听rpc请求和用于发送rpc请求结果。<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">Server</span><span class="params">(Object instance, Configuration conf, String bindAddress,  <span class="keyword">int</span> port,</span><br><span class="line">                  <span class="keyword">int</span> numHandlers, <span class="keyword">boolean</span> verbose, </span><br><span class="line">                  SecretManager&lt;? <span class="keyword">extends</span> TokenIdentifier&gt; secretManager)</span> </span><br><span class="line">        <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">      <span class="keyword">super</span>(bindAddress, port, Invocation.class, numHandlers, conf,</span><br><span class="line">          classNameBase(instance.getClass().getName()), secretManager);</span><br><span class="line">      <span class="keyword">this</span>.instance = instance;</span><br><span class="line">      <span class="keyword">this</span>.verbose = verbose;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<h5 id="JobTracker()：-2"><strong>JobTracker()：</strong></h5><p>继续。<br><figure class="highlight dart"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">String</span> infoAddr = </span><br><span class="line">  NetUtils.getServerAddress(conf, <span class="string">"mapred.job.tracker.info.bindAddress"</span>,</span><br><span class="line">                            <span class="string">"mapred.job.tracker.info.port"</span>,</span><br><span class="line">                            <span class="string">"mapred.job.tracker.http.address"</span>);</span><br><span class="line">InetSocketAddress infoSocAddr = NetUtils.createSocketAddr(infoAddr);</span><br><span class="line"><span class="built_in">String</span> infoBindAddress = infoSocAddr.getHostName();</span><br><span class="line"><span class="built_in">int</span> tmpInfoPort = infoSocAddr.getPort();</span><br><span class="line"><span class="keyword">this</span>.startTime = clock.getTime();</span><br><span class="line">infoServer = <span class="keyword">new</span> HttpServer(<span class="string">"job"</span>, infoBindAddress, tmpInfoPort, </span><br><span class="line">    tmpInfoPort == <span class="number">0</span>, conf, aclsManager.getAdminsAcl());</span><br><span class="line">infoServer.setAttribute(<span class="string">"job.tracker"</span>, <span class="keyword">this</span>);</span><br><span class="line"></span><br><span class="line">infoServer.addServlet(<span class="string">"reducegraph"</span>, <span class="string">"/taskgraph"</span>, TaskGraphServlet.<span class="keyword">class</span>);</span><br><span class="line">infoServer.start();</span><br></pre></td></tr></table></figure></p>
+<p>这里是新建一个infoServer线程用于web服务的，也就是将集群的一些信息显示到wen页面，端口是50030。createInstrumentation()，具体作用不清楚。</p>
+<h5 id="JobTracker()：-3"><strong>JobTracker()：</strong></h5><p>继续。<br><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">this</span>.dnsToSwitchMapping = ReflectionUtils.newInstance(</span><br><span class="line">        conf.getClass(<span class="string">"topology.node.switch.mapping.impl"</span>, ScriptBasedMapping.<span class="keyword">class</span>,</span><br><span class="line">            DNSToSwitchMapping.<span class="keyword">class</span>), conf);</span><br><span class="line">    <span class="keyword">this</span>.numTaskCacheLevels = conf.getInt(<span class="string">"mapred.task.cache.levels"</span>, </span><br><span class="line">        NetworkTopology.DEFAULT_HOST_LEVEL);</span><br><span class="line">    <span class="keyword">this</span>.isNodeGroupAware = conf.getBoolean(</span><br><span class="line">            <span class="string">"mapred.jobtracker.nodegroup.aware"</span>, <span class="literal">false</span>);</span><br></pre></td></tr></table></figure></p>
+<p>新建一个dnsToSwitchMapping用于构造集群的网络拓扑结构。</p>
+<h5 id="JobTracker()：-4"><strong>JobTracker()：</strong></h5><p>继续。<br><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">plugins = conf.getInstances(<span class="string">"mapreduce.jobtracker.plugins"</span>,</span><br><span class="line">        ServicePlugin.<span class="keyword">class</span>);</span><br><span class="line">    <span class="keyword">for</span> (ServicePlugin <span class="string">p :</span> plugins) &#123;</span><br><span class="line">      <span class="keyword">try</span> &#123;</span><br><span class="line">        p.start(<span class="keyword">this</span>);</span><br><span class="line">        LOG.info(<span class="string">"Started plug-in "</span> + p + <span class="string">" of type "</span> + p.getClass());</span><br><span class="line">      &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">        LOG.warn(<span class="string">"ServicePlugin "</span> + p + <span class="string">" of type "</span> + p.getClass()</span><br><span class="line">            + <span class="string">" could not be started"</span>, t);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>插件，但是没有实现，应该目前是一个扩展点吧。</p>
+<h5 id="JobTracker()：-5"><strong>JobTracker()：</strong></h5><p>最后一句this.initDone.set(conf.getBoolean(JT_INIT_CONFIG_KEY_FOR_TESTS, true))，设置JobTracker初始化完成。<br>到这里整个JobTracker的构造函数结束了，总结一下，主要对一些重要的对象进行了初始化，有secretManager/aclsManager/taskScheduler/interTrackerServer/infoServicer。接下来回到JobTracker.startTracker()方法。</p>
+<h5 id="JobTracker-startTracker()：-1"><strong>JobTracker.startTracker()：</strong></h5><p>在初始化JobTracker之后，会执行result.taskScheduler.setTaskTrackerManager(result)，将JobTracker赋值给taskScheduler的taskTrackerManager对象。<br><figure class="highlight nimrod"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span>(initialize == <span class="literal">true</span>) &#123;</span><br><span class="line">        <span class="literal">result</span>.setSafeModeInternal(<span class="type">SafeModeAction</span>.<span class="type">SAFEMODE_ENTER</span>);</span><br><span class="line">        <span class="literal">result</span>.initializeFilesystem();</span><br><span class="line">        <span class="literal">result</span>.setSafeModeInternal(<span class="type">SafeModeAction</span>.<span class="type">SAFEMODE_LEAVE</span>);</span><br><span class="line">        <span class="literal">result</span>.initialize();</span><br><span class="line">      &#125;</span><br></pre></td></tr></table></figure></p>
+<p>之前提到调用startTracker时传递的initialize=false，所以这里不进行JobTracker的初始化操作，而是留到offerService()中进行。 到这里main()方法的JobTracker tracker = startTracker(new JobConf())完成，接下来执行tracker.offerService()。</p>
+<h5 id="JobTracker-offerService()："><strong>JobTracker.offerService()：</strong></h5><p>this.interTrackerServer.start();<br>启动interTrackerServer，<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="function"><span class="keyword">void</span> <span class="title">start</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    responder.start();</span><br><span class="line">    listener.start();</span><br><span class="line">    handlers = <span class="keyword">new</span> Handler[handlerCount];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; handlerCount; i++) &#123;</span><br><span class="line">      handlers[i] = <span class="keyword">new</span> Handler(i);</span><br><span class="line">      handlers[i].start();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>启动responder和listener，同时创建handlerCount个handlers对象并启动，handlerCount前面在JobTracker构造函数中提到，由mapred.job.tracker.handler.count参数决定，默认是10，这里涉及到RPC内部机制。<br><figure class="highlight scss"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"> <span class="function">setSafeModeInternal</span>(SafeModeAction<span class="class">.SAFEMODE_ENTER</span>);</span><br><span class="line">    <span class="function">initializeFilesystem</span>();</span><br><span class="line">    <span class="function">setSafeModeInternal</span>(SafeModeAction<span class="class">.SAFEMODE_LEAVE</span>);</span><br><span class="line">Initialize the JobTracker FileSystem within safemode。</span><br><span class="line"><span class="comment">// Initialize JobTracker</span></span><br><span class="line">    <span class="function">initialize</span>();</span><br></pre></td></tr></table></figure></p>
+<p>初始化JobTracker。</p>
+<h5 id="JobTracker-initialize()："><strong>JobTracker.initialize()：</strong></h5><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">getMROwner().doAs(<span class="keyword">new</span> PrivilegedExceptionAction&lt;Boolean&gt;() &#123;</span><br><span class="line">      <span class="annotation">@Override</span></span><br><span class="line">      <span class="keyword">public</span> <span class="function">Boolean <span class="title">run</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        JobHistory.init(jtFinal, conf, jtFinal.localMachine, </span><br><span class="line">            jtFinal.startTime);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br></pre></td></tr></table></figure>
+<p>初始化JobHistory<br>recoveryManager = new RecoveryManager();<br>初始化recoveryManager，用于作业恢复管理。<br><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (conf.getBoolean(<span class="string">"mapred.jobtracker.restart.recover"</span>, <span class="literal">false</span>) </span><br><span class="line">            &amp;&amp; systemDirData != <span class="literal">null</span>) &#123;</span><br><span class="line">          <span class="keyword">for</span> (FileStatus status : systemDirData) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">              recoveryManager.checkAndAddJob(status);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">              LOG.warn(<span class="string">"Failed to add the job "</span> + status.getPath().getName(), </span><br><span class="line">                       t);</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">          </span><br><span class="line">          <span class="comment">// Check if there are jobs to be recovered</span></span><br><span class="line">          hasRestarted = recoveryManager.shouldRecover();</span><br><span class="line">          <span class="keyword">if</span> (hasRestarted) &#123;</span><br><span class="line">            <span class="keyword">break</span>; <span class="comment">// if there is something to recover else clean the sys dir</span></span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        LOG.info(<span class="string">"Cleaning up the system directory"</span>);</span><br><span class="line">        fs.<span class="keyword">delete</span>(systemDir, <span class="literal">true</span>);</span><br><span class="line">        <span class="keyword">if</span> (FileSystem.mkdirs(fs, systemDir, </span><br><span class="line">            <span class="keyword">new</span> FsPermission(SYSTEM_DIR_PERMISSION))) &#123;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
+<p>FileStatus[] systemDirData = fs.listStatus(this.systemDir)列出mapred.system.dir参数指定的目录下所有的文件信息，如果mapred.jobtracker.restart.recover=true，默认是false，且systemDir下存在文件时，调用recoveryManager.checkAndAddJob(status)判断是否需要进行作业恢复。<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">void</span> <span class="title">checkAndAddJob</span><span class="params">(FileStatus status)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">      String fileName = status.getPath().getName();</span><br><span class="line">      <span class="keyword">if</span> (isJobNameValid(fileName) &amp;&amp; isJobDirValid(JobID.forName(fileName))) &#123;</span><br><span class="line">        recoveryManager.addJobForRecovery(JobID.forName(fileName));</span><br><span class="line">        shouldRecover = <span class="keyword">true</span>; <span class="comment">// enable actual recovery if num-files &gt; 1</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>根据文件名是否是jobID以及在mapred.system.dir/jobID/下是否存在job信息文件，都存在，则将该jobID添加到recoveryManager队列中，并设置shouldRecover = true，表示需要进行作业恢复。<br><figure class="highlight dos"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// Check <span class="flow">if</span> there are jobs to be recovered</span><br><span class="line">          hasRestarted = recoveryManager.shouldRecover();</span><br><span class="line">          <span class="flow">if</span> (hasRestarted) &#123;</span><br><span class="line">            <span class="built_in">break</span>; // <span class="flow">if</span> there is something to <span class="built_in">recover</span> <span class="flow">else</span> clean the sys <span class="built_in">dir</span></span><br><span class="line">          &#125;</span><br></pre></td></tr></table></figure></p>
+<p>判断是否需要进行作业恢复，需要则直接退出，不需要则会执行删除systemDir命令，并重新创建systemDir目录。<br><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">fs.<span class="keyword">delete</span>(systemDir, <span class="literal">true</span>);</span><br><span class="line">        <span class="keyword">if</span> (FileSystem.mkdirs(fs, systemDir, </span><br><span class="line">            <span class="keyword">new</span> FsPermission(SYSTEM_DIR_PERMISSION))) &#123;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
+<p>之后根据是否需要进行作业恢复，判断是否清楚localDir目录，需要进行恢复则不清楚。<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Same with 'localDir' except it's always on the local disk.</span></span><br><span class="line">   <span class="keyword">if</span> (!hasRestarted) &#123;</span><br><span class="line">     <span class="keyword">conf</span>.deleteLocalFiles(SUBDIR);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<p>接下来是一些关于JobHistory和infoServer的操作，同时会启动调用jobHistoryServer = new JobHistoryServer(conf, aclsManager, infoServer);jobHistoryServer.start()，启动jobHistoryServer用于查看作业历史信息。<br><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//initializes the job status store</span></span><br><span class="line">    completedJobStatusStore = <span class="keyword">new</span> CompletedJobStatusStore(conf, aclsManager);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Setup HDFS monitoring</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.conf.getBoolean(</span><br><span class="line">        JT_HDFS_MONITOR_ENABLE, DEFAULT_JT_HDFS_MONITOR_THREAD_ENABLE)) &#123;</span><br><span class="line">      hdfsMonitor = <span class="keyword">new</span> HDFSMonitorThread(<span class="keyword">this</span>.conf, <span class="keyword">this</span>, <span class="keyword">this</span>.fs);</span><br><span class="line">      hdfsMonitor.start();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>新建completedJobStatusStore线程，用于将已完成的作业信息保存到hdfs中。具体是在一个job完成之后调用completedJobStatusStore的store()方法将job信息保存到hdfs中，而该线程的run()方法是清除掉已保存到hdfs的job信息文件，该功能的启用由mapred.job.tracker.persist.jobstatus.active参数决定，默认是关闭的。<br>hdfsMonitor用于监控hdfs是否正常，默认关闭该功能。<br>到这里initialize()方法完成了。回到offerService()方法。</p>
+<h5 id="JobTracker-offerService()：-1"><strong>JobTracker.offerService()：</strong></h5><p>recoveryManager.updateRestartCount()，更新恢复次数，具体逻辑：第一次恢复向mapred.system.dir/jobtracker.info文件中写入0，之后每次进行恢复都会对文件中的值进行+1操作。该方法是用来记录恢复次数。taskScheduler.start()，启动taskScheduler，在我上一篇文章中提到，这里不叙述。recoveryManager.recover()，进行作业恢复。</p>
+<h5 id="RecoveryManager-recover()："><strong>RecoveryManager.recover()：</strong></h5><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (JobID <span class="string">jobId :</span> jobsToRecover) &#123;</span><br><span class="line">        LOG.info(<span class="string">"Submitting job "</span> + jobId);</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">          Path jobInfoFile = getSystemFileForJob(jobId);</span><br><span class="line">          <span class="keyword">final</span> Path jobTokenFile = getTokenFileForJob(jobId);</span><br><span class="line">          FSDataInputStream <span class="keyword">in</span> = fs.open(jobInfoFile);</span><br><span class="line">          <span class="keyword">final</span> JobInfo token = <span class="keyword">new</span> JobInfo();</span><br><span class="line">          token.readFields(<span class="keyword">in</span>);</span><br><span class="line">          <span class="keyword">in</span>.close();</span><br><span class="line">          </span><br><span class="line">          <span class="comment">// Read tokens as JT user</span></span><br><span class="line">          JobConf job = <span class="keyword">new</span> JobConf();</span><br><span class="line">          <span class="keyword">final</span> Credentials ts = </span><br><span class="line">              (jobTokenFile.getFileSystem(job).exists(jobTokenFile)) ?</span><br><span class="line">            Credentials.readTokenStorageFile(jobTokenFile, job) : <span class="literal">null</span>;</span><br><span class="line"></span><br><span class="line">          <span class="comment">// Re-submit job  </span></span><br><span class="line">          <span class="keyword">final</span> UserGroupInformation ugi = UserGroupInformation</span><br><span class="line">              .createRemoteUser(token.getUser().toString());</span><br><span class="line">          JobStatus status = ugi.doAs(<span class="keyword">new</span> PrivilegedExceptionAction&lt;JobStatus&gt;() &#123;</span><br><span class="line">            <span class="keyword">public</span> JobStatus run() <span class="keyword">throws</span> IOException, InterruptedException &#123;</span><br><span class="line">              <span class="keyword">return</span> submitJob(JobID.downgrade(token.getJobID()), token</span><br><span class="line">                  .getJobSubmitDir().toString(), ugi, ts, <span class="literal">true</span>);</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;);</span><br><span class="line">          <span class="keyword">if</span> (status == <span class="literal">null</span>) &#123;</span><br><span class="line">            LOG.info(<span class="string">"Job "</span> + jobId + <span class="string">" was not recovered since it "</span> +</span><br><span class="line">              <span class="string">"disabled recovery on restart ("</span> + JobConf.MAPREDUCE_RECOVER_JOB +</span><br><span class="line">              <span class="string">" set to 'false')."</span>);</span><br><span class="line">          &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            recovered++;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">          LOG.warn(<span class="string">"Could not recover job "</span> + jobId, e);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br></pre></td></tr></table></figure>
+<p>jobsToRecover队列是在jobTracker初始化时添加的，对其中每个作业进行恢复。主要是读取job信息，然后调用<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">JobTracker.submitJob(JobID.downgrade(<span class="keyword">token</span>.getJobID()), <span class="keyword">token</span> .getJobSubmitDir().<span class="keyword">toString</span>(), ugi, ts, true)进行作业在此提交。</span><br><span class="line"><span class="comment">// refresh the node list as the recovery manager might have added </span></span><br><span class="line">    <span class="comment">// disallowed trackers</span></span><br><span class="line">    refreshHosts();</span><br></pre></td></tr></table></figure></p>
+<p>更新节点信息。<br><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> refreshHosts() <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">    <span class="comment">// Reread the config to get mapred.hosts and mapred.hosts.exclude filenames.</span></span><br><span class="line">    <span class="comment">// Update the file names and refresh internal includes and excludes list</span></span><br><span class="line">    LOG.info(<span class="string">"Refreshing hosts information"</span>);</span><br><span class="line">    Configuration conf = <span class="keyword">new</span> Configuration();</span><br><span class="line"></span><br><span class="line">    hostsReader.updateFileNames(conf.<span class="built_in">get</span>(<span class="string">"mapred.hosts"</span>,<span class="string">""</span>), </span><br><span class="line">                                conf.<span class="built_in">get</span>(<span class="string">"mapred.hosts.exclude"</span>, <span class="string">""</span>));</span><br><span class="line">    hostsReader.refresh();</span><br><span class="line">    </span><br><span class="line">    Set&lt;<span class="keyword">String</span>&gt; excludeSet = <span class="keyword">new</span> HashSet&lt;<span class="keyword">String</span>&gt;();</span><br><span class="line">    <span class="keyword">for</span>(Map.Entry&lt;<span class="keyword">String</span>, TaskTracker&gt; eSet : taskTrackers.entrySet()) &#123;</span><br><span class="line">      <span class="keyword">String</span> trackerName = eSet.getKey();</span><br><span class="line">      TaskTrackerStatus status = eSet.getValue().getStatus();</span><br><span class="line">      <span class="comment">// Check if not include i.e not in host list or in hosts list but excluded</span></span><br><span class="line">      <span class="keyword">if</span> (!inHostsList(status) || inExcludedHostsList(status)) &#123;</span><br><span class="line">          excludeSet.<span class="built_in">add</span>(status.getHost()); <span class="comment">// add to rejected trackers</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    decommissionNodes(excludeSet);</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>由hostsReader重新读取mapred.hosts以及mapred.hosts.exclude值，并添加到相应队列中，然后遍历现有的taskTrackers节点，把不在mapred.hosts或者在mapred.hosts.exclude中的节点从hostnameToTaskTracker中移除。<br><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">this</span>.expireTrackersThread = <span class="keyword">new</span> Thread(<span class="keyword">this</span>.expireTrackers,</span><br><span class="line">                                          <span class="string">"expireTrackers"</span>);</span><br><span class="line">    <span class="keyword">this</span>.expireTrackersThread.start();</span><br><span class="line">    <span class="keyword">this</span>.retireJobsThread = <span class="keyword">new</span> Thread(<span class="keyword">this</span>.retireJobs, <span class="string">"retireJobs"</span>);</span><br><span class="line">    <span class="keyword">this</span>.retireJobsThread.start();</span><br><span class="line">    expireLaunchingTaskThread.start();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (completedJobStatusStore.isActive()) &#123;</span><br><span class="line">      completedJobsStoreThread = <span class="keyword">new</span> Thread(completedJobStatusStore,</span><br><span class="line">                                            <span class="string">"completedjobsStore-housekeeper"</span>);</span><br><span class="line">      completedJobsStoreThread.start();</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里分别启动expireTrackersThread，retireJobsThread，expireLaunchingTaskThread，completedJobStatusStore线程。<br>1）expireTrackersThread：该线程用于发现和清除死掉的TaskTracker。主要根据一个TaskTracker自上一次的心跳汇报以来在TASKTRACKER_EXPIRY_INTERVAL时间（由mapred.tasktracker.expiry.interval参数设置，默认是10 <em> 60 </em> 1000，单位ms）内未汇报心跳，则将其清除。<br>2）retireJobsThread：该线程用于清除已完成的作业信息。主要清除那些状态为SUCCEEDED、FAILED、KILLED的job，并且是在RETIRE_JOB_INTERVAL时间间隔（由mapred.jobtracker.retirejob.interval参数设置，默认是24 <em> 60 </em> 60 <em> 1000，单位ms）之前完成；或者用户保存的总完成job数超过MAX_COMPLETE_USER_JOBS_IN_MEMORY（由mapred.jobtracker.completeuserjobs.maximum参数设置，默认是100）也会将已完成的作业进行清除。<br>3）expireLaunchingTaskThread：该线程用于发现已经分配给某个TaskTracker但一直未汇报信息的任务。主要是根据每个TaskAttemptID启动的时间与当前时间的间隔是否大于TASKTRACKER_EXPIRY_INTERVAL（由mapred.tasktracker.expiry.interval参数设置，默认是10 </em> 60 * 1000，单位ms）决定。<br>4）completedJobsStoreThread：该线程用于将已完成的作业信息保存到hdfs中。<br>至此，JobTracker.offerService()方法完成了。总结下，该方法主要是初始化并启动一些重要线程如上述几个，以及进行作业恢复和启动taskScheduler。<br>offerService()结束main()也就结束了。这就是整个JobTracker的启动过程，如有错误请指出，谢谢</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/JobTracker/" rel="tag">#JobTracker</a>
+          
+            <a href="/tags/MapReduce/" rel="tag">#MapReduce</a>
+          
+            <a href="/tags/源码/" rel="tag">#源码</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/" rel="prev">Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2013/11/21/FairScheduler job初始化过程源码浅析/" rel="next">FairScheduler job初始化过程源码浅析</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/"
+     data-title="Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化"
+     data-content=""
+     data-url="http://vickyqi.com/2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/"
+                       data-title="Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化" data-url="http://vickyqi.com/2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/images/Vicky.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">一个不甘做屌丝的程序员</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">24</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#JobTracker-main()："><span class="nav-number">1.</span> <span class="nav-text">JobTracker.main()：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#JobTracker-startTracker()："><span class="nav-number">2.</span> <span class="nav-text">JobTracker.startTracker()：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#QueueManager："><span class="nav-number">3.</span> <span class="nav-text">QueueManager：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#JobTracker()："><span class="nav-number">4.</span> <span class="nav-text">JobTracker()：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#JobTracker()：-1"><span class="nav-number">5.</span> <span class="nav-text">JobTracker()：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#RPC-getServer()："><span class="nav-number">6.</span> <span class="nav-text">RPC.getServer()：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#JobTracker()：-2"><span class="nav-number">7.</span> <span class="nav-text">JobTracker()：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#JobTracker()：-3"><span class="nav-number">8.</span> <span class="nav-text">JobTracker()：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#JobTracker()：-4"><span class="nav-number">9.</span> <span class="nav-text">JobTracker()：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#JobTracker()：-5"><span class="nav-number">10.</span> <span class="nav-text">JobTracker()：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#JobTracker-startTracker()：-1"><span class="nav-number">11.</span> <span class="nav-text">JobTracker.startTracker()：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#JobTracker-offerService()："><span class="nav-number">12.</span> <span class="nav-text">JobTracker.offerService()：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#JobTracker-initialize()："><span class="nav-number">13.</span> <span class="nav-text">JobTracker.initialize()：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#JobTracker-offerService()：-1"><span class="nav-number">14.</span> <span class="nav-text">JobTracker.offerService()：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#RecoveryManager-recover()："><span class="nav-number">15.</span> <span class="nav-text">RecoveryManager.recover()：</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>

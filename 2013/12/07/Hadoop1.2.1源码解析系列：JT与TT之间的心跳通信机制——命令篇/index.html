@@ -1,0 +1,809 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="一个不甘做屌丝的程序员" />
+
+
+
+  <meta name="keywords" content="Hadoop,Java,JobTracker,MapReduce,心跳,源码," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="前两篇文章简单介绍了hadoop心跳机制的两个重要角色：JT和TT，虽然不是太详细，但是大纸业说清楚了一些事，在JT篇的最后对于JT返回TT的心跳响应中的一些命令一笔带过，这篇文章将重要介绍这些命令：ReinitTrackerAction，KillTaskAction，KillJobAction，CommitTaskAction，LaunchTaskAction。每个命令都对应着一系列行为，所有的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇">
+<meta property="og:url" content="http://vickyqi.com/2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="前两篇文章简单介绍了hadoop心跳机制的两个重要角色：JT和TT，虽然不是太详细，但是大纸业说清楚了一些事，在JT篇的最后对于JT返回TT的心跳响应中的一些命令一笔带过，这篇文章将重要介绍这些命令：ReinitTrackerAction，KillTaskAction，KillJobAction，CommitTaskAction，LaunchTaskAction。每个命令都对应着一系列行为，所有的">
+<meta property="og:updated_time" content="2015-11-01T08:08:28.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇">
+<meta name="twitter:description" content="前两篇文章简单介绍了hadoop心跳机制的两个重要角色：JT和TT，虽然不是太详细，但是大纸业说清楚了一些事，在JT篇的最后对于JT返回TT的心跳响应中的一些命令一笔带过，这篇文章将重要介绍这些命令：ReinitTrackerAction，KillTaskAction，KillJobAction，CommitTaskAction，LaunchTaskAction。每个命令都对应着一系列行为，所有的">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇 - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-12-07T22:17:00+08:00" content="2013-12-07">
+            2013-12-07
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>前两篇文章简单介绍了hadoop心跳机制的两个重要角色：<a href="http://vickyqi.com/2013/12/05/Hadoop1.2.1%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E7%B3%BB%E5%88%97%EF%BC%9AJT%E4%B8%8ETT%E4%B9%8B%E9%97%B4%E7%9A%84%E5%BF%83%E8%B7%B3%E9%80%9A%E4%BF%A1%E6%9C%BA%E5%88%B6%E2%80%94%E2%80%94JT%E7%AF%87/">JT</a>和<a href="http://vickyqi.com/2013/12/03/Hadoop1.2.1%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%E7%B3%BB%E5%88%97%EF%BC%9AJT%E4%B8%8ETT%E4%B9%8B%E9%97%B4%E7%9A%84%E5%BF%83%E8%B7%B3%E9%80%9A%E4%BF%A1%E6%9C%BA%E5%88%B6%E2%80%94%E2%80%94TT%E7%AF%87/">TT</a>，虽然不是太详细，但是大纸业说清楚了一些事，在JT篇的最后对于JT返回TT的心跳响应中的一些命令一笔带过，这篇文章将重要介绍这些命令：<strong>ReinitTrackerAction</strong>，<strong>KillTaskAction</strong>，<strong>KillJobAction</strong>，<strong>CommitTaskAction</strong>，<strong>LaunchTaskAction</strong>。每个命令都对应着一系列行为，所有的行为都是由TT完成。下面分别看看这五个TaskTrackerAction，每个命令从三个部分进行解释：</p>
+<ol>
+<li>命令内容</li>
+<li>JT下达命令</li>
+<li>TT处理命令</li>
+</ol>
+<h5 id="ReinitTrackerAction"><strong>ReinitTrackerAction</strong></h5><ol>
+<li><p><strong>命令内容：</strong><br>该命令指示TT进行重新初始化操作。一般当JT与TT之间状态不一致时，JT就会像TT下达该命令，命令TT进行重新初始化。重新初始化会TT会清空其上的task，以及初始化一些状态信息和参数，最重要的是justInited变量会变成true，表示刚初始化的，这时再次发送心跳时JT接收到的参数initialContact就为true了，表示TT首次联系JT，保证JT和TT之间的状态一致。<br>该对象内部非常简单，简单到啥也没有。出了一个actionType==ActionType.REINIT_TRACKER（表示重新初始化，共有五种类型，对应五种命令）外啥也没有。</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ReinitTrackerAction</span> <span class="keyword"><span class="keyword">extends</span></span> <span class="title">TaskTrackerAction</span> &#123;</span></span><br><span class="line">  public <span class="type">ReinitTrackerAction</span>() &#123;</span><br><span class="line">    <span class="keyword">super</span>(<span class="type">ActionType</span>.<span class="type">REINIT_TRACKER</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  public void write(<span class="type">DataOutput</span> out) <span class="keyword">throws</span> <span class="type">IOException</span> &#123;&#125;</span><br><span class="line">  public void readFields(<span class="type">DataInput</span> in) <span class="keyword">throws</span> <span class="type">IOException</span> &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>JT下达命令：</strong><br>如上所说JT对TT下达该命令一般是由于两者之间状态不一致导致，具体见下代码（去掉了注释）。</p>
+<figure class="highlight monkey"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (initialContact != <span class="literal">true</span>) &#123;</span><br><span class="line">      <span class="keyword">if</span> (prevHeartbeatResponse == <span class="literal">null</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (hasRestarted()) &#123;</span><br><span class="line">          addRestartInfo = <span class="literal">true</span>;</span><br><span class="line">          recoveryManager.unMarkTracker(trackerName);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          <span class="built_in">LOG</span>.warn(<span class="string">"Serious problem, cannot find record of 'previous' "</span> +</span><br><span class="line">                   <span class="string">"heartbeat for '"</span> + trackerName + </span><br><span class="line">                   <span class="string">"'; reinitializing the tasktracker"</span>);</span><br><span class="line">          <span class="keyword">return</span> <span class="keyword">new</span> HeartbeatResponse(responseId, </span><br><span class="line">              <span class="keyword">new</span> TaskTrackerAction[] &#123;<span class="keyword">new</span> ReinitTrackerAction()&#125;);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (prevHeartbeatResponse.getResponseId() != responseId) &#123;</span><br><span class="line">          <span class="built_in">LOG</span>.info(<span class="string">"Ignoring 'duplicate' heartbeat from '"</span> + </span><br><span class="line">              trackerName + <span class="string">"'; resending the previous 'lost' response"</span>);</span><br><span class="line">          <span class="keyword">return</span> prevHeartbeatResponse;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>initialContact由TT发送，表示TT是否首次联系JT，一般该变量只是在TT实例化时和初始化（initialize()方法）时赋为true，当调用了TT的offerService()方法之后该变量就会被赋成false。TT的main()方法会先实例化一个TT对象，然后会调用其initialize()方法，接着会调用TT的offerService()方法，该方法内会向JT发送一次心跳，这次心跳是该TT启动时发送的第一次心跳，所有restarted和initialContact都是true，在这次心跳之后，offerService()方法会将restarted和initialContact都设为false。<br>当initialContact==false时，且prevHeartbeatResponse==null，prevHeartbeatResponse变量是JT从其保存的心跳记录中取出该TT的上次心跳记录，为null则表示JT没有收到过来自该TT的心跳记录，但是initialContact==false表示TT认为他不是首次联系JT，即JT有接收到过TT的心跳请求，这样JT与TT就产生了状态不一致情况。注释给出了一种可能的解释：This is the first heartbeat from the old tracker to the newly  started JobTracker.意思是JT是重新实例化，即JT刚重启过，但是TT未重启，或者重新初始化，即old。出现这种情况时，JT会根据是否有任务需要恢复来判断是否让TT重新初始化。至于为什么要在对TT下达重新初始化命令之前判断是否有任务需要恢复，是因为如果JT检查出有任务需要恢复，那么有可能需要回复的任务在该TT上运行过，那么就需要该TT来恢复该任务，而TT重新初始化之后会丢失所有任务。总之如果JT不需要进行任务恢复则对TT下达重新初始化命令。还有另外一种情况JT也会对TT下达该命令。<br><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!processHeartbeat(status, initialContact, now)) &#123;</span><br><span class="line">  <span class="keyword">if</span> (prevHeartbeatResponse != <span class="literal">null</span>) &#123;</span><br><span class="line">    trackerToHeartbeatResponseMap.remove(trackerName);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> HeartbeatResponse(newResponseId, </span><br><span class="line">               <span class="keyword">new</span> TaskTrackerAction[] &#123;<span class="keyword">new</span> ReinitTrackerAction()&#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>当JT调用processHeartbeat()方法处理心跳请求时返回false，则对TT下达重新初始化命令。processHeartbeat()方法返回false的原因如下：<br><figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">boolean</span> seenBefore = updateTaskTrackerStatus(trackerName,</span><br><span class="line">                                                     trackerStatus);</span><br><span class="line">        TaskTracker taskTracker = getTaskTracker(trackerName);</span><br><span class="line">        <span class="keyword">if</span> (initialContact) &#123;</span><br><span class="line">          <span class="comment">// If it's first contact, then clear out </span></span><br><span class="line">          <span class="comment">// any state hanging around</span></span><br><span class="line">          <span class="keyword">if</span> (seenBefore) &#123;</span><br><span class="line">            lostTaskTracker(taskTracker);</span><br><span class="line">          &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          <span class="comment">// If not first contact, there should be some record of the tracker</span></span><br><span class="line">          <span class="keyword">if</span> (<span class="subst">!</span>seenBefore) &#123;</span><br><span class="line">            <span class="keyword">LOG</span><span class="built_in">.</span>warn(<span class="string">"Status from unknown Tracker : "</span> + trackerName);</span><br><span class="line">            updateTaskTrackerStatus(trackerName, <span class="built_in">null</span>);</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure></p>
+<p>当initialContact==false且seenBefore==false时返回false，seenBefore表示JT的taskTrackers队列中是否存在该TT，不存在则seenBefore==false，所以processHeartbeat()原因是TT不是首次联系JT，但是JT中并不存在该TT的信息，又是一种不一致状态，所以JT会对其下达重新初始化命令。<br>以上就是JT对TT下达重新初始化命令产生的两种情况，归根到底都是由于JT与TT之间状态不一致导致，即TT认为他不是首次联系JT，但是JT却没有TT的以前记录。</p>
+<ol>
+<li><strong>TT处理命令：</strong><br>TT发送心跳都是在TT的offerService()方法中调用的，该方法在TT运行过程中一直执行，当TT的心跳请求接收到响应时，会首先对收到的HeartbeatResponse中的TaskTrackerAction进行判断，判断是否有ReinitTrackerAction命令。<figure class="highlight autoit"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">TaskTrackerAction[] actions = heartbeatResponse.getActions()<span class="comment">;</span></span><br><span class="line"><span class="keyword">if</span>(<span class="built_in">LOG</span>.isDebugEnabled()) &#123;</span><br><span class="line">  <span class="built_in">LOG</span>.debug(<span class="string">"Got heartbeatResponse from JobTracker with responseId: "</span> + </span><br><span class="line">            heartbeatResponse.getResponseId() + <span class="string">" and "</span> + </span><br><span class="line">            ((actions != <span class="literal">null</span>) ? actions.length : <span class="number">0</span>) + <span class="string">" actions"</span>)<span class="comment">;</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (reinitTaskTracker(actions)) &#123;</span><br><span class="line">  <span class="keyword">return</span> State.STALE<span class="comment">;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>reinitTaskTracker()方法判断是否有ReinitTrackerAction命令，<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">boolean</span> <span class="title">reinitTaskTracker</span><span class="params">(TaskTrackerAction[] actions)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (actions != <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">for</span> (TaskTrackerAction action : actions) &#123;</span><br><span class="line">      <span class="keyword">if</span> (action.getActionId() == </span><br><span class="line">          TaskTrackerAction.ActionType.REINIT_TRACKER) &#123;</span><br><span class="line">        LOG.info(<span class="string">"Recieved ReinitTrackerAction from JobTracker"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>简单的根据Action的Id进行判断，当判断出心跳的返回结果中有ReinitTrackerAction命令时，则退出offerService()的无限循环，并返回State.STALE。TT是个线程，所以offerService()的返回值返回到run()方法。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (running &amp;&amp; !staleState &amp;&amp; !shuttingDown &amp;&amp; !denied) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">              State osState = offerService();</span><br><span class="line">              <span class="keyword">if</span> (osState == State.STALE) &#123;</span><br><span class="line">                staleState = <span class="literal">true</span>;</span><br><span class="line">              &#125; <span class="keyword">else</span> <span class="keyword">if</span> (osState == State.DENIED) &#123;</span><br><span class="line">                denied = <span class="literal">true</span>;</span><br><span class="line">              &#125;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception ex) &#123;</span><br><span class="line">              <span class="keyword">if</span> (!shuttingDown) &#123;</span><br><span class="line">                LOG.info(<span class="string">"Lost connection to JobTracker ["</span> +</span><br><span class="line">                         jobTrackAddr + <span class="string">"].  Retrying..."</span>, ex);</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                  Thread.sleep(<span class="number">5000</span>);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (InterruptedException ie) &#123;</span><br><span class="line">                &#125;</span><br><span class="line">              &#125;</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br></pre></td></tr></table></figure></p>
+<p>因为offerService()的返回值是State.STALE，所以staleState==true，会退出循环。<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&#125; finally &#123;</span><br><span class="line">          <span class="comment">// If denied we'll close via shutdown below. We should close</span></span><br><span class="line">          <span class="comment">// here even if shuttingDown as shuttingDown can be set even</span></span><br><span class="line">          <span class="comment">// if shutdown is not called.</span></span><br><span class="line">          <span class="keyword">if</span> (!denied) &#123;</span><br><span class="line">            <span class="keyword">close</span>();</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (shuttingDown) &#123; <span class="keyword">return</span>; &#125;</span><br><span class="line">        <span class="keyword">if</span> (denied) &#123; <span class="keyword">break</span>; &#125;</span><br><span class="line">        <span class="keyword">LOG</span>.warn(<span class="string">"Reinitializing local state"</span>);</span><br><span class="line">        initialize();</span><br></pre></td></tr></table></figure></p>
+<p>调用initialize()方法重新初始化。之后继续循环。</p>
+<h5 id="KillTaskAction"><strong>KillTaskAction</strong></h5><ol>
+<li><strong>命令内容：</strong><br>从名字就可以看出该命令是指kill掉task的意思。对象内部同ReinitTrackerAction一样，只不过多存储一个taskId（TaskAttemptID）对象，所以在序列化时会将该变量序列化到流中，以便TT接收到命令时可以准确知道需要kill掉哪个TaskAttempt。</li>
+<li><strong>JT下达命令：</strong><br>JT通过调用getTasksToKill()方法，获取该TT上所有需要kill的task，下面看看该方法如何获取需要kill掉的task。<figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">synchronized</span> List&lt;TaskTrackerAction&gt; getTasksToKill(</span><br><span class="line">                                                              <span class="keyword">String</span> taskTracker) &#123;</span><br><span class="line">    </span><br><span class="line">    Set&lt;TaskAttemptID&gt; taskIds = trackerToTaskMap.<span class="built_in">get</span>(taskTracker);</span><br><span class="line">    List&lt;TaskTrackerAction&gt; killList = <span class="keyword">new</span> ArrayList&lt;TaskTrackerAction&gt;();</span><br><span class="line">    <span class="keyword">if</span> (taskIds != <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">for</span> (TaskAttemptID killTaskId : taskIds) &#123;</span><br><span class="line">        TaskInProgress tip = taskidToTIPMap.<span class="built_in">get</span>(killTaskId);</span><br><span class="line">        <span class="keyword">if</span> (tip == <span class="keyword">null</span>) &#123;</span><br><span class="line">          <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (tip.shouldClose(killTaskId)) &#123;</span><br><span class="line">          <span class="comment">// </span></span><br><span class="line">          <span class="comment">// This is how the JobTracker ends a task at the TaskTracker.</span></span><br><span class="line">          <span class="comment">// It may be successfully completed, or may be killed in</span></span><br><span class="line">          <span class="comment">// mid-execution.</span></span><br><span class="line">          <span class="comment">//</span></span><br><span class="line">          <span class="keyword">if</span> (!tip.getJob().isComplete()) &#123;</span><br><span class="line">            killList.<span class="built_in">add</span>(<span class="keyword">new</span> KillTaskAction(killTaskId));</span><br><span class="line">            <span class="keyword">if</span> (LOG.isDebugEnabled()) &#123;</span><br><span class="line">              LOG.debug(taskTracker + <span class="string">" -&gt; KillTaskAction: "</span> + killTaskId);</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// add the stray attempts for uninited jobs</span></span><br><span class="line">    <span class="keyword">synchronized</span> (trackerToTasksToCleanup) &#123;</span><br><span class="line">      Set&lt;TaskAttemptID&gt; <span class="built_in">set</span> = trackerToTasksToCleanup.remove(taskTracker);</span><br><span class="line">      <span class="keyword">if</span> (<span class="built_in">set</span> != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">for</span> (TaskAttemptID id : <span class="built_in">set</span>) &#123;</span><br><span class="line">          killList.<span class="built_in">add</span>(<span class="keyword">new</span> KillTaskAction(id));</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> killList;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>这里有两处获得需要kill掉的任务，首先看看第一处。第一处，首先从JT上保存的trackerToTaskMap对象中获取该TT所有的TaskAttempt（一个Task可能包含多个TaskAttempt）对象（trackerToTaskMap保存了taskTrackerName–&gt;TaskAttemptID的信息），然后判断每个TaskAttempt是否需要被kill，判断方法是调用TaskInProgress对象的shouldClose()方法。下面看看shouldClose()方法。<br><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="built_in">boolean</span> shouldClose(TaskAttemptID taskid) &#123;</span><br><span class="line">    <span class="built_in">boolean</span> close = <span class="keyword">false</span>;</span><br><span class="line">    TaskStatus ts = taskStatuses.<span class="built_in">get</span>(taskid);</span><br><span class="line">    <span class="keyword">if</span> ((ts != <span class="keyword">null</span>) &amp;&amp;</span><br><span class="line">        (!tasksReportedClosed.contains(taskid)) &amp;&amp;</span><br><span class="line">        ((<span class="keyword">this</span>.failed) ||</span><br><span class="line">        ((job.getStatus().getRunState() != JobStatus.RUNNING &amp;&amp;</span><br><span class="line">         (job.getStatus().getRunState() != JobStatus.PREP))))) &#123;</span><br><span class="line">      tasksReportedClosed.<span class="built_in">add</span>(taskid);</span><br><span class="line">      close = <span class="keyword">true</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (isComplete() &amp;&amp; </span><br><span class="line">               !(isMapTask() &amp;&amp; !jobSetup &amp;&amp; </span><br><span class="line">                   !jobCleanup &amp;&amp; isComplete(taskid)) &amp;&amp;</span><br><span class="line">               !tasksReportedClosed.contains(taskid)) &#123;</span><br><span class="line">      tasksReportedClosed.<span class="built_in">add</span>(taskid);</span><br><span class="line">      close = <span class="keyword">true</span>; </span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (isCommitPending(taskid) &amp;&amp; !shouldCommit(taskid) &amp;&amp;</span><br><span class="line">               !tasksReportedClosed.contains(taskid)) &#123;</span><br><span class="line">      tasksReportedClosed.<span class="built_in">add</span>(taskid);</span><br><span class="line">      close = <span class="keyword">true</span>; </span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      close = tasksToKill.keySet().contains(taskid);</span><br><span class="line">    &#125;   </span><br><span class="line">    <span class="keyword">return</span> close;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>该方法通过判断TaskAttempt所属的Task对象的状态来确定是否需要被关闭，具体判断条件如下：</p>
+<ol>
+<li>满足Task的taskStatuses队列中包含此TaskAttempt，且tasksReportedClosed队列不包含该TaskAttempt对象（tasksReportedClosed中保存所有已被关闭的TaskAttempt，所以tasksReportedClosed中存在该TaskAttempt则表示该TaskAttempt已被关闭，则无需重复关闭），且满足该TaskInProgress对象的failed==true，即该Task已失败，或者Task所属的Job处于SUCCEEDED、FAILED、KILLED三个状态，则表示该TaskAttempt需要被关闭（Close），则返回true，同时将该TaskAttempt对象添加到tasksReportedClosed队列中，以避免下次重复关闭。</li>
+<li>满足该Task已完成，且该Task不是一个map任务，也不是jobSetup或者jobCleanup任务，且该TaskAttempt是该Task成功的那个TaskAttempt，且tasksReportedClosed不包含该TaskAttempt。这里需要知道一个Task可能会有多个TaskAttempt，这是由于推测执行导致（可以去了解下推测执行），这多个TaskAttempt之中只要有一个完成，则该Task就完成，完成的那一个TaskAttempt会被标记在Task对象中（successfulTaskId参数）。还有一点，即当该任务是map任务时，并不关闭该TaskAttempt，注释给出的解释是：However, for completed map tasks we do not close the task which actually was the one responsible for <em>completing</em> the TaskInProgress. (不解)</li>
+<li>满足该TaskAttempt已完成，但是未决定提交，且不是successfulTaskId参数标志的TaskAttempt，且tasksReportedClosed不包含该TaskAttempt。这个条件表示当多个TaskAttempt同时运行时，有一个已完成且成功提交，那么余下的就算成功了的TaskAttempt也会被关闭，因为一个Task只需要一次成功提交即可。</li>
+<li>该TaskAttempt在tasksToKill队列中。tasksToKill队列存放着由客户端发起的kill命令指定kill的TaskAttempt。比如当我们手动在命令行或者其他地方执行hadoop job -kill时，会kill掉该Job所有的TaskAttempt。<br>由上判断出TaskAttempt对象需要关闭后，会判断如果该TaskAttempt需要被关闭的原因不是由于其所属的Job已完成，则对其创建一个KillTaskAction对象，并添加到心跳响应结果中。这里由于所属Job完成而需要关闭的TaskAttempt对象，并不作为KillTaskAction命令返回给TT。</li>
+</ol>
+<p>下面第二处：<br><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// add the stray attempts for uninited jobs</span></span><br><span class="line">    <span class="keyword">synchronized</span> (trackerToTasksToCleanup) &#123;</span><br><span class="line">      Set&lt;TaskAttemptID&gt; <span class="built_in">set</span> = trackerToTasksToCleanup.remove(taskTracker);</span><br><span class="line">      <span class="keyword">if</span> (<span class="built_in">set</span> != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">for</span> (TaskAttemptID id : <span class="built_in">set</span>) &#123;</span><br><span class="line">          killList.<span class="built_in">add</span>(<span class="keyword">new</span> KillTaskAction(id));</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里是从trackerToTasksToCleanup队列中获取该TT上所有需要cleanup的TaskAttempt。在updateTaskStatuses()方法中往trackerToJobsToCleanup队列中添加任务，而updateTaskStatuses()方法在processHeartbeat()中调用，也就是当JT接收到TT的心跳请求之后，会处理此次心跳，然后根据TT发送过来的TaskTrackerStatus中包含的TaskStatus信息，获取每个TaskStatus所对应的Job，如果Job不存在，则将该TaskStatus所属的Job添加到trackerToJobsToCleanup队列（获取KillJobAction时会用到）。如果Job存在，但是Job没有初始化，也会将该TaskStatus所属的TaskAttempt添加到trackerToTasksToCleanup队列。<br>以上就是JT如何判断哪些TaskAttempt需要被kill，并通过KillTaskAction向TT下达命令。</p>
+<ol>
+<li><strong>TT处理命令：</strong><figure class="highlight sqf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (actions != null)&#123; </span><br><span class="line">          <span class="keyword">for</span>(TaskTrackerAction <span class="built_in">action</span>: actions) &#123;</span><br><span class="line">            <span class="keyword">if</span> (<span class="built_in">action</span> instanceof LaunchTaskAction) &#123;</span><br><span class="line">              addToTaskQueue((LaunchTaskAction)<span class="built_in">action</span>);</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="built_in">action</span> instanceof CommitTaskAction) &#123;</span><br><span class="line">              CommitTaskAction commitAction = (CommitTaskAction)<span class="built_in">action</span>;</span><br><span class="line">              <span class="keyword">if</span> (!commitResponses.contains(commitAction.getTaskID())) &#123;</span><br><span class="line">                <span class="built_in">LOG</span>.info(<span class="string">"Received commit task action for "</span> + </span><br><span class="line">                          commitAction.getTaskID());</span><br><span class="line">                commitResponses.add(commitAction.getTaskID());</span><br><span class="line">              &#125;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">              addActionToCleanup(<span class="built_in">action</span>);</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>可以看出TT将KillTaskAction和KillJobAction一样处理，都是调用addActionToCleanup(action)方法，而LaunchTaskAction则调用addToTaskQueue((LaunchTaskAction)action)，CommitTaskAction调用commitResponses.add(commitAction.getTaskID())。<br>下面看看对KillTaskAction和KillJobAction的处理。<br><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> addActionToCleanup(TaskTrackerAction action) <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">String</span> actionId = getIdForCleanUpAction(action);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// add the action to the queue only if its not added in the first place</span></span><br><span class="line">  <span class="keyword">String</span> previousActionId = allCleanupActions.putIfAbsent(actionId, actionId);</span><br><span class="line">  <span class="keyword">if</span> (previousActionId != <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    activeCleanupActions.put(action);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>将Action中的JobId或者TaskId添加到allCleanupActions队列中，如果对应的JobId或者TaskId已存在与allCleanupActions中，则将Action添加到activeCleanupActions队列中。activeCleanupActions队列由taskCleanupThread线程进行操作，该线程在TT实例化化时初始化，并在TT运行一开始调用startCleanupThreads()方法启动，该线程会一直执行taskCleanUp()方法进行清除工作。<br><figure class="highlight fortran"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="keyword">action</span> instanceof KillJobAction) &#123;</span><br><span class="line">      purgeJob((KillJobAction) <span class="keyword">action</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">action</span> instanceof KillTaskAction) &#123;</span><br><span class="line">      processKillTaskAction((KillTaskAction) <span class="keyword">action</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="built_in">LOG</span>.error(<span class="string">"Non-delete action given to cleanup thread: "</span> + <span class="keyword">action</span>);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></p>
+<p>分别调用purgeJob和purgeTask方法执行清除工作。</p>
+<h5 id="KillJobAction"><strong>KillJobAction</strong></h5><ol>
+<li><strong>命令内容：</strong><br>KillJobAction跟KillTaskAction很相似，只不过KillJobAction是kill job，而KillTaskAction是kill task。所以KillJobAction内部保存一个jobId（JobID）对象。</li>
+<li><strong>JT下达命令：</strong><br>同KillJobAction一样，JT通过调用getJobsForCleanup()方法获取该TT上需要kill掉的job信息。<figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="built_in">List</span>&lt;TaskTrackerAction&gt; getJobsForCleanup(<span class="built_in">String</span> taskTracker) &#123;</span><br><span class="line">  <span class="built_in">Set</span>&lt;JobID&gt; jobs = <span class="built_in">null</span>;</span><br><span class="line">  synchronized (trackerToJobsToCleanup) &#123;</span><br><span class="line">    jobs = trackerToJobsToCleanup<span class="built_in">.</span>remove(taskTracker);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (jobs != <span class="built_in">null</span>) &#123;</span><br><span class="line">    <span class="comment">// prepare the actions list</span></span><br><span class="line">    <span class="built_in">List</span>&lt;TaskTrackerAction&gt; killList = <span class="literal">new</span> ArrayList&lt;TaskTrackerAction&gt;();</span><br><span class="line">    f<span class="subst">or</span> (JobID killJobId : jobs) &#123;</span><br><span class="line">      killList<span class="built_in">.</span>add(<span class="literal">new</span> KillJobAction(killJobId));</span><br><span class="line">      <span class="keyword">if</span>(<span class="keyword">LOG</span><span class="built_in">.</span>isDebugEnabled()) &#123;</span><br><span class="line">        <span class="keyword">LOG</span><span class="built_in">.</span>debug(taskTracker + <span class="string">" -&gt; KillJobAction: "</span> + killJobId);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> killList;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>该方法很简单，只是从trackerToJobsToCleanup队列中获取该TT所对应的需要Cleanup的Job信息。trackerToJobsToCleanup队列JT在两种情况会向其添加内容，第一个是当一个Job完成时，通过JT的finalizeJob()方法；另一中情况是通过JT的processHeartbeat()处理心跳时，调用updateTaskStatuses()方法，获取心跳发送方（TT）上所有的Task信息，如果有的Task在JT上没有对应的Job存在，则将该Task所保存的JobId添加到trackerToJobsToCleanup队列中，等待清除。</p>
+<ol>
+<li><strong>TT处理命令：</strong><br>同上KillTaskAction。<h5 id="CommitTaskAction"><strong>CommitTaskAction</strong></h5></li>
+<li><strong>命令内容：</strong><br>CommitTaskAction是指TT需要提交Task，内部保存一个taskId（TaskAttemptID）对象。</li>
+<li><strong>JT下达命令：</strong><br>JT通过调用getTasksToSave()方法获取该TT需要提交的任务信息。<figure class="highlight dart"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">private synchronized <span class="built_in">List</span>&lt;TaskTrackerAction&gt; getTasksToSave(</span><br><span class="line">                                                 TaskTrackerStatus tts) &#123;</span><br><span class="line">    <span class="built_in">List</span>&lt;TaskStatus&gt; taskStatuses = tts.getTaskReports();</span><br><span class="line">    <span class="keyword">if</span> (taskStatuses != <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="built_in">List</span>&lt;TaskTrackerAction&gt; saveList = <span class="keyword">new</span> ArrayList&lt;TaskTrackerAction&gt;();</span><br><span class="line">      <span class="keyword">for</span> (TaskStatus taskStatus : taskStatuses) &#123;</span><br><span class="line">        <span class="keyword">if</span> (taskStatus.getRunState() == TaskStatus.State.COMMIT_PENDING) &#123;</span><br><span class="line">          TaskAttemptID taskId = taskStatus.getTaskID();</span><br><span class="line">          TaskInProgress tip = taskidToTIPMap.<span class="literal">get</span>(taskId);</span><br><span class="line">          <span class="keyword">if</span> (tip == <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">if</span> (tip.shouldCommit(taskId)) &#123;</span><br><span class="line">            saveList.add(<span class="keyword">new</span> CommitTaskAction(taskId));</span><br><span class="line">            <span class="keyword">if</span> (LOG.isDebugEnabled()) &#123;</span><br><span class="line">              LOG.debug(tts.getTrackerName() + </span><br><span class="line">                      <span class="string">" -&gt; CommitTaskAction: "</span> + taskId);</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> saveList;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>该方法根据TT发送过来的TaskTrackerStatus获取该TT上所有的TaskAttempt，然后从taskidToTIPMap中获取每个TaskAttempt所对应的TaskInProgress，调用TaskInProgress的shouldCommit()方法判断该TaskAttempt是否应该commit。下面看看TaskInProgress的shouldCommit()方法。<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">boolean</span> <span class="title">shouldCommit</span><span class="params">(TaskAttemptID taskid)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> !isComplete() &amp;&amp; isCommitPending(taskid) &amp;&amp; </span><br><span class="line">         taskToCommit.equals(taskid);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>该方法内部通过isComplete()判断该Task是否已完成，如果Task已完成，则TaskAttempt无需commit，如果Task未完成，且TaskAttempt处于COMMIT_PENDING状态（等待提交），且Task的taskToCommit==该TaskAttempt的ID，则该TaskAttempt应该commit。这里说一下，Hadoop中JT是不进行任务任务执行的，所有的任务执行都是交由TT完成，JT上只是保存了Job/Task的各种队列信息，而JT上保存的Job/Task等的状态信息的更新都是通过TT向JT发送心跳完成的，即在JT的processHeartbeat()方法中，这个方法内部根据TT发送过来的其上的所有Task状态信息来更新JT上保存的Job/Task状态信息，使得JT能够及时了解每个Job/Task的状态变化，以便根据其状态给出合适的处理命令。这里涉及的taskToCommit对象就是在processHeartbeat()方法调用JobInProgress对象的updateTaskStatus()方法更新的。</p>
+<ol>
+<li><strong>TT处理命令：</strong><br>TT将接收到的CommitTaskAction命令存放在commitResponses队列中，该队列的作用是当Task完成时通过RPC请求向TT询问是否可以提交时，TT根据commitResponses队列中是否包含该Task信息来决定是否让Task进行提交操作。具体发生在Task的done()方法中。<h5 id="LaunchTaskAction"><strong>LaunchTaskAction</strong></h5></li>
+<li><strong>命令内容：</strong><br>LaunchTaskAction是五个命令中最复杂的一个，该命令指示TT进行Task的运行，所以涉及到MapReduce中最核心的问题——任务调度，即如何合理的调度各个任务。LaunchTaskAction内部保存了一个task（Task）对象，同时在序列化会先写入task.isMapTask()的值（boolean型），在反序列化时会首先读取isMapTask值。</li>
+<li><strong>JT下达命令：</strong><figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">List&lt;<span class="keyword">Task</span>&gt; tasks = getSetupAndCleanupTasks(taskTrackerStatus);</span><br><span class="line">        <span class="keyword">if</span> (tasks == <span class="keyword">null</span> ) &#123;</span><br><span class="line">          tasks = taskScheduler.assignTasks(taskTrackers.get(trackerName));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (tasks != <span class="keyword">null</span>) &#123;</span><br><span class="line">          <span class="keyword">for</span> (<span class="keyword">Task</span> <span class="keyword">task</span> : tasks) &#123;</span><br><span class="line">            expireLaunchingTasks.addNewTask(<span class="keyword">task</span>.getTaskID());</span><br><span class="line">            <span class="keyword">if</span>(LOG.isDebugEnabled()) &#123;</span><br><span class="line">              LOG.debug(trackerName + <span class="string">" -&gt; LaunchTask: "</span> + <span class="keyword">task</span>.getTaskID());</span><br><span class="line">            &#125;</span><br><span class="line">            actions.add(<span class="keyword">new</span> LaunchTaskAction(<span class="keyword">task</span>));</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>JT下达该命令需要根据TT发送心跳时的acceptNewTasks值决定是否给该TT下达任务。JT在为TT选择任务的时的选择优先级是：Map Cleanup任务，Map Cleanup的TaskAttempt，Map Setup任务，Reduce Cleanup任务，Reduce Cleanup的TaskAttempt，Reduce Setup任务，Map/Reduce任务。除去最后一个任务的选择，其他任务都是由JT选择的，最后的Map/Reduce任务则由TaskScheduler选择，这里涉及到任务调度，说实话不懂，略过。</p>
+<ol>
+<li><strong>TT处理命令：</strong><br>TT接收到JT的LaunchTaskAction会调用addToTaskQueue()方法，根据Task的类型（Map/Reduce）分别添加到mapLauncher和reduceLauncher对象中。mapLauncher和reduceLauncher对象是以线程模式运行的任务启动器，其在TT初始化过程中实例化并启动。这两个线程会进行Task的启动。<br>以上就是心跳响应中的五种命令，有错误之处还望指出，谢谢！</li>
+</ol>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/JobTracker/" rel="tag">#JobTracker</a>
+          
+            <a href="/tags/MapReduce/" rel="tag">#MapReduce</a>
+          
+            <a href="/tags/心跳/" rel="tag">#心跳</a>
+          
+            <a href="/tags/源码/" rel="tag">#源码</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2013/12/11/FairScheduler的任务调度机制——assignTasks/" rel="prev">FairScheduler的任务调度机制——assignTasks</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2013/12/05/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——JT篇/" rel="next">Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——JT篇</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/"
+     data-title="Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇"
+     data-content=""
+     data-url="http://vickyqi.com/2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/"
+                       data-title="Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇" data-url="http://vickyqi.com/2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/images/Vicky.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">一个不甘做屌丝的程序员</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">24</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#ReinitTrackerAction"><span class="nav-number">1.</span> <span class="nav-text">ReinitTrackerAction</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#KillTaskAction"><span class="nav-number">2.</span> <span class="nav-text">KillTaskAction</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#KillJobAction"><span class="nav-number">3.</span> <span class="nav-text">KillJobAction</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#CommitTaskAction"><span class="nav-number">4.</span> <span class="nav-text">CommitTaskAction</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#LaunchTaskAction"><span class="nav-number">5.</span> <span class="nav-text">LaunchTaskAction</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>

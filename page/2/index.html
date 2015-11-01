@@ -207,6 +207,370 @@
           
           
             
+              <a class="post-title-link" href="/2013/12/05/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——JT篇/" itemprop="url">
+                Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——JT篇
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-12-05T00:36:00+08:00" content="2013-12-05">
+            2013-12-05
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/12/05/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——JT篇/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/05/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——JT篇/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <span itemprop="articleBody">
+            
+            上一篇浅析了Hadoop心跳机制的TT（TaskTracker）方面，这一篇浅析下JT（JobTracker）方面。我们知道心跳是TT通过RPC请求调用JT的heartbeat()方法的，TT在调用JT的heartbeat回收集自身的状态信息封装到TaskTrackerStatus对象中，传递给JT
+            ...
+          </span>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2013/12/05/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——JT篇/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/" itemprop="url">
+                Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-12-03T23:37:00+08:00" content="2013-12-03">
+            2013-12-03
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <span itemprop="articleBody">
+            
+            在Hadoop中JT（JobTracker）与TT（TaskTracker）之间的通信是通过心跳机制完成的。JT实现InterTrackerProtocol协议，该协议定义了JT与TT之间的通信机制——心跳。心跳机制实际上就是一个RPC请求，JT作为Server，而TT作为Client，TT通过RP
+            ...
+          </span>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/" itemprop="url">
+                Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-11-24T23:52:00+08:00" content="2013-11-24">
+            2013-11-24
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <span itemprop="articleBody">
+            
+            JobTracker是hadoop的mapreduce框架中最重要的一个类，这个类负责整个集群的作业控制和资源管理。JobTracker的启动是在用户启动hadoop集群时启动的，也就是在hadoop启动完之后使用jps命令看到的jobTracker进程，启动代码是在start-mapred.sh中
+            ...
+          </span>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2013/11/21/FairScheduler job初始化过程源码浅析/" itemprop="url">
+                FairScheduler job初始化过程源码浅析
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-11-21T22:31:00+08:00" content="2013-11-21">
+            2013-11-21
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/11/21/FairScheduler job初始化过程源码浅析/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/11/21/FairScheduler job初始化过程源码浅析/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <span itemprop="articleBody">
+            
+            上一篇文章说到了jobTracker中的submitJob()方法，这个方法最终会调用listener.jobAdded(job)，将Job注册到TaskScheduler中，由其进行调度。今天接着研究hadoop中默认的TaskScheduler是JobQueueTaskScheduler，采用的
+            ...
+          </span>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2013/11/21/FairScheduler job初始化过程源码浅析/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
               <a class="post-title-link" href="/2013/11/20/Hadoop JobTracker提交job源码浅析/" itemprop="url">
                 Hadoop JobTracker提交job源码浅析
               </a>
@@ -227,7 +591,7 @@
           <span class="post-category" >
             &nbsp; | &nbsp; 分类于
             
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop学习/" itemprop="url" rel="index"><span itemprop="name">Hadoop学习</span></a></span>
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
 
               
               
@@ -319,7 +683,7 @@
           <span class="post-category" >
             &nbsp; | &nbsp; 分类于
             
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop学习/" itemprop="url" rel="index"><span itemprop="name">Hadoop学习</span></a></span>
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
 
               
               
@@ -411,7 +775,7 @@ jo
           <span class="post-category" >
             &nbsp; | &nbsp; 分类于
             
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop学习/" itemprop="url" rel="index"><span itemprop="name">Hadoop学习</span></a></span>
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
 
               
               
@@ -502,7 +866,7 @@ jo
           <span class="post-category" >
             &nbsp; | &nbsp; 分类于
             
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop学习/" itemprop="url" rel="index"><span itemprop="name">Hadoop学习</span></a></span>
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
 
               
               
@@ -597,7 +961,7 @@ LinuxOS：RedHat Enterp
           <span class="post-category" >
             &nbsp; | &nbsp; 分类于
             
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Linux学习/" itemprop="url" rel="index"><span itemprop="name">Linux学习</span></a></span>
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a></span>
 
               
               
@@ -689,7 +1053,7 @@ LinuxOS：RedHat Enterp
           <span class="post-category" >
             &nbsp; | &nbsp; 分类于
             
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
 
               
               
@@ -750,395 +1114,11 @@ LinuxOS：RedHat Enterp
 
 
     
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2012/05/19/Java类之间的关联关系/" itemprop="url">
-                Java类之间的关联关系
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2012-05-19T20:43:00+08:00" content="2012-05-19">
-            2012-05-19
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2012/05/19/Java类之间的关联关系/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2012/05/19/Java类之间的关联关系/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            UML类图中的关系分为四种：泛化、依赖、关联、实现；关联关系又可以细化为聚合和组合。
-泛化（Generalization）泛化是父类和子类之间的关系，子类继承父类的所有结构和行为。在子类中可以增加新的结构和行为，也可以覆写父类的行为。一般用一个带空心箭头的实线表示泛化关系，UML图如下：泛化对应Ja
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2012/05/19/Java类之间的关联关系/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2012/05/19/Session的理解/" itemprop="url">
-                Session的理解
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2012-05-19T00:13:00+08:00" content="2012-05-19">
-            2012-05-19
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
-
-              
-              
-                ， 
-              
-
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/Web开发/" itemprop="url" rel="index"><span itemprop="name">Web开发</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2012/05/19/Session的理解/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2012/05/19/Session的理解/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            个人误区&emsp;&emsp;一开始很傻的把Session的会话与用户的登录与退出弄混淆了，实在很傻！Session的会话指的是当你打开浏览器，请求一个应用服务器时开始，直到与这个应用服务器断开连接（如关闭浏览器等）为止的一系列动作。这与用户登录完全没有关系，被弄混淆个人觉得是Session最普遍
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2012/05/19/Session的理解/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2012/05/13/Struts2整合Spring方法及原理/" itemprop="url">
-                Struts2整合Spring方法及原理
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2012-05-13T14:44:00+08:00" content="2012-05-13">
-            2012-05-13
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
-
-              
-              
-                ， 
-              
-
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/Web开发/" itemprop="url" rel="index"><span itemprop="name">Web开发</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2012/05/13/Struts2整合Spring方法及原理/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2012/05/13/Struts2整合Spring方法及原理/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            Struts 2框架整合Spring步骤
-复制文件。复制struts2-spring-plugin-x-x-x.jar和spring.jar到WEB-INF/lib目录下。其中的x对应了Spring的版本号。还需要复制commons-logging.jar文件到WEB-INF/lib目录下。
-配置s
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2012/05/13/Struts2整合Spring方法及原理/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2012/05/12/Java多线程和同步的理解/" itemprop="url">
-                Java多线程和同步的理解
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2012-05-12T00:41:00+08:00" content="2012-05-12">
-            2012-05-12
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java学习/" itemprop="url" rel="index"><span itemprop="name">Java学习</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2012/05/12/Java多线程和同步的理解/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2012/05/12/Java多线程和同步的理解/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            进程与线程在谈论线程之前，我们先来看看什么叫进程，以及进程与线程的关系。
-进程我们在windows操作系统中打开任务管理器，可以看到有一项是“进程”，里面列举出了用户目前正在运行的所有进程，包括系统进程和用户应用程序进程，以及每个进程所占用的内存资源等信息。进程是操作系统结构的基础，它不仅只包括运行
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2012/05/12/Java多线程和同步的理解/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/">&laquo;</a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
+    <a class="extend prev" rel="prev" href="/">&laquo;</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/3/">&raquo;</a>
   </nav>
 
 
@@ -1173,7 +1153,7 @@ LinuxOS：RedHat Enterp
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">20</span>
+              <span class="site-state-item-count">24</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1187,7 +1167,7 @@ LinuxOS：RedHat Enterp
 
           <div class="site-state-item site-state-tags">
             <a href="/tags">
-              <span class="site-state-item-count">26</span>
+              <span class="site-state-item-count">27</span>
               <span class="site-state-item-name">标签</span>
               </a>
           </div>

@@ -1,0 +1,761 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="一个不甘做屌丝的程序员" />
+
+
+
+  <meta name="keywords" content="Hadoop,Java,JobTracker,MapReduce,源码," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="在Hadoop中JT（JobTracker）与TT（TaskTracker）之间的通信是通过心跳机制完成的。JT实现InterTrackerProtocol协议，该协议定义了JT与TT之间的通信机制——心跳。心跳机制实际上就是一个RPC请求，JT作为Server，而TT作为Client，TT通过RPC调用JT的heartbeat方法，将TT自身的一些状态信息发送给JT，同时JT通过返回值返回对TT">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇">
+<meta property="og:url" content="http://vickyqi.com/2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="在Hadoop中JT（JobTracker）与TT（TaskTracker）之间的通信是通过心跳机制完成的。JT实现InterTrackerProtocol协议，该协议定义了JT与TT之间的通信机制——心跳。心跳机制实际上就是一个RPC请求，JT作为Server，而TT作为Client，TT通过RPC调用JT的heartbeat方法，将TT自身的一些状态信息发送给JT，同时JT通过返回值返回对TT">
+<meta property="og:updated_time" content="2015-11-01T08:08:34.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇">
+<meta name="twitter:description" content="在Hadoop中JT（JobTracker）与TT（TaskTracker）之间的通信是通过心跳机制完成的。JT实现InterTrackerProtocol协议，该协议定义了JT与TT之间的通信机制——心跳。心跳机制实际上就是一个RPC请求，JT作为Server，而TT作为Client，TT通过RPC调用JT的heartbeat方法，将TT自身的一些状态信息发送给JT，同时JT通过返回值返回对TT">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇 - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-12-03T23:37:00+08:00" content="2013-12-03">
+            2013-12-03
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>在Hadoop中JT（JobTracker）与TT（TaskTracker）之间的通信是通过心跳机制完成的。JT实现InterTrackerProtocol协议，该协议定义了JT与TT之间的通信机制——心跳。心跳机制实际上就是一个RPC请求，JT作为Server，而TT作为Client，TT通过RPC调用JT的heartbeat方法，将TT自身的一些状态信息发送给JT，同时JT通过返回值返回对TT的指令。<br>心跳有三个作用：</p>
+<ul>
+<li>判断TT是否活着</li>
+<li>报告TT的资源情况以及任务运行情况</li>
+<li>为TT发送指令（如运行task，kill task等）</li>
+</ul>
+<p>下面详细阅读下涉及到心跳调用的源码。<br>首先我们需要清楚，心跳机制是TT调用JT的方法，而非JT主动调用TT的方法。TT通过transmitHeartBeat方法调用JT的heartbeat方法。</p>
+<h5 id="TaskTracker-transmitHeartBeat："><strong>TaskTracker.transmitHeartBeat：</strong></h5><figure class="highlight autoit"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">// <span class="built_in">Send</span> Counters <span class="keyword">in</span> the status once every COUNTER_UPDATE_INTERVAL</span><br><span class="line">    boolean sendCounters<span class="comment">;</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">now</span> &gt; (previousUpdate + COUNTER_UPDATE_INTERVAL)) &#123;</span><br><span class="line">      sendCounters = <span class="literal">true</span><span class="comment">;</span></span><br><span class="line">      previousUpdate = <span class="built_in">now</span><span class="comment">;</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">      sendCounters = <span class="literal">false</span><span class="comment">;</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>根据sendCounters的间隔判断此次心跳是否发送计算器信息。</p>
+<h5 id="TaskTracker-transmitHeartBeat：-1"><strong>TaskTracker.transmitHeartBeat：</strong></h5><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Check if the last heartbeat got through... </span></span><br><span class="line">    <span class="comment">// if so then build the heartbeat information for the JobTracker;</span></span><br><span class="line">    <span class="comment">// else resend the previous status information.</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    <span class="keyword">if</span> (status == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">        status = <span class="keyword">new</span> TaskTrackerStatus(taskTrackerName, localHostname, </span><br><span class="line">                                       httpPort, </span><br><span class="line">                                       cloneAndResetRunningTaskStatuses(</span><br><span class="line">                                         sendCounters), </span><br><span class="line">                                       taskFailures,</span><br><span class="line">                                       localStorage.numFailures(),</span><br><span class="line">                                       maxMapSlots,</span><br><span class="line">                                       maxReduceSlots); </span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      LOG.info(<span class="string">"Resending 'status' to '"</span> + jobTrackAddr.getHostName() +</span><br><span class="line">               <span class="string">"' with reponseId '"</span> + heartbeatResponseId);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>此处根据status变量是否为null，判断上次的心跳是否成功发送。tatus!=null，则表示上次的心跳尚未发送，所以直接将上次收集到的TT状态信息（封装在status中）发送给JT；相反，status==null，则表示上次心跳已完成，重新收集TT的状态信息，同样封装到status中。下面详细看下new TaskTrackerStatus（）方法。注意此处有个cloneAndResetRunningTaskStatuses(sendCounters)方法：<br><figure class="highlight nimrod"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">private synchronized <span class="type">List</span>&lt;<span class="type">TaskStatus</span>&gt; cloneAndResetRunningTaskStatuses(</span><br><span class="line">                                          boolean sendCounters) &#123;</span><br><span class="line">    <span class="type">List</span>&lt;<span class="type">TaskStatus</span>&gt; <span class="literal">result</span> = new <span class="type">ArrayList</span>&lt;<span class="type">TaskStatus</span>&gt;(runningTasks.size());</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">TaskInProgress</span> tip: runningTasks.values()) &#123;</span><br><span class="line">      <span class="type">TaskStatus</span> status = tip.getStatus();</span><br><span class="line">      status.setIncludeCounters(sendCounters);</span><br><span class="line">      // send counters <span class="keyword">for</span> finished <span class="keyword">or</span> failed tasks <span class="keyword">and</span> commit pending tasks</span><br><span class="line">      <span class="keyword">if</span> (status.getRunState() != <span class="type">TaskStatus</span>.<span class="type">State</span>.<span class="type">RUNNING</span>) &#123;</span><br><span class="line">        status.setIncludeCounters(<span class="literal">true</span>);</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="literal">result</span>.add((<span class="type">TaskStatus</span>)status.clone());</span><br><span class="line">      status.clearStatus();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">result</span>;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>该方法中涉及到runningTasks队列，该队列保存了该TT上接收的所有未完成的Task任务，通过runningTasks.values()可以获取TT当前所有未完成的Task，然后获取每个TaskInProgress的status信息，同时根据第一步判断出的sendCounters（true/false）决定是否发送counters信息（includeCounters），即是否将counters对象序列化到TaskStatus对象中，这里需要注意如果TaskInProgress不处于Running状态，则includeCounters设为true，即发送counters信息。</p>
+<h5 id="TaskTrackerStatus()："><strong>TaskTrackerStatus()：</strong></h5><figure class="highlight dart"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">public TaskTrackerStatus(<span class="built_in">String</span> trackerName, <span class="built_in">String</span> host, </span><br><span class="line">                           <span class="built_in">int</span> httpPort, <span class="built_in">List</span>&lt;TaskStatus&gt; taskReports, </span><br><span class="line">                           <span class="built_in">int</span> taskFailures, <span class="built_in">int</span> dirFailures,</span><br><span class="line">                           <span class="built_in">int</span> maxMapTasks, <span class="built_in">int</span> maxReduceTasks) &#123;</span><br><span class="line">    <span class="keyword">this</span>.trackerName = trackerName;</span><br><span class="line">    <span class="keyword">this</span>.host = host;</span><br><span class="line">    <span class="keyword">this</span>.httpPort = httpPort;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.taskReports = <span class="keyword">new</span> ArrayList&lt;TaskStatus&gt;(taskReports);</span><br><span class="line">    <span class="keyword">this</span>.taskFailures = taskFailures;</span><br><span class="line">    <span class="keyword">this</span>.dirFailures = dirFailures;</span><br><span class="line">    <span class="keyword">this</span>.maxMapTasks = maxMapTasks;</span><br><span class="line">    <span class="keyword">this</span>.maxReduceTasks = maxReduceTasks;</span><br><span class="line">    <span class="keyword">this</span>.resStatus = <span class="keyword">new</span> ResourceStatus();</span><br><span class="line">    <span class="keyword">this</span>.healthStatus = <span class="keyword">new</span> TaskTrackerHealthStatus();</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<p>这里只是进行简单的变量复制操作，分析下其中一些参数的含义：<br>1）taskReports：包含该TT上目前所有的Task状态信息，其中的counters信息会根据之前判断sendCounters值进行决定是否发送，上一步有提到。<br>2）taskFailures：该TT上失败的Task总数（重启会清空），该参数帮助JT决定是否向该TT提交Task，因为失败数越多表明该TT可能出现Task失败的概率越大。<br>3）dirFailures：这个值是mapred.local.dir参数设置的目录中有多少是不可用的（以后会详细提到）<br>4）maxMapSlots/maxReduceSlots：这个值是TT可使用的最大map和reduce slot数量</p>
+<p>初始化完成，继续回到TaskTracker.transmitHeartBeat方法。</p>
+<h5 id="TaskTracker-transmitHeartBeat：-2"><strong>TaskTracker.transmitHeartBeat：</strong></h5><figure class="highlight dns"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"> // Check if we should ask for a new Task</span><br><span class="line">    //</span><br><span class="line">    boolean askForNewTask<span class="comment">;</span></span><br><span class="line">    long localMinSpaceStart<span class="comment">;</span></span><br><span class="line">    synchronized (this) &#123;</span><br><span class="line">      askForNewTask = </span><br><span class="line">        ((status.countOccupiedMapSlots() &lt; maxMapSlots || </span><br><span class="line">          status.countOccupiedReduceSlots() &lt; maxReduceSlots) &amp;&amp; </span><br><span class="line">         acceptNewTasks)<span class="comment">; </span></span><br><span class="line">      localMinSpaceStart = minSpaceStart<span class="comment">;</span></span><br><span class="line">    &#125;</span><br><span class="line">    if (askForNewTask) &#123;</span><br><span class="line">      askForNewTask = enoughFreeSpace(localMinSpaceStart)<span class="comment">;</span></span><br><span class="line">      long freeDiskSpace = getFreeSpace()<span class="comment">;</span></span><br><span class="line">      long totVmem = getTotalVirtualMemoryOnTT()<span class="comment">;</span></span><br><span class="line">      long totPmem = getTotalPhysicalMemoryOnTT()<span class="comment">;</span></span><br><span class="line">      long availableVmem = getAvailableVirtualMemoryOnTT()<span class="comment">;</span></span><br><span class="line">      long availablePmem = getAvailablePhysicalMemoryOnTT()<span class="comment">;</span></span><br><span class="line">      long cumuCpuTime = getCumulativeCpuTimeOnTT()<span class="comment">;</span></span><br><span class="line">      long cpuFreq = getCpuFrequencyOnTT()<span class="comment">;</span></span><br><span class="line">      int numCpu = getNumProcessorsOnTT()<span class="comment">;</span></span><br><span class="line">      float cpuUsage = getCpuUsageOnTT()<span class="comment">;</span></span><br><span class="line">status.getResourceStatus().setAvailableSpace(freeDiskSpace)<span class="comment">;</span></span><br><span class="line">      status.getResourceStatus().setTotalVirtualMemory(totVmem)<span class="comment">;</span></span><br><span class="line">      status.getResourceStatus().setTotalPhysicalMemory(totPmem)<span class="comment">;</span></span><br><span class="line">      status.getResourceStatus().setMapSlotMemorySizeOnTT(</span><br><span class="line">          mapSlotMemorySizeOnTT)<span class="comment">;</span></span><br><span class="line">      status.getResourceStatus().setReduceSlotMemorySizeOnTT(</span><br><span class="line">          reduceSlotSizeMemoryOnTT)<span class="comment">;</span></span><br><span class="line">      status.getResourceStatus().setAvailableVirtualMemory(availableVmem)<span class="comment">; </span></span><br><span class="line">      status.getResourceStatus().setAvailablePhysicalMemory(availablePmem)<span class="comment">;</span></span><br><span class="line">      status.getResourceStatus().setCumulativeCpuTime(cumuCpuTime)<span class="comment">;</span></span><br><span class="line">      status.getResourceStatus().setCpuFrequency(cpuFreq)<span class="comment">;</span></span><br><span class="line">      status.getResourceStatus().setNumProcessors(numCpu)<span class="comment">;</span></span><br><span class="line">      status.getResourceStatus().setCpuUsage(cpuUsage)<span class="comment">;</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>从源码中的注释可以知道，此处是TT根据自身资源使用情况判断是否接收new task。<br>首先第一步status.countOccupiedMapSlots()获得该TT上已占用的map slot数量：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line">   * Get the number of occupied map slots.</span><br><span class="line">   * @return the number of occupied map slots</span><br><span class="line">   */</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">countOccupiedMapSlots</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> mapSlotsCount = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (TaskStatus ts : taskReports) &#123;</span><br><span class="line">      <span class="keyword">if</span> (ts.getIsMap() &amp;&amp; isTaskRunning(ts)) &#123;</span><br><span class="line">        mapSlotsCount += ts.getNumSlots();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> mapSlotsCount;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>方法内部是根据taskReports中的TaskStatus进行判断，这里计算的是map slot，所以会判断ts.getIsMap()，如果该task是map任务，且isTaskRunning()返回true，则获取该task所需的slot数量。isTaskRunning()方法内部判断逻辑是：该task处于RUNNING或者UNASSIGNED状态，或者处于CleanerUp阶段（这里可能是Task处于FAILED_UNCLEAN或者KILLED_UNCLEAN阶段）。这个方法会计算出TT当前已占用的map slot数量。同样的通过countOccupiedReduceSlots()方法计算出TT当前已占用的reduce slot数量。获取到occupied map/reduce slots后将其同maxMapSlots/maxReduceSlots进行比较，这里是“||”而非“&amp;&amp;”，表示只要有map slot或者有reduce slot就可以接收新任务，当然还需要满足acceptNewTasks==true的条件。acceptNewTasks会在其他地方根据TT可使用的空间进行合适的赋值。以上可以判断出是否可以接收新任务，即askForNewTask值。<br>localMinSpaceStart = minSpaceStart，minSpaceStart由mapred.local.dir.minspacestart参数决定，默认是0，即无限制，该值的意思应该是可接收新任务的localDirs最小的可用空间大小。接下来可以看到该值能够影响acceptNewTasks值。<br>当acceptNewTasks==true时，即初步判断可以接收新任务，会再次根据localMinSpaceStart判断是否可接收新任务。<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line">   * Check if any of the local directories has enough</span><br><span class="line">   * free space  (more than minSpace)</span><br><span class="line">   * </span><br><span class="line">   * If not, do not try to get a new task assigned </span><br><span class="line">   * <span class="doctag">@return</span></span><br><span class="line">   * <span class="doctag">@throws</span> IOException </span><br><span class="line">   */</span></span><br><span class="line">  <span class="keyword">private</span> <span class="function"><span class="keyword">boolean</span> <span class="title">enoughFreeSpace</span><span class="params">(<span class="keyword">long</span> minSpace)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (minSpace == <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> minSpace &lt; getFreeSpace();</span><br><span class="line">  &#125;</span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">long</span> <span class="title">getFreeSpace</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">    <span class="keyword">long</span> biggestSeenSoFar = <span class="number">0</span>;</span><br><span class="line">    String[] localDirs = localStorage.getDirs();</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; localDirs.length; i++) &#123;</span><br><span class="line">      DF df = <span class="keyword">null</span>;</span><br><span class="line">      <span class="keyword">if</span> (localDirsDf.containsKey(localDirs[i])) &#123;</span><br><span class="line">        df = localDirsDf.get(localDirs[i]);</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        df = <span class="keyword">new</span> DF(<span class="keyword">new</span> File(localDirs[i]), fConf);</span><br><span class="line">        localDirsDf.put(localDirs[i], df);</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">long</span> availOnThisVol = df.getAvailable();</span><br><span class="line">      <span class="keyword">if</span> (availOnThisVol &gt; biggestSeenSoFar) &#123;</span><br><span class="line">        biggestSeenSoFar = availOnThisVol;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//Should ultimately hold back the space we expect running tasks to use but </span></span><br><span class="line">    <span class="comment">//that estimate isn't currently being passed down to the TaskTrackers    </span></span><br><span class="line">    <span class="keyword">return</span> biggestSeenSoFar;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>判断方法是获取所有的lcoalDir，计算出这些目录中可用空间最大一个目录的可用大小，为什么使用最大值作为可用大小，而不是所有目录可用空间总和，是因为localDir存放task的一些本地信息，这些信息是不能夸目录存放的，所以必须确保有一个目录能够容纳下所有的信息。当计算出freeSpace后，根据比较localMinSpaceStart值与freeSpace的大小决定是否接收新任务。<br>接下来就是获取TT的一些资源信息，如总虚拟内存，总物理内存，可用的虚拟内存，可用的物理内存，CPU使用情况等。接着将这些值添加到status中去，发送给JT。</p>
+<h5 id="TaskTracker-transmitHeartBeat：-3"><strong>TaskTracker.transmitHeartBeat：</strong></h5><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//add node health information</span></span><br><span class="line">    </span><br><span class="line">    TaskTrackerHealthStatus healthStatus = status.getHealthStatus();</span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">      <span class="keyword">if</span> (healthChecker != <span class="keyword">null</span>) &#123;</span><br><span class="line">        healthChecker.setHealthStatus(healthStatus);</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        healthStatus.setNodeHealthy(<span class="keyword">true</span>);</span><br><span class="line">        healthStatus.setLastReported(<span class="number">0</span>L);</span><br><span class="line">        healthStatus.setHealthReport(<span class="string">""</span>);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>此处是检查TT的健康状况。</p>
+<h5 id="TaskTracker-transmitHeartBeat：-4"><strong>TaskTracker.transmitHeartBeat：</strong></h5><figure class="highlight protobuf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// Xmit the heartbeat</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="constant">HeartbeatResponse heartbeatResponse</span> = jobClient.heartbeat(status,justStarted,justInited,askForNewTask,heartbeatResponseId);</span><br></pre></td></tr></table></figure>
+<p>此处通过RPC调用JT的heartbeat()方法。传的参数包括：status——TT自身的状态信息；justStarted——表示TT是否刚启动；justInited——表示TT是否刚初始化；askForNewTask——表示是否接收新任务；heartbeatResponseId——上次心跳返回的responseId。方法的返回值是一个HeartbeatResponse对象，具体JT内的heartbeat()方法如何处理以及HeartbeatResponse内容会另外分析。继续往下走。</p>
+<h5 id="TaskTracker-transmitHeartBeat：-5"><strong>TaskTracker.transmitHeartBeat：</strong></h5><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//</span></span><br><span class="line">    <span class="comment">// The heartbeat got through successfully!</span></span><br><span class="line">    <span class="comment">//</span></span><br><span class="line">    heartbeatResponseId = heartbeatResponse.getResponseId();</span><br><span class="line">      </span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">      <span class="keyword">for</span> (TaskStatus taskStatus : status.getTaskReports()) &#123;</span><br><span class="line">        <span class="keyword">if</span> (taskStatus.getRunState() != TaskStatus.State.RUNNING &amp;&amp;</span><br><span class="line">            taskStatus.getRunState() != TaskStatus.State.UNASSIGNED &amp;&amp;</span><br><span class="line">            taskStatus.getRunState() != TaskStatus.State.COMMIT_PENDING &amp;&amp;</span><br><span class="line">            !taskStatus.inTaskCleanupPhase()) &#123;</span><br><span class="line">          <span class="keyword">if</span> (taskStatus.getIsMap()) &#123;</span><br><span class="line">            mapTotal--;</span><br><span class="line">          &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            reduceTotal--;</span><br><span class="line">          &#125;</span><br><span class="line">          myInstrumentation.completeTask(taskStatus.getTaskID());</span><br><span class="line">          runningTasks.remove(taskStatus.getTaskID());</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      </span><br><span class="line">      <span class="comment">// Clear transient status information which should only</span></span><br><span class="line">      <span class="comment">// be sent once to the JobTracker</span></span><br><span class="line">      <span class="keyword">for</span> (TaskInProgress tip: runningTasks.values()) &#123;</span><br><span class="line">        tip.getStatus().clearStatus();</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Force a rebuild of 'status' on the next iteration</span></span><br><span class="line">    status = <span class="keyword">null</span>;                                </span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> heartbeatResponse;</span><br></pre></td></tr></table></figure>
+<p>首先从HeartbeatResponse返回值中获取heartbeatResponseId。接下来对TT中的每个TaskInProgress的status信息进行判断，如果一个task处于SUCCEEDED/FAILED/KILLED状态，则表示该task已完成（不论是失败还是成功，亦或是被kill掉），如果该task是一个map任务，则mapTotal减一，该task是一个reduce任务，则reduceTotal减一，mapTotal/reduceTotal记录当前TT所有处于运行状态（非SUCCEEDED/FAILED/KILLED状态）的task数量。<br>myInstrumentation.completeTask(taskStatus.getTaskID())此处将该TT所有完成任务数加一，runningTasks.remove(taskStatus.getTaskID())则是将该task从runningTasks队列中移除，所以可以知道runningTasks中只包含未完成的task信息。<br>接下来是清除TaskInProgress的TaskStatus的临时信息（diagnosticInfo），从clearStatus()方法的注释可以看出diagnosticInfo信息只是在Task向TaskTracker，或者TaskTracker向JobTracker发送一个状态更新信息时的临时诊断信息，所以在发送完成之后需要清除。<br>到这里整个TaskTracker发送心跳信息的过程就完成了，方法返回值是HeartbeatResponse对象，即心跳的返回值。</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/JobTracker/" rel="tag">#JobTracker</a>
+          
+            <a href="/tags/MapReduce/" rel="tag">#MapReduce</a>
+          
+            <a href="/tags/源码/" rel="tag">#源码</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2013/12/05/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——JT篇/" rel="prev">Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——JT篇</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/" rel="next">Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/"
+     data-title="Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇"
+     data-content=""
+     data-url="http://vickyqi.com/2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/"
+                       data-title="Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇" data-url="http://vickyqi.com/2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="/images/Vicky.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">一个不甘做屌丝的程序员</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">24</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#TaskTracker-transmitHeartBeat："><span class="nav-number">1.</span> <span class="nav-text">TaskTracker.transmitHeartBeat：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#TaskTracker-transmitHeartBeat：-1"><span class="nav-number">2.</span> <span class="nav-text">TaskTracker.transmitHeartBeat：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#TaskTrackerStatus()："><span class="nav-number">3.</span> <span class="nav-text">TaskTrackerStatus()：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#TaskTracker-transmitHeartBeat：-2"><span class="nav-number">4.</span> <span class="nav-text">TaskTracker.transmitHeartBeat：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#TaskTracker-transmitHeartBeat：-3"><span class="nav-number">5.</span> <span class="nav-text">TaskTracker.transmitHeartBeat：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#TaskTracker-transmitHeartBeat：-4"><span class="nav-number">6.</span> <span class="nav-text">TaskTracker.transmitHeartBeat：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#TaskTracker-transmitHeartBeat：-5"><span class="nav-number">7.</span> <span class="nav-text">TaskTracker.transmitHeartBeat：</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>
