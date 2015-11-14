@@ -1,0 +1,751 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="让自己的努力变得更有价值" />
+
+
+
+  <meta name="keywords" content="Java,JDK,源码,并发,JUC,Concurrent,ConcurrentSkipListMap,跳表," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="ConcurrentSkipListMap在JDK并发工具类使用范围不是很广，它是针对某一特殊需求而设计的——支持排序，同时支持搜索目标返回最接近匹配项的导航方法。一般情况下开发者很少会使用到该类，但是如果你有如上的特殊需求，那么ConcurrentSkipListMap将是一个很好地解决方案。 本文通过对JDK的ConcurrentSkipListMap的代码详细分析，深入分析其实现原理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)">
+<meta property="og:url" content="http://vickyqi.com/2015/11/13/JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="ConcurrentSkipListMap在JDK并发工具类使用范围不是很广，它是针对某一特殊需求而设计的——支持排序，同时支持搜索目标返回最接近匹配项的导航方法。一般情况下开发者很少会使用到该类，但是如果你有如上的特殊需求，那么ConcurrentSkipListMap将是一个很好地解决方案。 本文通过对JDK的ConcurrentSkipListMap的代码详细分析，深入分析其实现原理。">
+<meta property="og:updated_time" content="2015-11-13T06:13:02.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)">
+<meta name="twitter:description" content="ConcurrentSkipListMap在JDK并发工具类使用范围不是很广，它是针对某一特殊需求而设计的——支持排序，同时支持搜索目标返回最接近匹配项的导航方法。一般情况下开发者很少会使用到该类，但是如果你有如上的特殊需求，那么ConcurrentSkipListMap将是一个很好地解决方案。 本文通过对JDK的ConcurrentSkipListMap的代码详细分析，深入分析其实现原理。">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> JDK并发工具类源码学习系列——ConcurrentSkipListMap(续) - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-11-13T20:05:00+08:00" content="2015-11-13">
+            2015-11-13
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
+
+              
+              
+                ， 
+              
+
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/JDK源码/" itemprop="url" rel="index"><span itemprop="name">JDK源码</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/11/13/JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/11/13/JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>ConcurrentSkipListMap在JDK并发工具类使用范围不是很广，它是针对某一特殊需求而设计的——支持排序，同时支持搜索目标返回最接近匹配项的导航方法。一般情况下开发者很少会使用到该类，但是如果你有如上的特殊需求，那么ConcurrentSkipListMap将是一个很好地解决方案。 本文通过对JDK的ConcurrentSkipListMap的代码详细分析，深入分析其实现原理。<br><a id="more"></a><br><a href="http://vickyqi.com/2015/11/13/JDK%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94ConcurrentSkipListMap/">上一篇介绍了ConcurrentSkipListMap的原理以及对put()方法进行了解析</a>，本篇继续接着上一篇往下看。</p>
+<h5 id="常用方法解读"><strong>常用方法解读</strong></h5><p>上一篇说到put()的最后一句：<code>insertIndex(z, level);</code>这一句是将一个新节点插入到跳表结构中，下面看看是如何实现的。<br><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> insertIndex(Node&lt;K,V&gt; z, <span class="built_in">int</span> level) &#123;</span><br><span class="line"> HeadIndex&lt;K,V&gt; h = head;<span class="comment">// 读取跳表的头</span></span><br><span class="line">    <span class="built_in">int</span> <span class="built_in">max</span> = h.level;<span class="comment">// 跳表的最高层级</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (level &lt;= <span class="built_in">max</span>) &#123;<span class="comment">// level &lt;= max则需要将自最底层到level层的每一层插入该节点</span></span><br><span class="line">    	<span class="comment">// 此处从最底层开始往上创建跳表节点，每个节点的down指向下一层的节点，</span></span><br><span class="line">    	<span class="comment">// 最后的idx为level层的节点，通过down形成一个链表结构</span></span><br><span class="line">        Index&lt;K,V&gt; idx = <span class="keyword">null</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">1</span>; i &lt;= level; ++i)</span><br><span class="line">            idx = <span class="keyword">new</span> Index&lt;K,V&gt;(z, idx, <span class="keyword">null</span>);</span><br><span class="line">        <span class="comment">// 将该节点插入跳表</span></span><br><span class="line">        addIndex(idx, h, level);</span><br><span class="line"></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123; <span class="comment">// Add a new level(新增加一层)</span></span><br><span class="line">        <span class="comment">/*</span><br><span class="line">         * To reduce interference by other threads checking for</span><br><span class="line">         * empty levels in tryReduceLevel, new levels are added</span><br><span class="line">         * with initialized right pointers. Which in turn requires</span><br><span class="line">         * keeping levels in an array to access them while</span><br><span class="line">         * creating new head index nodes from the opposite</span><br><span class="line">         * direction.</span><br><span class="line">         */</span></span><br><span class="line">        level = <span class="built_in">max</span> + <span class="number">1</span>;<span class="comment">// 最大值+1</span></span><br><span class="line">Index&lt;K,V&gt;[] idxs = (Index&lt;K,V&gt;[])<span class="keyword">new</span> Index[level+<span class="number">1</span>];<span class="comment">//一个数组</span></span><br><span class="line">        Index&lt;K,V&gt; idx = <span class="keyword">null</span>;<span class="comment">// 一个新的跳表头结点</span></span><br><span class="line">        <span class="comment">// 该数组是一个从level层开始一直向下引用的垂直链表，用于方便获取某层的节点</span></span><br><span class="line">        <span class="comment">// 用处在下面if (level &lt;= oldLevel)出可以看出</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">1</span>; i &lt;= level; ++i)</span><br><span class="line">            idxs[i] = idx = <span class="keyword">new</span> Index&lt;K,V&gt;(z, idx, <span class="keyword">null</span>);</span><br><span class="line"></span><br><span class="line">        HeadIndex&lt;K,V&gt; oldh;<span class="comment">//旧头结点</span></span><br><span class="line">        <span class="built_in">int</span> k;</span><br><span class="line">        <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">            oldh = head;</span><br><span class="line">            <span class="built_in">int</span> oldLevel = oldh.level;</span><br><span class="line">            <span class="comment">// 此处如果发生level &lt;= oldLevel说明其他线程已经增加了这一层，那么当前线程要插入的层已经不&gt;跳表的最大层了</span></span><br><span class="line">            <span class="comment">// 那直接从数组中渠道level层的节点插入到跳表即可，插入方式同上面</span></span><br><span class="line">            <span class="keyword">if</span> (level &lt;= oldLevel) &#123; <span class="comment">// lost race to add level</span></span><br><span class="line">                k = level;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            HeadIndex&lt;K,V&gt; newh = oldh;</span><br><span class="line">            Node&lt;K,V&gt; oldbase = oldh.node;</span><br><span class="line">            <span class="keyword">for</span> (<span class="built_in">int</span> j = oldLevel+<span class="number">1</span>; j &lt;= level; ++j)</span><br><span class="line">            	<span class="comment">// 循环创建头结点，直到level层，其实从level = max + 1;这里可以看出也就最多增加一层</span></span><br><span class="line">            	<span class="comment">// 新的头结点node和下一层的node一样，down引用下一层，right是我们新建的节点(通过idxs数组直接访问第N层的节点)</span></span><br><span class="line">                newh = <span class="keyword">new</span> HeadIndex&lt;K,V&gt;(oldbase, newh, idxs[j], j);</span><br><span class="line">            <span class="comment">// 用新的头结点取代旧的头结点，使用CAS避免并发安全问题</span></span><br><span class="line">            <span class="keyword">if</span> (casHead(oldh, newh)) &#123;</span><br><span class="line">            	<span class="comment">// 此处k = oldLevel，直接导致下面插入节点的时候从oldLevel开始插入，</span></span><br><span class="line">            	<span class="comment">// 因为oldLevel之上是新插入的层级，每层都是一个接节点，所以已经是OK的了</span></span><br><span class="line">                k = oldLevel;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 插入节点</span></span><br><span class="line">        addIndex(idxs[k], oldh, k);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> addIndex(Index&lt;K,V&gt; idx, HeadIndex&lt;K,V&gt; h, <span class="built_in">int</span> indexLevel) &#123;</span><br><span class="line"><span class="comment">// Track next level to insert in case of retries</span></span><br><span class="line">    <span class="built_in">int</span> insertionLevel = indexLevel;</span><br><span class="line">    Comparable&lt;? <span class="keyword">super</span> K&gt; <span class="variable">key</span> = comparable(idx.node.<span class="variable">key</span>);</span><br><span class="line">    <span class="keyword">if</span> (<span class="variable">key</span> == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Similar to findPredecessor, but adding index nodes along</span></span><br><span class="line">    <span class="comment">// path to key.</span></span><br><span class="line">    <span class="comment">// 此处死循环是在发生不一致时进行重试</span></span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">    	<span class="comment">// 此处从跳表头部开始找到该插入该节点的位置，类似findPredecessor</span></span><br><span class="line">        <span class="built_in">int</span> j = h.level;</span><br><span class="line">        Index&lt;K,V&gt; q = h;</span><br><span class="line">        Index&lt;K,V&gt; r = q.right;</span><br><span class="line">        Index&lt;K,V&gt; t = idx;</span><br><span class="line">        <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        	<span class="comment">// 在当前层级查找适合插入节点的位置</span></span><br><span class="line">            <span class="keyword">if</span> (r != <span class="keyword">null</span>) &#123;</span><br><span class="line">                Node&lt;K,V&gt; n = r.node;</span><br><span class="line">                <span class="comment">// compare before deletion check avoids needing recheck</span></span><br><span class="line">                <span class="built_in">int</span> c = <span class="variable">key</span>.compareTo(n.<span class="variable">key</span>);</span><br><span class="line">                <span class="keyword">if</span> (n.value == <span class="keyword">null</span>) &#123;<span class="comment">// 如果r已被删除，则移除r</span></span><br><span class="line">                    <span class="keyword">if</span> (!q.unlink(r))</span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                    r = q.right;<span class="comment">//r指向下一层节点，继续</span></span><br><span class="line">                    <span class="keyword">continue</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">if</span> (c &gt; <span class="number">0</span>) &#123;<span class="comment">//如果当前访问的节点key&lt;需插入节点的key，则继续右移</span></span><br><span class="line">                    q = r;</span><br><span class="line">                    r = r.right;</span><br><span class="line">                    <span class="keyword">continue</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 到达此处有两种情况：</span></span><br><span class="line">            <span class="comment">//	1.已访问到该层链表的最右边</span></span><br><span class="line">            <span class="comment">//	2.当前访问的节点(r)的key&gt;=需插入节点的key，则继续右移</span></span><br><span class="line">            <span class="keyword">if</span> (j == insertionLevel) &#123;<span class="comment">// 如果找到的层级==要插入的层级，那么就在该层级插入该节点</span></span><br><span class="line">                <span class="comment">// Don't insert index if node already deleted</span></span><br><span class="line">                <span class="keyword">if</span> (t.indexesDeletedNode()) &#123;<span class="comment">// 判断要插入的节点是否已经被删除，此处考虑的是多线程情况下可能发生的并发问题</span></span><br><span class="line">                    findNode(<span class="variable">key</span>); <span class="comment">// cleans up</span></span><br><span class="line">                    <span class="keyword">return</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="comment">// 将t插入到q的右边，替代之前的r，通过CAS确保并发安全</span></span><br><span class="line">                <span class="keyword">if</span> (!q.link(r, t))</span><br><span class="line">                    <span class="keyword">break</span>; <span class="comment">// restart</span></span><br><span class="line">                <span class="keyword">if</span> (--insertionLevel == <span class="number">0</span>) &#123;<span class="comment">// 插入下一层，直到0为止</span></span><br><span class="line">                    <span class="comment">// need final deletion check before return</span></span><br><span class="line">                    <span class="keyword">if</span> (t.indexesDeletedNode())</span><br><span class="line">                        findNode(<span class="variable">key</span>);</span><br><span class="line">                    <span class="keyword">return</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 将j-1有两个目的：</span></span><br><span class="line">            <span class="comment">// 	1.如果在-1之前j == insertionLevel，即查找已经定位到要插入节点的那一层，则insertionLevel会-1，所以j也要跟着-1</span></span><br><span class="line">            <span class="comment">//	2.在-1之前j != insertionLevel，说明还未查找到要插入的那一层，需要继续往下查找</span></span><br><span class="line">            <span class="comment">//此处需要同时满足两个条件才可向下一层查找：</span></span><br><span class="line">            <span class="comment">//	1.-1之后的j&gt;=insertionLevel(此处可能是还未找到要插入的层，也可能已经找到了)</span></span><br><span class="line">            <span class="comment">//	2.j &lt; indexLevel，针对第一点还未找到要插入的层，如果j&gt;=indeLevel说明该层不需要插入节点</span></span><br><span class="line">            <span class="keyword">if</span> (--j &gt;= insertionLevel &amp;&amp; j &lt; indexLevel)</span><br><span class="line">            	<span class="comment">// t=t.down即将t往下移动一层，此处的t是在每一层要插入的节点，其实也就是要插入节点的下一层</span></span><br><span class="line">                t = t.down;</span><br><span class="line">            <span class="comment">// 到这里存在两种情况：</span></span><br><span class="line">            <span class="comment">//	1.上层已经插入了</span></span><br><span class="line">            <span class="comment">//	2.还未找到要插入的层(第一个要插入的层，也就是新插入节点被分配到的层级)</span></span><br><span class="line">            <span class="comment">// 不管上面如何处理，到这里都需要往下遍历了</span></span><br><span class="line">            q = q.down;</span><br><span class="line">            r = q.right;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>真的挺复杂的逻辑，本身跳表的插入就有点复杂，现在还需要考虑并发问题，就更多复杂难懂了。代码中加入了大量的注释，希望能够说明白吧，其实自己看着也挺蒙，明白原理就行，哈哈。<br>put()总算说完了，下面看看get()吧。</p>
+<h6 id="get(Object)"><strong>get(Object)</strong></h6><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> V doGet(<span class="keyword">Object</span> okey) &#123;</span><br><span class="line">Comparable&lt;? <span class="keyword">super</span> K&gt; <span class="variable">key</span> = comparable(okey);</span><br><span class="line">    Node&lt;K,V&gt; bound = <span class="keyword">null</span>;</span><br><span class="line">    Index&lt;K,V&gt; q = head;</span><br><span class="line">    Index&lt;K,V&gt; r = q.right;</span><br><span class="line">    Node&lt;K,V&gt; n;</span><br><span class="line">    K k;</span><br><span class="line">    <span class="built_in">int</span> c;</span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        Index&lt;K,V&gt; d;</span><br><span class="line">        <span class="comment">// Traverse rights</span></span><br><span class="line">        <span class="keyword">if</span> (r != <span class="keyword">null</span> &amp;&amp; (n = r.node) != bound &amp;&amp; (k = n.<span class="variable">key</span>) != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> ((c = <span class="variable">key</span>.compareTo(k)) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                q = r;</span><br><span class="line">                r = r.right;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (c == <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">Object</span> v = n.value;</span><br><span class="line">                <span class="keyword">return</span> (v != <span class="keyword">null</span>)? (V)v : getUsingFindNode(<span class="variable">key</span>);</span><br><span class="line">            &#125; <span class="keyword">else</span></span><br><span class="line">            	<span class="comment">// 这里当前查找的节点(n)key&gt;指定key说明已经跑过头了，此时需要往下找了</span></span><br><span class="line">            	<span class="comment">// bound在这里的作用是在下一层进行查找时如果找到了这一层的bound节点则说明又需要往下找了</span></span><br><span class="line">            	<span class="comment">// 这里如果理解了跳表的结构就好理解了，因为有的节点并不是每层都有</span></span><br><span class="line">                bound = n;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Traverse down</span></span><br><span class="line">        <span class="keyword">if</span> ((d = q.down) != <span class="keyword">null</span>) &#123;</span><br><span class="line">            q = d;</span><br><span class="line">            r = d.right;</span><br><span class="line">        &#125; <span class="keyword">else</span></span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 如果执行到这里，说明已经找到最底层了，但是依旧没找到该节点，所以要找的节点如果存在那么就是在最底层的靠右端</span></span><br><span class="line">    <span class="comment">// 所以还需要往右查找</span></span><br><span class="line">    <span class="comment">// Traverse nexts</span></span><br><span class="line">    <span class="keyword">for</span> (n = q.node.next;  n != <span class="keyword">null</span>; n = n.next) &#123;</span><br><span class="line">        <span class="keyword">if</span> ((k = n.<span class="variable">key</span>) != <span class="keyword">null</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> ((c = <span class="variable">key</span>.compareTo(k)) == <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">Object</span> v = n.value;</span><br><span class="line">                <span class="keyword">return</span> (v != <span class="keyword">null</span>)? (V)v : getUsingFindNode(<span class="variable">key</span>);</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (c &lt; <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> V getUsingFindNode(Comparable&lt;? <span class="keyword">super</span> K&gt; <span class="variable">key</span>) &#123;</span><br><span class="line">	<span class="comment">/*</span><br><span class="line">     * Loop needed here and elsewhere in case value field goes</span><br><span class="line">     * null just as it is about to be returned, in which case we</span><br><span class="line">     * lost a race with a deletion, so must retry.</span><br><span class="line">     */</span></span><br><span class="line">	<span class="comment">// 该方法循环查找key的节点，如果找不到key对应的节点，则直接返回null</span></span><br><span class="line">	<span class="comment">// 如果找到对应的节点，但是value==null，则重试(原因尚不清楚，注释也不是太明白)</span></span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">    	<span class="comment">// findNode返回的n如果不为null，那么就已经判断过n的value是否为null了，</span></span><br><span class="line">    	<span class="comment">// 下面再次判断可能是为了避免其他线程在这段时间内删掉了这个节点</span></span><br><span class="line">    	<span class="comment">// 不过既然被其他线程删掉了为什么还要去找呢，直接返回null不就好了，是在不明白，难道是为了再去删掉这个节点？</span></span><br><span class="line">        Node&lt;K,V&gt; n = findNode(<span class="variable">key</span>);</span><br><span class="line">        <span class="keyword">if</span> (n == <span class="keyword">null</span>)</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">        <span class="keyword">Object</span> v = n.value;</span><br><span class="line">        <span class="keyword">if</span> (v != <span class="keyword">null</span>)</span><br><span class="line">            <span class="keyword">return</span> (V)v;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line">* @By Vicky:此方法用于根据key查找对应的节点</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">private</span> Node&lt;K,V&gt; findNode(Comparable&lt;? <span class="keyword">super</span> K&gt; <span class="variable">key</span>) &#123;</span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">    	<span class="comment">// findPredecessor找到key的左边的节点，之前有介绍</span></span><br><span class="line">        Node&lt;K,V&gt; b = findPredecessor(<span class="variable">key</span>);</span><br><span class="line">        <span class="comment">// n是b的next节点，正确情况下n的key==key</span></span><br><span class="line">        Node&lt;K,V&gt; n = b.next;</span><br><span class="line">        <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">            <span class="keyword">if</span> (n == <span class="keyword">null</span>)	<span class="comment">// n==null说明b是最右边的节点，所以其实未找到key对应的节点</span></span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">            Node&lt;K,V&gt; f = n.next;</span><br><span class="line">            <span class="keyword">if</span> (n != b.next)                <span class="comment">// inconsistent read</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">Object</span> v = n.value;</span><br><span class="line">            <span class="comment">// n被删除了，helpDelete掉</span></span><br><span class="line">            <span class="keyword">if</span> (v == <span class="keyword">null</span>) &#123;                <span class="comment">// n is deleted</span></span><br><span class="line">                n.helpDelete(b, f);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// b被打上了delete标记，等待其他线程将其删除</span></span><br><span class="line">            <span class="keyword">if</span> (v == n || b.value == <span class="keyword">null</span>)  <span class="comment">// b is deleted</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="built_in">int</span> c = <span class="variable">key</span>.compareTo(n.<span class="variable">key</span>);</span><br><span class="line">            <span class="keyword">if</span> (c == <span class="number">0</span>)<span class="comment">// 即n就是要查找的节点</span></span><br><span class="line">                <span class="keyword">return</span> n;</span><br><span class="line">            <span class="keyword">if</span> (c &lt; <span class="number">0</span>)<span class="comment">// b的key小于指定key，但是b的下一个节点的key大于指定key，说明没指定key对应的节点</span></span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">            b = n;<span class="comment">// 继续往右走</span></span><br><span class="line">            n = f;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>get()过程涉及三个方法，都是查找，相对put()来说，get简单多了，就是按跳表的结构查找，只是需要判断节点是否被删除，同时还需要帮忙将被删除的节点移除跳表结构。代码中的注释应该比较清楚了，就不再细述了，下面看remove()方法。</p>
+<h6 id="remove(Object)"><strong>remove(Object)</strong></h6><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> V remove(<span class="keyword">Object</span> <span class="variable">key</span>) &#123;</span><br><span class="line">	<span class="keyword">return</span> doRemove(<span class="variable">key</span>, <span class="keyword">null</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line">* @By Vicky:删除的逻辑和查找类似，将找到的节点的value置为null，同时将其打上删除标记 </span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">final</span> V doRemove(<span class="keyword">Object</span> okey, <span class="keyword">Object</span> value) &#123;</span><br><span class="line">    Comparable&lt;? <span class="keyword">super</span> K&gt; <span class="variable">key</span> = comparable(okey);</span><br><span class="line">    <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">    	<span class="comment">// findPredecessor找到最底层的前一个节点(这里的节点是链表的节点，而非跳表的节点)</span></span><br><span class="line">        Node&lt;K,V&gt; b = findPredecessor(<span class="variable">key</span>);</span><br><span class="line">        Node&lt;K,V&gt; n = b.next;</span><br><span class="line">        <span class="keyword">for</span> (;;) &#123;</span><br><span class="line">        	<span class="comment">// b.next==null说明未找到响应的节点，直接返回null</span></span><br><span class="line">            <span class="keyword">if</span> (n == <span class="keyword">null</span>)</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">            Node&lt;K,V&gt; f = n.next;</span><br><span class="line">            <span class="keyword">if</span> (n != b.next)                    <span class="comment">// inconsistent read</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">Object</span> v = n.value;</span><br><span class="line">            <span class="comment">// 下面分别判断n和b是否已被删除</span></span><br><span class="line">            <span class="keyword">if</span> (v == <span class="keyword">null</span>) &#123;                    <span class="comment">// n is deleted</span></span><br><span class="line">                n.helpDelete(b, f);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (v == n || b.value == <span class="keyword">null</span>)      <span class="comment">// b is deleted</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="built_in">int</span> c = <span class="variable">key</span>.compareTo(n.<span class="variable">key</span>);</span><br><span class="line">            <span class="comment">// c&lt;0说明findPredecessor找到的节点的下一个节点的key&lt;要删除的key</span></span><br><span class="line">            <span class="comment">// 正确情况下(无并发情况下)c应该是&gt;=0才对</span></span><br><span class="line">            <span class="keyword">if</span> (c &lt; <span class="number">0</span>)</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">            <span class="comment">// c&gt;0继续查找</span></span><br><span class="line">            <span class="keyword">if</span> (c &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                b = n;</span><br><span class="line">                n = f;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// value!=null则说明需要待删除的节点的值和指定的值一样才可删除</span></span><br><span class="line">            <span class="keyword">if</span> (value != <span class="keyword">null</span> &amp;&amp; !value.equals(v))</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">            <span class="comment">// 将节点的value置为null即表示删除</span></span><br><span class="line">            <span class="keyword">if</span> (!n.casValue(v, <span class="keyword">null</span>))</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="comment">// 同时为n添加删除标记</span></span><br><span class="line">            <span class="keyword">if</span> (!n.appendMarker(f) || !b.casNext(n, f))</span><br><span class="line">            	<span class="comment">// 这一步其实就是为了触发删除节点</span></span><br><span class="line">                findNode(<span class="variable">key</span>);                  <span class="comment">// Retry via findNode</span></span><br><span class="line">            <span class="keyword">else</span> &#123;</span><br><span class="line">            	<span class="comment">// 触发删除节点，同时如果最高层的节点被删完了则降一层</span></span><br><span class="line">                findPredecessor(<span class="variable">key</span>);           <span class="comment">// Clean index</span></span><br><span class="line">                <span class="keyword">if</span> (head.right == <span class="keyword">null</span>)</span><br><span class="line">                    tryReduceLevel();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> (V)v;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>remove()和get()差不多，毕竟删除节点的第一步就是找到这个节点，代码中添加了注释，这里不再细述。</p>
+<p>看完了三个重要方法，说实话虽然每个方法中的每行代码都可以理解，但是想要理解为什么这么做还是很难的，毕竟代码是死的。就比如说remove和get，remove中也要查找节点，但是remove是调用findPredecessor()来直接查找最底层链表的前继节点，而get是自己按照跳表的结构进行查找，为什么呢？还有一点，所有的跳表节点中引用的node(链表节点)都是一样的，即如果第2层跳表引用一个node(key=4)和第1层引用的node(key=4)其实是同一个引用，而且同最底层的链表的node也是同一个，所以如果找到最上层的那个节点，不就是相当于找到最底层的那个节点了吗？为什么非得找最底层呢？<br>这里可以给出一个答案，那就是findPredecessor()会将已经被删除的跳表的节点从跳表结构中移除，因为删除节点只是将value置为null，顺便加个删除标记，但是这些节点还挂在跳表中，所以需要人为的触发findPredecessor()去一个个删除，也许这就是目的吧。</p>
+<p>这三个方法都没有加锁，使用了CAS进行更新，同时修改结构的时候都是控制在一个CAS操作中完成，例如put()方法在将一个节点插入到链表时，是先创建一个新的节点，这个节点的next指向要插入的位置的下一个节点，这步操作不会影响整体的结构，所以是安全的，然后将要插入位置的前一个节点的next原子性的更新成新的节点，所以也不会影响到其他线程，而remove则只是将节点的value值修改为null，以及原子的更新节点的next，所以CAS+volatile就是JDKconcurrent包下的并发控制的实现原理。</p>
+<h5 id="使用场景"><strong>使用场景</strong></h5><p>ConcurrentSkipListMap使用跳表结构来保存链表的顺序，解决了在有序链表中快速查找的问题，所以ConcurrentSkipListMap适合在需要链表的高效更新效率(删除/插入)以及还要保证一定的随机访问效率(查找/更新)的场景下使用。</p>
+<h5 id="参考文章"><strong>参考文章</strong></h5><p><a href="http://kenby.iteye.com/blog/1187303" target="_blank" rel="external">SkipList 跳表</a><br><a href="http://blog.csdn.net/guangcigeyun/article/details/8278349" target="_blank" rel="external">Java多线程（四）之ConcurrentSkipListMap深入分析</a><br><a href="http://www.cnblogs.com/skywang12345/p/3498556.html" target="_blank" rel="external">Java多线程系列–“JUC集合”05之 ConcurrentSkipListMap</a></p>
+<hr>
+<p>以上就是本篇的全部内容，如有错误之处，还望大家指出，谢谢~~~</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/JDK/" rel="tag">#JDK</a>
+          
+            <a href="/tags/JUC/" rel="tag">#JUC</a>
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/11/10/为Hexo博客文章添加关键字/" rel="next">为Hexo博客文章添加关键字</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2015/11/13/JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)/"
+     data-title="JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)"
+     data-content=""
+     data-url="http://vickyqi.com/2015/11/13/JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2015/11/13/JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)/"
+                       data-title="JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)" data-url="http://vickyqi.com/2015/11/13/JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/avatar.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">让自己的努力变得更有价值</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">40</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">8</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">33</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#常用方法解读"><span class="nav-number">1.</span> <span class="nav-text">常用方法解读</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#get(Object)"><span class="nav-number">1.1.</span> <span class="nav-text">get(Object)</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#remove(Object)"><span class="nav-number">1.2.</span> <span class="nav-text">remove(Object)</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#使用场景"><span class="nav-number">2.</span> <span class="nav-text">使用场景</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#参考文章"><span class="nav-number">3.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>

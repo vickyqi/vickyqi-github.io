@@ -24,11 +24,11 @@
 <link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
 
 
-    <meta name="description" content="一个不甘做屌丝的程序员" />
+    <meta name="description" content="让自己的努力变得更有价值" />
 
 
 
-  <meta name="keywords" content="JDK,Java,并发,源码," />
+  <meta name="keywords" content="Java,JDK,源码,并发,JUC,Concurrent," />
 
 
 
@@ -45,7 +45,7 @@
 <meta property="og:url" content="http://vickyqi.com/2015/10/24/JDK并发工具类源码学习系列——介绍/index.html">
 <meta property="og:site_name" content="Vicky's Blog">
 <meta property="og:description" content="JDK并发工具类是JDK1.5引入的一大重要的功能，集中在java.util.concurrent包下，java.util.concurrent包下还包括了java.util.concurrent.atomic以及java.util.concurrent.locks两个子包。java.util.concurrent包主要包含了并发集合类以及线程池和信号量三组重要工具类；java.util.conc">
-<meta property="og:updated_time" content="2015-11-01T08:09:36.000Z">
+<meta property="og:updated_time" content="2015-11-13T06:02:04.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JDK并发工具类源码学习系列——介绍">
 <meta name="twitter:description" content="JDK并发工具类是JDK1.5引入的一大重要的功能，集中在java.util.concurrent包下，java.util.concurrent包下还包括了java.util.concurrent.atomic以及java.util.concurrent.locks两个子包。java.util.concurrent包主要包含了并发集合类以及线程池和信号量三组重要工具类；java.util.conc">
@@ -271,7 +271,7 @@
 <ul>
 <li><a href="http://vickyqi.com/2015/10/26/JDK%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94ConcurrentHashMap/">ConcurrentHashMap</a></li>
 <li><a href="http://vickyqi.com/2015/10/29/JDK%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94ConcurrentLinkedQueue/">ConcurrentLinkedQueue</a></li>
-<li>ConcurrentSkipListMap</li>
+<li><a href="http://vickyqi.com/2015/11/13/JDK%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94ConcurrentSkipListMap/">ConcurrentSkipListMap</a></li>
 <li>CopyOnWriteArrayList</li>
 <li>LinkedBlockingQueue</li>
 <li>PriorityBlockingQueue</li>
@@ -289,11 +289,9 @@
           
             <a href="/tags/JDK/" rel="tag">#JDK</a>
           
+            <a href="/tags/JUC/" rel="tag">#JUC</a>
+          
             <a href="/tags/Java/" rel="tag">#Java</a>
-          
-            <a href="/tags/并发/" rel="tag">#并发</a>
-          
-            <a href="/tags/源码/" rel="tag">#源码</a>
           
         </div>
       
@@ -387,28 +385,28 @@
 
       <section class="site-overview">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-          <img class="site-author-image" src="/images/Vicky.jpg" alt="Vicky" itemprop="image"/>
+          <img class="site-author-image" src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/avatar.jpg" alt="Vicky" itemprop="image"/>
           <p class="site-author-name" itemprop="name">Vicky</p>
         </div>
-        <p class="site-description motion-element" itemprop="description">一个不甘做屌丝的程序员</p>
+        <p class="site-description motion-element" itemprop="description">让自己的努力变得更有价值</p>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">24</span>
+              <span class="site-state-item-count">40</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
 
           <div class="site-state-item site-state-categories">
             <a href="/categories">
-              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-count">8</span>
               <span class="site-state-item-name">分类</span>
               </a>
           </div>
 
           <div class="site-state-item site-state-tags">
             <a href="/tags">
-              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-count">33</span>
               <span class="site-state-item-name">标签</span>
               </a>
           </div>

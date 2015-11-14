@@ -24,11 +24,11 @@
 <link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
 
 
-    <meta name="description" content="一个不甘做屌丝的程序员" />
+    <meta name="description" content="让自己的努力变得更有价值" />
 
 
 
-  <meta name="keywords" content="ConcurrentLinkedQueue,JDK,Java,并发,源码," />
+  <meta name="keywords" content="Java,JDK,源码,并发,JUC,Concurrent,ConcurrentLinkedQueue," />
 
 
 
@@ -48,7 +48,7 @@
 <meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blogConcurrentLinkedQueue%E7%BB%93%E6%9E%84%E5%9B%BE.png">
 <meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/ConcurrentLinkedQueue%E5%85%A5%E9%98%9F%E6%B5%81%E7%A8%8B%E5%9B%BE.png">
 <meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/ConcurrentLinkedQueue%E9%98%9F%E5%88%97%E6%97%B6%E5%BA%8F%E5%9B%BE.png">
-<meta property="og:updated_time" content="2015-11-01T08:09:42.000Z">
+<meta property="og:updated_time" content="2015-11-13T06:08:10.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JDK并发工具类源码学习系列——ConcurrentLinkedQueue">
 <meta name="twitter:description" content="ConcurrentLinkedQueue是一个基于链接节点的无界线程安全队列，它采用先进先出的规则对节点进行排序，当我们添加一个元素的时候，它会添加到队列的尾部，当我们获取一个元素时，它会返回队列头部的元素。它采用了“wait－free”算法来实现，该算法在Michael &amp;amp; Scott算法上进行了一些修改, Michael &amp;amp; Scott算法的详细信息可以参见参考资料一。">
@@ -390,15 +390,11 @@
       
         <div class="post-tags">
           
-            <a href="/tags/ConcurrentLinkedQueue/" rel="tag">#ConcurrentLinkedQueue</a>
-          
             <a href="/tags/JDK/" rel="tag">#JDK</a>
           
+            <a href="/tags/JUC/" rel="tag">#JUC</a>
+          
             <a href="/tags/Java/" rel="tag">#Java</a>
-          
-            <a href="/tags/并发/" rel="tag">#并发</a>
-          
-            <a href="/tags/源码/" rel="tag">#源码</a>
           
         </div>
       
@@ -406,6 +402,8 @@
       
         <div class="post-nav">
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/11/08/JDK并发工具类源码学习系列——ConcurrentSkipListMap/" rel="prev">JDK并发工具类源码学习系列——ConcurrentSkipListMap</a>
             
           </div>
 
@@ -490,28 +488,28 @@
 
       <section class="site-overview">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-          <img class="site-author-image" src="/images/Vicky.jpg" alt="Vicky" itemprop="image"/>
+          <img class="site-author-image" src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/avatar.jpg" alt="Vicky" itemprop="image"/>
           <p class="site-author-name" itemprop="name">Vicky</p>
         </div>
-        <p class="site-description motion-element" itemprop="description">一个不甘做屌丝的程序员</p>
+        <p class="site-description motion-element" itemprop="description">让自己的努力变得更有价值</p>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">24</span>
+              <span class="site-state-item-count">40</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
 
           <div class="site-state-item site-state-categories">
             <a href="/categories">
-              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-count">8</span>
               <span class="site-state-item-name">分类</span>
               </a>
           </div>
 
           <div class="site-state-item site-state-tags">
             <a href="/tags">
-              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-count">33</span>
               <span class="site-state-item-name">标签</span>
               </a>
           </div>

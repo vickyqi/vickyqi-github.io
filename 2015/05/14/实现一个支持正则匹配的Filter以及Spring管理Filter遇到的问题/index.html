@@ -1,0 +1,740 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="让自己的努力变得更有价值" />
+
+
+
+  <meta name="keywords" content="Java,Spring,Filter," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="相信很多人都会对Http的Filter的url-pattern不支持正则而烦恼吧。就比如，在web项目中Struts，当我们想要对所有的或者某一个Action进行过滤，而不过滤其他的Action，尤其是不想过滤静态资源，如果你的Struts配置了Action后缀可能会好一些，很可惜我的项目就没有设置后缀，所有没法使用url-pattern仅支持的几种规则，所以就自己实现了一个抽象类，用来支持可配置">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题">
+<meta property="og:url" content="http://vickyqi.com/2015/05/14/实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="相信很多人都会对Http的Filter的url-pattern不支持正则而烦恼吧。就比如，在web项目中Struts，当我们想要对所有的或者某一个Action进行过滤，而不过滤其他的Action，尤其是不想过滤静态资源，如果你的Struts配置了Action后缀可能会好一些，很可惜我的项目就没有设置后缀，所有没法使用url-pattern仅支持的几种规则，所以就自己实现了一个抽象类，用来支持可配置">
+<meta property="og:updated_time" content="2015-11-14T11:02:30.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题">
+<meta name="twitter:description" content="相信很多人都会对Http的Filter的url-pattern不支持正则而烦恼吧。就比如，在web项目中Struts，当我们想要对所有的或者某一个Action进行过滤，而不过滤其他的Action，尤其是不想过滤静态资源，如果你的Struts配置了Action后缀可能会好一些，很可惜我的项目就没有设置后缀，所有没法使用url-pattern仅支持的几种规则，所以就自己实现了一个抽象类，用来支持可配置">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> 实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题 - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-05-14T00:02:00+08:00" content="2015-05-14">
+            2015-05-14
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/05/14/实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/05/14/实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>相信很多人都会对Http的Filter的url-pattern不支持正则而烦恼吧。就比如，在web项目中Struts，当我们想要对所有的或者某一个Action进行过滤，而不过滤其他的Action，尤其是不想过滤静态资源，如果你的Struts配置了Action后缀可能会好一些，很可惜我的项目就没有设置后缀，所有没法使用url-pattern仅支持的几种规则，所以就自己实现了一个抽象类，用来支持可配置需过滤以及不需过滤的url规则，且支持正则，具体源码可见下方。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.util.regex.Pattern;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> javax.servlet.Filter;</span><br><span class="line"><span class="keyword">import</span> javax.servlet.FilterChain;</span><br><span class="line"><span class="keyword">import</span> javax.servlet.FilterConfig;</span><br><span class="line"><span class="keyword">import</span> javax.servlet.ServletException;</span><br><span class="line"><span class="keyword">import</span> javax.servlet.ServletRequest;</span><br><span class="line"><span class="keyword">import</span> javax.servlet.ServletResponse;</span><br><span class="line"><span class="keyword">import</span> javax.servlet.http.HttpServletRequest;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line"> * &lt;p&gt;</span><br><span class="line"> * 支持使用正则配置过滤指定URL</span><br><span class="line"> * </span><br><span class="line"> * web.xml配置时加入init-params: include:配置需要过滤的url规则，支持正则，多个之间已','分割</span><br><span class="line"> * exclude:配置不需要过滤的url规则，支持正则，多个之间已','分割</span><br><span class="line"> * &lt;/p&gt;</span><br><span class="line"> * </span><br><span class="line"> * <span class="doctag">@author</span> Vicky</span><br><span class="line"> * <span class="doctag">@date</span> 2015-5-13</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">PatternFilter</span> <span class="keyword">implements</span> <span class="title">Filter</span> </span>&#123;</span><br><span class="line">	<span class="keyword">protected</span> Pattern[] includePattern = <span class="keyword">null</span>;</span><br><span class="line">	<span class="keyword">protected</span> Pattern[] excludePattern = <span class="keyword">null</span>;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">(FilterConfig filterconfig)</span> <span class="keyword">throws</span> ServletException </span>&#123;</span><br><span class="line">		String include = filterconfig.getInitParameter(<span class="string">"include"</span>);</span><br><span class="line">		String exclude = filterconfig.getInitParameter(<span class="string">"exclude"</span>);</span><br><span class="line">		<span class="keyword">if</span> (<span class="keyword">null</span> != include &amp;&amp; !<span class="string">""</span>.equals(include)) &#123;</span><br><span class="line">			String[] arr = include.split(<span class="string">","</span>);</span><br><span class="line">			includePattern = <span class="keyword">new</span> Pattern[arr.length];</span><br><span class="line">			<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; arr.length; i++) &#123;</span><br><span class="line">				includePattern[i] = Pattern.compile(arr[i]);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> (<span class="keyword">null</span> != exclude &amp;&amp; !<span class="string">""</span>.equals(exclude)) &#123;</span><br><span class="line">			String[] arr = exclude.split(<span class="string">","</span>);</span><br><span class="line">			excludePattern = <span class="keyword">new</span> Pattern[arr.length];</span><br><span class="line">			<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; arr.length; i++) &#123;</span><br><span class="line">				excludePattern[i] = Pattern.compile(arr[i]);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		innerInit(filterconfig);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span><br><span class="line">	 * 子类进行初始化方法</span><br><span class="line">	 * </span><br><span class="line">	 * <span class="doctag">@param</span> filterconfig</span><br><span class="line">	 */</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">innerInit</span><span class="params">(FilterConfig filterconfig)</span> <span class="keyword">throws</span> ServletException</span>;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">destroy</span><span class="params">()</span> </span>&#123;</span><br><span class="line">		<span class="comment">// TODO Auto-generated method stub</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span><br><span class="line">	 * filter过滤方法，final子类不可覆盖，实现正则匹配规则，子类覆盖innerDoFilter</span><br><span class="line">	 */</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">doFilter</span><span class="params">(ServletRequest servletrequest, ServletResponse servletresponse, FilterChain filterchain)</span></span><br><span class="line">			<span class="keyword">throws</span> IOException, ServletException </span>&#123;</span><br><span class="line">		String url = ((HttpServletRequest) servletrequest).getServletPath();</span><br><span class="line">		<span class="keyword">if</span> (checkExclude(url) || !checkInclude(url)) &#123;<span class="comment">// 无需过滤该请求，则pass</span></span><br><span class="line">			filterchain.doFilter(servletrequest, servletresponse);</span><br><span class="line">			<span class="keyword">return</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 调用innerDoFilter进行过滤</span></span><br><span class="line">		innerDoFilter(servletrequest, servletresponse, filterchain);</span><br><span class="line">		<span class="keyword">return</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span><br><span class="line">	 * 需子类覆盖，实现过滤逻辑</span><br><span class="line">	 * </span><br><span class="line">	 * <span class="doctag">@param</span> servletrequest</span><br><span class="line">	 * <span class="doctag">@param</span> servletresponse</span><br><span class="line">	 * <span class="doctag">@param</span> filterchain</span><br><span class="line">	 */</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">innerDoFilter</span><span class="params">(ServletRequest servletrequest, ServletResponse servletresponse,</span><br><span class="line">			FilterChain filterchain)</span> <span class="keyword">throws</span> IOException, ServletException</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span><br><span class="line">	 * 检验访问请求是否在include列表中</span><br><span class="line">	 * </span><br><span class="line">	 * <span class="doctag">@param</span> requestUrl</span><br><span class="line">	 * <span class="doctag">@return</span></span><br><span class="line">	 */</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">checkInclude</span><span class="params">(String requestUrl)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">boolean</span> flag = <span class="keyword">true</span>;</span><br><span class="line">		<span class="keyword">if</span> (<span class="keyword">null</span> == includePattern || includePattern.length == <span class="number">0</span>) &#123;</span><br><span class="line">			<span class="keyword">return</span> flag;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">for</span> (Pattern pat : includePattern) &#123;</span><br><span class="line">			<span class="keyword">if</span> (flag = pat.matcher(requestUrl).matches())</span><br><span class="line">				<span class="keyword">break</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> flag;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span><br><span class="line">	 * 检验访问请求是否在exclude列表中</span><br><span class="line">	 * </span><br><span class="line">	 * <span class="doctag">@param</span> requestUrl</span><br><span class="line">	 * <span class="doctag">@return</span></span><br><span class="line">	 */</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">checkExclude</span><span class="params">(String requestUrl)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">boolean</span> flag = <span class="keyword">false</span>;</span><br><span class="line">		<span class="keyword">if</span> (<span class="keyword">null</span> == excludePattern || excludePattern.length == <span class="number">0</span>) &#123;</span><br><span class="line">			<span class="keyword">return</span> flag;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">for</span> (Pattern pat : excludePattern) &#123;</span><br><span class="line">			<span class="keyword">if</span> (flag = pat.matcher(requestUrl).matches())</span><br><span class="line">				<span class="keyword">break</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> flag;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>源码其实很简单，仅有基础需要注意的地方：java的Matcher类是线程不安全的，所有在Filter中肯定是不能共享的，但是Pattern可以，所以我们将指定的规则初始化成Pattern缓存起来，避免每次调用的时候都来初始化Pattern，提高效率；通过使用final修改方法以防止子类覆盖doFilter的实现逻辑，并通过调用抽象方法innerDoFilter()来调用子类的过滤逻辑。<br>下面就来看看如何使用该过滤器。很简单，首先写一个Filter继承自该类即可，实现innerDoFilter()以及innerInit()方法即可，然后在web.xml中添加该filter的配置，配置的时候就可以指定两个init-param了，具体配置见下面。<br><figure class="highlight gherkin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">&lt;filter&gt;</span></span><br><span class="line">		<span class="variable">&lt;filter-name&gt;</span>loginFilter<span class="variable">&lt;/filter-name&gt;</span></span><br><span class="line">		<span class="variable">&lt;filter-class&gt;</span>org.springframework.web.filter.DelegatingFilterProxy<span class="variable">&lt;/filter-class&gt;</span></span><br><span class="line">		<span class="variable">&lt;init-param&gt;</span></span><br><span class="line">			<span class="variable">&lt;description&gt;</span>指定Spring管理Filter生命周期<span class="variable">&lt;/description&gt;</span></span><br><span class="line">			<span class="variable">&lt;param-name&gt;</span>targetFilterLifecycle<span class="variable">&lt;/param-name&gt;</span></span><br><span class="line">			<span class="variable">&lt;param-value&gt;</span>true<span class="variable">&lt;/param-value&gt;</span></span><br><span class="line">		<span class="variable">&lt;/init-param&gt;</span></span><br><span class="line">		<span class="variable">&lt;init-param&gt;</span></span><br><span class="line">			<span class="variable">&lt;description&gt;</span>配置需要过滤的url规则，需使用正则，多个之间已','分割<span class="variable">&lt;/description&gt;</span></span><br><span class="line">			<span class="variable">&lt;param-name&gt;</span>include<span class="variable">&lt;/param-name&gt;</span></span><br><span class="line">			<span class="variable">&lt;param-value&gt;</span><span class="variable">&lt;/param-value&gt;</span></span><br><span class="line">		<span class="variable">&lt;/init-param&gt;</span></span><br><span class="line">		<span class="variable">&lt;init-param&gt;</span></span><br><span class="line">			<span class="variable">&lt;description&gt;</span>配置不需要过滤的url规则，需使用正则，多个之间已','分割<span class="variable">&lt;/description&gt;</span></span><br><span class="line">			<span class="variable">&lt;param-name&gt;</span>exclude<span class="variable">&lt;/param-name&gt;</span></span><br><span class="line">			<span class="variable">&lt;param-value&gt;</span>/css/.<span class="keyword">*</span>,/js/.<span class="keyword">*</span>,/images/.<span class="keyword">*</span>,/fonts/.<span class="keyword">*</span>,/plugin/.<span class="keyword">*</span><span class="variable">&lt;/param-value&gt;</span></span><br><span class="line">		<span class="variable">&lt;/init-param&gt;</span></span><br><span class="line">	<span class="variable">&lt;/filter&gt;</span></span><br><span class="line"></span><br><span class="line">	<span class="variable">&lt;filter-mapping&gt;</span></span><br><span class="line">		<span class="variable">&lt;filter-name&gt;</span>loginFilter<span class="variable">&lt;/filter-name&gt;</span></span><br><span class="line">		<span class="variable">&lt;url-pattern&gt;</span>/<span class="keyword">*</span><span class="variable">&lt;/url-pattern&gt;</span></span><br><span class="line">	<span class="variable">&lt;/filter-mapping&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>从上面的配置文件可以看见，添加了两个初始化参数，含义配置中有详细描述。不过我的配置可能跟普通的filter配置不同，是因为我使用了Spring来管理Filter，所以这里的fliter-class是Spring的一个类(<strong>org.springframework.web.filter.DelegatingFilterProxy</strong>)，这个类默认会根据filter-name来查找对应的bean来初始化成filter。下面说一下Spring的这个类DelegatingFilterProxy。<br>从PatternFilter的代码可以看出需要调用init()方法，但是如果使用Spring的DelegatingFilterProxy类来管理Filter，默认情况下是不会调用Filter的init()方法的，这是因为默认情况下Spring是不会管理Filter的生命周期的，所以不会调用init()以及destory()方法。下面来简单分析下DelegatingFilterProxy这个类的源码，看看哪里是解决这个问题的关键。<br>首先打开DelegatingFilterProxy类的源码，可以看出继承自GenericFilterBean，而GenericFilterBean实现了Filter，并实现了init()方法。<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="function"><span class="keyword">void</span> <span class="title">init</span><span class="params">(FilterConfig filterConfig)</span> <span class="keyword">throws</span> ServletException </span>&#123;</span><br><span class="line">		Assert.notNull(filterConfig, <span class="string">"FilterConfig must not be null"</span>);</span><br><span class="line">		<span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line">			logger.debug(<span class="string">"Initializing filter '"</span> + filterConfig.getFilterName() + <span class="string">"'"</span>);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">this</span>.filterConfig = filterConfig;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// Set bean properties from init parameters.</span></span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			PropertyValues pvs = <span class="keyword">new</span> FilterConfigPropertyValues(filterConfig, <span class="keyword">this</span>.requiredProperties);</span><br><span class="line">			BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(<span class="keyword">this</span>);</span><br><span class="line">			ResourceLoader resourceLoader = <span class="keyword">new</span> ServletContextResourceLoader(filterConfig.getServletContext());</span><br><span class="line">			bw.registerCustomEditor(Resource.class, <span class="keyword">new</span> ResourceEditor(resourceLoader, <span class="keyword">this</span>.environment));</span><br><span class="line">			initBeanWrapper(bw);</span><br><span class="line">			bw.setPropertyValues(pvs, <span class="keyword">true</span>);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">catch</span> (BeansException ex) &#123;</span><br><span class="line">			String msg = <span class="string">"Failed to set bean properties on filter '"</span> +</span><br><span class="line">				filterConfig.getFilterName() + <span class="string">"': "</span> + ex.getMessage();</span><br><span class="line">			logger.<span class="keyword">error</span>(msg, ex);</span><br><span class="line">			<span class="keyword">throw</span> <span class="keyword">new</span> NestedServletException(msg, ex);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// Let subclasses do whatever initialization they like.</span></span><br><span class="line">		initFilterBean();</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line">			logger.debug(<span class="string">"Filter '"</span> + filterConfig.getFilterName() + <span class="string">"' configured successfully"</span>);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure></p>
+<p>从上面的代码可以看出GenericFilterBean的init()方法中通过调用initFilterBean()来调用子类的init()方法，下面我们来看下DelegatingFilterProxy的initFilterBean()方法。<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="function"><span class="keyword">void</span> <span class="title">initFilterBean</span><span class="params">()</span> <span class="keyword">throws</span> ServletException </span>&#123;</span><br><span class="line">		<span class="keyword">synchronized</span> (<span class="keyword">this</span>.delegateMonitor) &#123;</span><br><span class="line">			<span class="keyword">if</span> (<span class="keyword">this</span>.delegate == <span class="keyword">null</span>) &#123;</span><br><span class="line">				<span class="comment">// If no target bean name specified, use filter name.</span></span><br><span class="line">				<span class="keyword">if</span> (<span class="keyword">this</span>.targetBeanName == <span class="keyword">null</span>) &#123;</span><br><span class="line">					<span class="keyword">this</span>.targetBeanName = getFilterName();</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="comment">// Fetch Spring root application context and initialize the delegate early,</span></span><br><span class="line">				<span class="comment">// if possible. If the root application context will be started after this</span></span><br><span class="line">				<span class="comment">// filter proxy, we'll have to resort to lazy initialization.</span></span><br><span class="line">				WebApplicationContext wac = findWebApplicationContext();</span><br><span class="line">				<span class="keyword">if</span> (wac != <span class="keyword">null</span>) &#123;</span><br><span class="line">					<span class="keyword">this</span>.delegate = initDelegate(wac);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure></p>
+<p>该方法内部调用了initDelegate()方法。<br><figure class="highlight cs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> Filter <span class="title">initDelegate</span>(<span class="params">WebApplicationContext wac</span>) throws ServletException </span>&#123;</span><br><span class="line">		Filter <span class="keyword">delegate</span> = wac.getBean(getTargetBeanName(), Filter.class);</span><br><span class="line">		<span class="keyword">if</span> (isTargetFilterLifecycle()) &#123;</span><br><span class="line">			<span class="keyword">delegate</span>.init(getFilterConfig());</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">delegate</span>;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure></p>
+<p>该方法内部调用了被代理的类（即我们自己的filter）init()方法。但是，注意下在调用的时候有一个if判断，即判断是否允许Spring管理filter的生命周期(isTargetFilterLifecycle())，看看这个方法内部时如果进行判断的。<br><figure class="highlight smali"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line">	 * Return whether to<span class="instruction"> invoke </span>the &#123;@code Filter.init&#125;<span class="instruction"> and</span><br><span class="line"></span>	 * &#123;@code Filter.destroy&#125; lifecycle methods on the target bean.</span><br><span class="line">	 */</span><br><span class="line"><span class="keyword">	protected</span> boolean<span class="function"> isTargetFilterLifecycle(</span><span class="function">)</span> &#123;</span><br><span class="line">	<span class="instruction">	return </span>this.targetFilter<span class="class">Lifecycle;</span></span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure></p>
+<p>方法内部很简单，只是判断一个变量值，该变量值决定了是否允许Spring管理filter的生命周期，默认是false，所以当找到这里的时候就已经知道是什么原因引起的了。所以很自然的就是想看看是否存在一个设置该变量值的方法，当然，肯定是存在的(setTargetFilterLifecycle())，于是就找这个方法在哪里被调用了，结果发现没有任何地方显示调用了该方法，注意是显示，所以暂且没辙了，于是很自然的想到了继承该类以此来满足自己的需求，但是总感觉不对，于是看了下这个类的注释，结果很高兴的发现了注释中提到了这个变量值如果修改。<br><figure class="highlight livecodeserver"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">* &lt;p&gt;&lt;b&gt;NOTE:&lt;/b&gt; The lifecycle methods defined <span class="keyword">by</span> <span class="operator">the</span> Servlet Filter interface</span><br><span class="line">* will <span class="keyword">by</span> default &lt;i&gt;<span class="operator">not</span>&lt;/i&gt; be delegated <span class="built_in">to</span> <span class="operator">the</span> target bean, relying <span class="command"><span class="keyword">on</span> <span class="title">the</span></span></span><br><span class="line">* Spring application context <span class="built_in">to</span> manage <span class="operator">the</span> lifecycle <span class="operator">of</span> that bean. Specifying</span><br><span class="line">* <span class="operator">the</span> <span class="string">"targetFilterLifecycle"</span> <span class="built_in">filter</span> init-<span class="built_in">param</span> <span class="keyword">as</span> <span class="string">"true"</span> will enforce invocation</span><br><span class="line">* <span class="operator">of</span> <span class="operator">the</span> &#123;@code Filter.init&#125; <span class="operator">and</span> &#123;@code Filter.destroy&#125; lifecycle methods</span><br><span class="line">* <span class="command"><span class="keyword">on</span> <span class="title">the</span> <span class="title">target</span> <span class="title">bean</span>, <span class="title">letting</span> <span class="title">the</span> <span class="title">servlet</span> <span class="title">container</span> <span class="title">manage</span> <span class="title">the</span> <span class="title">filter</span> <span class="title">lifecycle</span>.</span></span><br></pre></td></tr></table></figure></p>
+<p>很简单，就是在配置filter的时候在init-param中添加一个参数，名为targetFilterLifecycle，值为true即可，于是尝试下，结果OK了。虽然问题解决了，但是还是想看一下到底是哪里调用了setTargetFilterLifecycle()这个方法，毕竟没有地方显示调用，于是又回去翻源码。</p>
+<p>我们回到GenericFilterBean这个类的init()方法，可以看到其中有一个地方很想设置变量值的地方：bw.setPropertyValues(pvs, true);。结果深入看了下，就是这个地方设置的setTargetFilterLifecycle值，具体做法是获取filter中所有的init-param参数，然后根据参数名通过反射获取对应的set方法，并调用赋值，其中具体代码有很多不解之处，不过不影响理解这个问题。根据以上的逻辑，DelegatingFilterProxy类中的所有变量只有存在对应的set方法应该都是可以通过init-param指定。</p>
+<p>以上就是我自己实现的可配置规则的Filter类以及Spring管理Filter遇到的问题。</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/Spring/" rel="tag">#Spring</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/08/12/排序算法系列——直接插入排序/" rel="prev">排序算法系列——直接插入排序</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2014/03/01/算法系列：PageRank算法的MapReduce实现/" rel="next">算法系列：PageRank算法的MapReduce实现</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2015/05/14/实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题/"
+     data-title="实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题"
+     data-content=""
+     data-url="http://vickyqi.com/2015/05/14/实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2015/05/14/实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题/"
+                       data-title="实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题" data-url="http://vickyqi.com/2015/05/14/实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/avatar.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">让自己的努力变得更有价值</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">40</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">8</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">33</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>

@@ -24,11 +24,11 @@
 <link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
 
 
-    <meta name="description" content="一个不甘做屌丝的程序员" />
+    <meta name="description" content="让自己的努力变得更有价值" />
 
 
 
-  <meta name="keywords" content="vickyqi,Java,并发" />
+  <meta name="keywords" content="vickyqi,Java,并发,Python,多线程,服务器" />
 
 
 
@@ -39,15 +39,15 @@
   <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
 
 
-<meta name="description" content="一个不甘做屌丝的程序员">
+<meta name="description" content="让自己的努力变得更有价值">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Vicky's Blog">
 <meta property="og:url" content="http://vickyqi.com/index.html">
 <meta property="og:site_name" content="Vicky's Blog">
-<meta property="og:description" content="一个不甘做屌丝的程序员">
+<meta property="og:description" content="让自己的努力变得更有价值">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Vicky's Blog">
-<meta name="twitter:description" content="一个不甘做屌丝的程序员">
+<meta name="twitter:description" content="让自己的努力变得更有价值">
 
 
 <script type="text/javascript" id="hexo.configuration">
@@ -195,6 +195,370 @@
             <div id="content" class="content">
                 
   <section id="posts" class="posts-expand">
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2015/11/13/JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)/" itemprop="url">
+                JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-11-13T20:05:00+08:00" content="2015-11-13">
+            2015-11-13
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
+
+              
+              
+                ， 
+              
+
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/JDK源码/" itemprop="url" rel="index"><span itemprop="name">JDK源码</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/11/13/JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/11/13/JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <p>ConcurrentSkipListMap在JDK并发工具类使用范围不是很广，它是针对某一特殊需求而设计的——支持排序，同时支持搜索目标返回最接近匹配项的导航方法。一般情况下开发者很少会使用到该类，但是如果你有如上的特殊需求，那么ConcurrentSkipListMap将是一个很好地解决方案。 本文通过对JDK的ConcurrentSkipListMap的代码详细分析，深入分析其实现原理。<br>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2015/11/13/JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2015/11/10/为Hexo博客文章添加关键字/" itemprop="url">
+                为Hexo博客文章添加关键字
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-11-10T17:12:00+08:00" content="2015-11-10">
+            2015-11-10
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/博客/" itemprop="url" rel="index"><span itemprop="name">博客</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/11/10/为Hexo博客文章添加关键字/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/11/10/为Hexo博客文章添加关键字/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <p>本文章是为Hexo博客的next主题的文章增加关键字的设定，默认next主题的文章关键字取文章的标签，所以如果想要设置很全的关键字，肯定会造成自己的标签页的标签过多，看着过于杂乱，所以就想将文章的关键字与标签分开，下面做简单的修改即可达到此目的。<br>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2015/11/10/为Hexo博客文章添加关键字/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2015/11/10/坑爹的Spring数据源——自动提交事务/" itemprop="url">
+                坑爹的Spring数据源——自动提交事务
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-11-10T15:56:00+08:00" content="2015-11-10">
+            2015-11-10
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/11/10/坑爹的Spring数据源——自动提交事务/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/11/10/坑爹的Spring数据源——自动提交事务/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <p>记一次数据源的自动提交事务带来的烦恼，并通过分析找到JBoss JNDI数据源默认自动提交事务的解决方案<br>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2015/11/10/坑爹的Spring数据源——自动提交事务/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2015/11/08/JDK并发工具类源码学习系列——ConcurrentSkipListMap/" itemprop="url">
+                JDK并发工具类源码学习系列——ConcurrentSkipListMap
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-11-08T20:05:00+08:00" content="2015-11-08">
+            2015-11-08
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
+
+              
+              
+                ， 
+              
+
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/JDK源码/" itemprop="url" rel="index"><span itemprop="name">JDK源码</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/11/08/JDK并发工具类源码学习系列——ConcurrentSkipListMap/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/11/08/JDK并发工具类源码学习系列——ConcurrentSkipListMap/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <p>ConcurrentSkipListMap在JDK并发工具类使用范围不是很广，它是针对某一特殊需求而设计的——支持排序，同时支持搜索目标返回最接近匹配项的导航方法。一般情况下开发者很少会使用到该类，但是如果你有如上的特殊需求，那么ConcurrentSkipListMap将是一个很好地解决方案。 本文通过对JDK的ConcurrentSkipListMap的代码详细分析，深入分析其实现原理。<br>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2015/11/08/JDK并发工具类源码学习系列——ConcurrentSkipListMap/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
     
       
 
@@ -678,97 +1042,6 @@
           
           
             
-              <a class="post-title-link" href="/2015/10/19/正则学习二三事/" itemprop="url">
-                正则学习二三事
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2015-10-19T14:19:11+08:00" content="2015-10-19">
-            2015-10-19
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2015/10/19/正则学习二三事/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2015/10/19/正则学习二三事/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            正则一直是我一大痛点，一直都想解决这个问题，但是奈何每次看到那么多符号就发蒙，所以就一直拖下去了。直到最近总是被别人问到如何在hql中使用rlike查询符合特定规则的字段，然后各种不会，结果被鄙视的一塌糊涂，无奈，这才静下心来慢慢研究。以前看正则就是一堆符号，代表各个意思，如\d表示数字，\d+表示
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2015/10/19/正则学习二三事/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
               <a class="post-title-link" href="/2015/10/19/详解原码、反码、补码——深入理解补码/" itemprop="url">
                 详解原码、反码、补码——深入理解补码
               </a>
@@ -845,284 +1118,11 @@
 
 
     
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/" itemprop="url">
-                FairScheduler的任务调度机制——assignTasks（续）
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2013-12-15T20:49:00+08:00" content="2013-12-15">
-            2013-12-15
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            上一篇文章浅析了FairScheduler的assignTasks()方法，介绍了FairScheduler任务调度的原理。略过了最后一步通过JobScheduler获取Task时调用JobInProgress的五个方法：obtainNewNodeLocalMapTask()，obtainNewNo
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2013/12/11/FairScheduler的任务调度机制——assignTasks/" itemprop="url">
-                FairScheduler的任务调度机制——assignTasks
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2013-12-11T00:33:00+08:00" content="2013-12-11">
-            2013-12-11
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2013/12/11/FairScheduler的任务调度机制——assignTasks/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/11/FairScheduler的任务调度机制——assignTasks/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            首先需要了解FairScheduler是如何在各个Pool之间分配资源，以及每个Pool如何在Job之间分配资源的。FairScheduler的分配资源发生在update()方法中，而该方法由一个线程UpdateThread每隔updateInterval（由mapred.fairscheduler
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2013/12/11/FairScheduler的任务调度机制——assignTasks/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/" itemprop="url">
-                Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2013-12-07T22:17:00+08:00" content="2013-12-07">
-            2013-12-07
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            前两篇文章简单介绍了hadoop心跳机制的两个重要角色：JT和TT，虽然不是太详细，但是大纸业说清楚了一些事，在JT篇的最后对于JT返回TT的心跳响应中的一些命令一笔带过，这篇文章将重要介绍这些命令：ReinitTrackerAction，KillTaskAction，KillJobAction，C
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/">&raquo;</a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/">&raquo;</a>
   </nav>
 
 
@@ -1150,28 +1150,28 @@
 
       <section class="site-overview">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-          <img class="site-author-image" src="/images/Vicky.jpg" alt="Vicky" itemprop="image"/>
+          <img class="site-author-image" src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/avatar.jpg" alt="Vicky" itemprop="image"/>
           <p class="site-author-name" itemprop="name">Vicky</p>
         </div>
-        <p class="site-description motion-element" itemprop="description">一个不甘做屌丝的程序员</p>
+        <p class="site-description motion-element" itemprop="description">让自己的努力变得更有价值</p>
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">24</span>
+              <span class="site-state-item-count">40</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
 
           <div class="site-state-item site-state-categories">
             <a href="/categories">
-              <span class="site-state-item-count">6</span>
+              <span class="site-state-item-count">8</span>
               <span class="site-state-item-name">分类</span>
               </a>
           </div>
 
           <div class="site-state-item site-state-tags">
             <a href="/tags">
-              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-count">33</span>
               <span class="site-state-item-name">标签</span>
               </a>
           </div>

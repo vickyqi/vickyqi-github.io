@@ -1,0 +1,739 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="让自己的努力变得更有价值" />
+
+
+
+  <meta name="keywords" content="Hadoop,算法,PageRank,MapReduce," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="首先简单介绍PageRank的算法公式：(图片来源：http://en.wikipedia.org/wiki/Page_rank)PR(A)即A的PageRank值；d为阻尼因子，一般设为0.85；L(B)即B网站所有的出链数量（即B网站内的所有链接的数量）。所以公式的意义是：A的PageRank值=（1-d）+d*（链接到A的所有网站的PR值/该网站的所有出链数量之和）。这里首次计算时为每个链接">
+<meta property="og:type" content="article">
+<meta property="og:title" content="算法系列：PageRank算法的MapReduce实现">
+<meta property="og:url" content="http://vickyqi.com/2014/03/01/算法系列：PageRank算法的MapReduce实现/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="首先简单介绍PageRank的算法公式：(图片来源：http://en.wikipedia.org/wiki/Page_rank)PR(A)即A的PageRank值；d为阻尼因子，一般设为0.85；L(B)即B网站所有的出链数量（即B网站内的所有链接的数量）。所以公式的意义是：A的PageRank值=（1-d）+d*（链接到A的所有网站的PR值/该网站的所有出链数量之和）。这里首次计算时为每个链接">
+<meta property="og:image" content="http://img.blog.csdn.net/20140301143109890?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdmlja3l3YXk=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast">
+<meta property="og:updated_time" content="2015-11-14T10:57:30.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="算法系列：PageRank算法的MapReduce实现">
+<meta name="twitter:description" content="首先简单介绍PageRank的算法公式：(图片来源：http://en.wikipedia.org/wiki/Page_rank)PR(A)即A的PageRank值；d为阻尼因子，一般设为0.85；L(B)即B网站所有的出链数量（即B网站内的所有链接的数量）。所以公式的意义是：A的PageRank值=（1-d）+d*（链接到A的所有网站的PR值/该网站的所有出链数量之和）。这里首次计算时为每个链接">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> 算法系列：PageRank算法的MapReduce实现 - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              算法系列：PageRank算法的MapReduce实现
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2014-03-01T17:28:00+08:00" content="2014-03-01">
+            2014-03-01
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2014/03/01/算法系列：PageRank算法的MapReduce实现/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2014/03/01/算法系列：PageRank算法的MapReduce实现/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>首先简单介绍PageRank的算法公式：<br><img src="http://img.blog.csdn.net/20140301143109890?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvdmlja3l3YXk=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述"><br>(图片来源：<a href="http://en.wikipedia.org/wiki/Page_rank" target="_blank" rel="external">http://en.wikipedia.org/wiki/Page_rank</a>)<br>PR(A)即A的PageRank值；d为阻尼因子，一般设为0.85；L(B)即B网站所有的出链数量（即B网站内的所有链接的数量）。<br>所以公式的意义是：A的PageRank值=（1-d）+d*（链接到A的所有网站的PR值/该网站的所有出链数量之和）。这里首次计算时为每个链接附上一个初始值，我设的是0.85。<br>公式相对还是比较简单的，至于原理推荐几篇自己学习参考的文章：<a href="http://en.wikipedia.org/wiki/Page_rank（英文），http://www.cnblogs.com/FengYan/archive/2011/11/12/2246461.html（讲解原理，不是太容易懂）。" target="_blank" rel="external">http://en.wikipedia.org/wiki/Page_rank（英文），http://www.cnblogs.com/FengYan/archive/2011/11/12/2246461.html（讲解原理，不是太容易懂）。</a><br>下面主要讲解mapreduce的实现。<br>输入文件格式：<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">a    b,c,<span class="keyword">d</span>,<span class="keyword">e</span>,f,<span class="keyword">g</span>,<span class="literal">h</span></span><br><span class="line">b    a,c,<span class="keyword">d</span>,r,<span class="keyword">g</span></span><br><span class="line">c    s,f,<span class="keyword">g</span>,w,<span class="keyword">h</span>,b</span><br><span class="line"><span class="keyword">d</span>    f,<span class="keyword">e</span>,s,t,<span class="keyword">g</span>,a</span><br><span class="line"><span class="keyword">e</span>    f,s,a,c,t,<span class="keyword">g</span>,<span class="literal">h</span></span><br><span class="line">f    <span class="keyword">d</span>,s,a,q,v,<span class="keyword">g</span>,<span class="literal">h</span></span><br><span class="line"><span class="keyword">g</span>    <span class="keyword">d</span>,<span class="keyword">e</span>,t,<span class="keyword">g</span>,<span class="keyword">h</span>,j,<span class="literal">y</span></span><br><span class="line"><span class="keyword">h</span>    <span class="keyword">d</span>,<span class="keyword">e</span>,t,<span class="keyword">g</span>,<span class="keyword">h</span>,y,<span class="literal">j</span></span><br><span class="line">i    <span class="keyword">d</span>,w,a,c,<span class="keyword">d</span>,<span class="literal">s</span></span><br><span class="line">j    a,c,v,f,<span class="keyword">d</span>,<span class="literal">s</span></span><br><span class="line">k    <span class="keyword">d</span>,f,<span class="keyword">h</span>,r,s,a</span><br></pre></td></tr></table></figure></p>
+<p>其中字母代表链接，第一个字母是网站链接，其后的字符串代表该网站所有的出链，以’,’分割。<br>Mapper的实现：<br><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> class PageRankMapper extends Mapper&lt;Text, Text, Text, Text&gt; &#123;</span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Log <span class="built_in">log</span> = LogFactory.getLog(PageRankMapper.class);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">float</span> factor = <span class="number">0.85</span>f;<span class="comment">// 阻尼因子</span></span><br><span class="line"></span><br><span class="line">	@Override</span><br><span class="line">	<span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">setup</span>(Context context) <span class="keyword">throws</span> IOException,</span><br><span class="line">			InterruptedException &#123;</span><br><span class="line">		<span class="comment">// 获取阻尼因子值，默认0.85</span></span><br><span class="line">		factor = context.getConfiguration().getFloat(<span class="string">"mapred.pagerank.factor"</span>,</span><br><span class="line">				<span class="number">0.85</span>f);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	@Override</span><br><span class="line">	<span class="keyword">protected</span> <span class="keyword">void</span> <span class="built_in">map</span>(Text <span class="variable">key</span>, Text value, Context context)</span><br><span class="line">			<span class="keyword">throws</span> IOException, InterruptedException &#123;</span><br><span class="line">		<span class="built_in">log</span>.info(<span class="variable">key</span>.toString() + <span class="string">";"</span> + value.toString());</span><br><span class="line">		<span class="comment">// 输入文件格式为：A b,c,d,...</span></span><br><span class="line">		<span class="comment">// 即key为目标网站，value为A所有的出链，并以','分割</span></span><br><span class="line">		<span class="keyword">String</span>[] outLinks = value.toString().<span class="built_in">split</span>(<span class="string">","</span>);</span><br><span class="line">		<span class="comment">// 分割key，获取key的rank值，以','分割</span></span><br><span class="line">		<span class="keyword">String</span>[] link = <span class="variable">key</span>.toString().<span class="built_in">split</span>(<span class="string">","</span>);</span><br><span class="line">		<span class="built_in">float</span> rank = factor;</span><br><span class="line">		<span class="keyword">if</span> (link.length &gt; <span class="number">1</span>) &#123;</span><br><span class="line">			rank = Float.parseFloat(link[<span class="number">1</span>]);<span class="comment">// 存在rank值，则取得，不存在则设为默认值：阻尼因子</span></span><br><span class="line">		&#125;</span><br><span class="line">		<span class="built_in">int</span> outLinkLen = outLinks.length;<span class="comment">// A的出链数量</span></span><br><span class="line">		<span class="comment">// 遍历A所有的出链，输出格式：key-A的各个出链(b,c,d...);value-[A+','+rank+','+outLinkLen]</span></span><br><span class="line">		<span class="comment">// 得到每个链接的所有入链的PR值以及链接到该链接的链接的出链数</span></span><br><span class="line">		<span class="keyword">for</span> (<span class="keyword">String</span> s : outLinks) &#123;</span><br><span class="line">			context.write(<span class="keyword">new</span> Text(s), <span class="keyword">new</span> Text(link[<span class="number">0</span>] + <span class="string">";"</span> + rank + <span class="string">";"</span></span><br><span class="line">					+ outLinkLen));</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 还需要输出A的所有出链信息，以便进行下一次mapreduce任务的处理</span></span><br><span class="line">		context.write(<span class="keyword">new</span> Text(link[<span class="number">0</span>]), value);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这是Mapper的实现代码，根据输入文件，这里选择KeyValueInputFormat，读入的key为一个网站链接，而value为该网站的所有出链，并以’,’分割。对value进行按’,’进行分割，得到该网站所有的出链，然后将出链作为key，value为之前的key+’,’+其rank值。这里注意，因为第一次计算时所有网站无rank值，故设置一个初始值，我这里设的是0.85(同阻尼因子)。同时还需要将输入的key+rank值以及输入的value一起输出，以便下次job的执行。<br>说明一下，除了第一次job之外，其他的job输入文件的格式其实如下：<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">a,0.85    b,c,<span class="keyword">d</span>,<span class="keyword">e</span>,f,<span class="keyword">g</span>,<span class="literal">h</span></span><br><span class="line">b,0.85    a,c,<span class="keyword">d</span>,r,<span class="keyword">g</span></span><br><span class="line">c,0.85    s,f,<span class="keyword">g</span>,w,<span class="keyword">h</span>,b</span><br><span class="line"><span class="keyword">d</span>,0.85    f,<span class="keyword">e</span>,s,t,<span class="keyword">g</span>,a</span><br><span class="line"><span class="keyword">e</span>,0.85    f,s,a,c,t,<span class="keyword">g</span>,<span class="literal">h</span></span><br><span class="line">f,0.85    <span class="keyword">d</span>,s,a,q,v,<span class="keyword">g</span>,<span class="literal">h</span></span><br><span class="line"><span class="keyword">g</span>,0.85    <span class="keyword">d</span>,<span class="keyword">e</span>,t,<span class="keyword">g</span>,<span class="keyword">h</span>,j,<span class="literal">y</span></span><br><span class="line"><span class="keyword">h</span>,0.85    <span class="keyword">d</span>,<span class="keyword">e</span>,t,<span class="keyword">g</span>,<span class="keyword">h</span>,y,<span class="literal">j</span></span><br><span class="line">i,0.85    <span class="keyword">d</span>,w,a,c,<span class="keyword">d</span>,<span class="literal">s</span></span><br><span class="line">j,0.85    a,c,v,f,<span class="keyword">d</span>,<span class="literal">s</span></span><br><span class="line">k,0.85    <span class="keyword">d</span>,f,<span class="keyword">h</span>,r,s,a</span><br></pre></td></tr></table></figure></p>
+<p>相比第一次的输入文件，这里的输入文件的key发生了变化，key是网站链接+’,’+其rank值组成，初始时无初始值，所以没有后面的。<br>Reducer的实现：<br><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> class PageRankReducer extends Reducer&lt;Text, Text, Text, Text&gt; &#123;</span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Log <span class="built_in">log</span> = LogFactory.getLog(PageRankReducer.class);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">float</span> factor = <span class="number">0.85</span>f;<span class="comment">// 阻尼因子</span></span><br><span class="line"></span><br><span class="line">	@Override</span><br><span class="line">	<span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">setup</span>(Context context) <span class="keyword">throws</span> IOException,</span><br><span class="line">			InterruptedException &#123;</span><br><span class="line">		<span class="comment">// 获取阻尼因子值，默认0.85</span></span><br><span class="line">		factor = context.getConfiguration().getFloat(<span class="string">"mapred.pagerank.factor"</span>,</span><br><span class="line">				<span class="number">0.85</span>f);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	@Override</span><br><span class="line">	<span class="keyword">protected</span> <span class="keyword">void</span> reduce(Text <span class="variable">key</span>, Iterable&lt;Text&gt; values, Context context)</span><br><span class="line">			<span class="keyword">throws</span> IOException, InterruptedException &#123;</span><br><span class="line">		<span class="built_in">log</span>.info(<span class="variable">key</span>.toString());</span><br><span class="line">		<span class="built_in">float</span> rank = <span class="number">1</span> - factor;<span class="comment">// PageRank值</span></span><br><span class="line">		<span class="keyword">String</span>[] <span class="built_in">str</span>;</span><br><span class="line">		Text outLinks = <span class="keyword">new</span> Text();<span class="comment">// 记录该链接的所有出链信息</span></span><br><span class="line">		<span class="comment">// 集合的数据位key的所有入链链接的page,rank,count值，以及key的所有出链信息</span></span><br><span class="line">		<span class="keyword">for</span> (Text t : values) &#123;</span><br><span class="line">			<span class="comment">// 入链信息以';'分割，出链信息以','分割，以此区别</span></span><br><span class="line">			<span class="built_in">str</span> = t.toString().<span class="built_in">split</span>(<span class="string">";"</span>);</span><br><span class="line">			<span class="keyword">if</span> (<span class="built_in">str</span>.length == <span class="number">3</span>) &#123;</span><br><span class="line">				<span class="comment">// 计算key的rank值=(1-d)+d*key的入链rank值/其出链数</span></span><br><span class="line">				rank += Float.parseFloat(<span class="built_in">str</span>[<span class="number">1</span>]) / Integer.parseInt(<span class="built_in">str</span>[<span class="number">2</span>])</span><br><span class="line">						* factor;</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				outLinks.<span class="built_in">set</span>(t.toString());</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		context.write(<span class="keyword">new</span> Text(<span class="variable">key</span>.toString() + <span class="string">","</span> + rank), outLinks);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>以上是Reducer的实现代码。经过Mapper阶段的计算，到达Reducer这里的数据结构是：<strong>key–&gt;{page1;rank1;count1,page2;rank2;count2,…,page1,page2…}</strong>。<br>根据key的所有入链的rank值和其对应的出链数量，可以轻松的计算出key的rank值，然后将key+‘,’+rank作为key，value则是[page1,page2,…pagen]，输出到文件，在作为下次job的输入文件进行计算，也就得到了上面提到的输入文件格式。</p>
+<p>主要代码就这两个，剩下的代码主要完成多次迭代计算的功能，就不贴出来了，想参考的可以从<a href="http://pan.baidu.com/s/1mgx7HFi" target="_blank" rel="external">点击打开链接（网盘）</a>下载完整代码。<br>欢迎大家一起讨论学习，谢谢</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag">#Hadoop</a>
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/算法/" rel="tag">#算法</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/05/14/实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题/" rel="prev">实现一个支持正则匹配的Filter以及Spring管理Filter遇到的问题</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2014/02/25/算法系列：矩阵相乘算法的MapReduce实现/" rel="next">算法系列：矩阵相乘算法的MapReduce实现</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2014/03/01/算法系列：PageRank算法的MapReduce实现/"
+     data-title="算法系列：PageRank算法的MapReduce实现"
+     data-content=""
+     data-url="http://vickyqi.com/2014/03/01/算法系列：PageRank算法的MapReduce实现/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2014/03/01/算法系列：PageRank算法的MapReduce实现/"
+                       data-title="算法系列：PageRank算法的MapReduce实现" data-url="http://vickyqi.com/2014/03/01/算法系列：PageRank算法的MapReduce实现/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/avatar.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">让自己的努力变得更有价值</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">40</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">8</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">33</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>
