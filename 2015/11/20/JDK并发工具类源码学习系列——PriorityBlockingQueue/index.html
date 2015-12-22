@@ -1,0 +1,762 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="让自己的努力变得更有价值" />
+
+
+
+  <meta name="keywords" content="Java,JDK,源码,并发,JUC,PriorityBlockingQueue,BlockingQueue,阻塞队列,队列,堆,优先队列," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="PriorityBlockingQueue是一个基于优先级堆的无界的并发安全的优先级队列（FIFO），队列的元素按照其自然顺序进行排序，或者根据构造队列时提供的 Comparator 进行排序，具体取决于所使用的构造方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JDK并发工具类源码学习系列——PriorityBlockingQueue">
+<meta property="og:url" content="http://vickyqi.com/2015/11/20/JDK并发工具类源码学习系列——PriorityBlockingQueue/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="PriorityBlockingQueue是一个基于优先级堆的无界的并发安全的优先级队列（FIFO），队列的元素按照其自然顺序进行排序，或者根据构造队列时提供的 Comparator 进行排序，具体取决于所使用的构造方法。">
+<meta property="og:updated_time" content="2015-11-23T10:48:22.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JDK并发工具类源码学习系列——PriorityBlockingQueue">
+<meta name="twitter:description" content="PriorityBlockingQueue是一个基于优先级堆的无界的并发安全的优先级队列（FIFO），队列的元素按照其自然顺序进行排序，或者根据构造队列时提供的 Comparator 进行排序，具体取决于所使用的构造方法。">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> JDK并发工具类源码学习系列——PriorityBlockingQueue - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              JDK并发工具类源码学习系列——PriorityBlockingQueue
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-11-20T20:18:00+08:00" content="2015-11-20">
+            2015-11-20
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
+
+              
+              
+                ， 
+              
+
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/JDK源码/" itemprop="url" rel="index"><span itemprop="name">JDK源码</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/11/20/JDK并发工具类源码学习系列——PriorityBlockingQueue/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/11/20/JDK并发工具类源码学习系列——PriorityBlockingQueue/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>PriorityBlockingQueue是一个基于优先级堆的无界的并发安全的优先级队列（FIFO），队列的元素按照其自然顺序进行排序，或者根据构造队列时提供的 Comparator 进行排序，具体取决于所使用的构造方法。<br><a id="more"></a></p>
+<h5 id="实现原理"><strong>实现原理</strong></h5><p>PriorityBlockingQueue通过使用堆这种数据结构实现将队列中的元素按照某种排序规则进行排序，从而改变先进先出的队列顺序，提供开发者改变队列中元素的顺序的能力。队列中的元素必须是可比较的，即实现Comparable接口，或者在构建函数时提供可对队列元素进行比较的Comparator对象。</p>
+<h5 id="堆的介绍"><strong>堆的介绍</strong></h5><p>由于PriorityBlockingQueue是基于堆的，所以这里简单介绍下堆的结构。堆是一种二叉树结构，堆的根元素是整个树的最大值或者最小值（称为大顶堆或者小顶堆），同时堆的每个子树都是满足堆的树结构。由于堆的顶部是最大值或者最小值，所以每次从堆获取数据都是直接获取堆顶元素，然后再将堆调整成堆结构。</p>
+<p>更多关于堆的介绍请参考：<a href="http://vickyqi.com/2015/11/19/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94%E5%A0%86/">数据结构系列——堆</a></p>
+<h5 id="结构介绍"><strong>结构介绍</strong></h5><p>PriorityBlockingQueue通过内部组合PriorityQueue的方式实现优先级队列（<code>private final PriorityQueue<e> q;</e></code>），另外在外层通过ReentrantLock实现线程安全，同时通过Condition实现阻塞唤醒。</p>
+<h5 id="常用方法介绍"><strong>常用方法介绍</strong></h5><p>PriorityBlockingQueue继承自AbstractQueue，以及实现了BlockingQueue接口，是一个阻塞队列，主要方法：offer(E)/poll()/poll(long, TimeUnit)/take()/remove(Object)。下面我们结合源码堆这些方法进行深入分析。</p>
+<h6 id="offer(E)"><strong>offer(E)</strong></h6><p>入队操作。此处虽然PriorityBlockingQueue是阻塞队列，但是其并没有阻塞的入队方法，因为该队列是无界的，所以入队是不会阻塞的。<br><figure class="highlight cs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> boolean <span class="title">offer</span>(<span class="params">E e</span>) </span>&#123;</span><br><span class="line">	final ReentrantLock <span class="keyword">lock</span> = <span class="keyword">this</span>.<span class="keyword">lock</span>;</span><br><span class="line">    <span class="keyword">lock</span>.<span class="keyword">lock</span>();<span class="comment">// 加锁</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">    	<span class="comment">// 通过PriorityQueue入队一个元素</span></span><br><span class="line">        boolean ok = q.offer(e);</span><br><span class="line">        assert ok;</span><br><span class="line">        <span class="comment">// 唤醒等在notEmpty上的线程</span></span><br><span class="line">        notEmpty.signal();</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        <span class="keyword">lock</span>.unlock();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">boolean</span> <span class="title">offer</span><span class="params">(E e, <span class="keyword">long</span> timeout, TimeUnit unit)</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">return</span> <span class="title">offer</span><span class="params">(e)</span></span>; <span class="comment">// never need to block</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>offer()方法正如在结构介绍中提到的通过组合的方式，通过外部加锁内部直接调用PriorityQueue的offer()方法。所以主要的工作在PriorityQueue内部。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> *@By Vicky:入队一个元素</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> boolean <span class="title">offer</span><span class="params">(E e)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (e == null)</span><br><span class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();</span><br><span class="line">	modCount++;</span><br><span class="line">	<span class="keyword">int</span> i = size;</span><br><span class="line">	<span class="comment">// 内部使用数组保存队列的元素，所以如果队列的大小超过数组的长度，则需要进行扩容</span></span><br><span class="line">	<span class="comment">// 扩容的标准是：&lt;64扩大2倍，&gt;=64则扩大1.5倍</span></span><br><span class="line">	<span class="keyword">if</span> (i &gt;= <span class="built_in">queue</span>.length)</span><br><span class="line">		grow(i + <span class="number">1</span>);</span><br><span class="line">	size = i + <span class="number">1</span>;</span><br><span class="line">	<span class="comment">// i==0表示队列目前没有元素，则直接将带插入元素添加到数组即可</span></span><br><span class="line">	<span class="keyword">if</span> (i == <span class="number">0</span>)</span><br><span class="line">		<span class="built_in">queue</span>[<span class="number">0</span>] = e;</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		<span class="comment">// 将带插入元素添加到队列的最后一个元素，然后自下而上调整堆</span></span><br><span class="line">		siftUp(i, e);</span><br><span class="line">	<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line"> *@By Vicky:自下而上调整堆 </span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">siftUp</span><span class="params">(<span class="keyword">int</span> k, E x)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 两者逻辑一样，只是采用的比较方式不同而已</span></span><br><span class="line">    <span class="keyword">if</span> (comparator != null)</span><br><span class="line">        siftUpUsingComparator(k, x);</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        siftUpComparable(k, x);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line">*@By Vicky:自下而上调整堆 </span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">siftUpUsingComparator</span><span class="params">(<span class="keyword">int</span> k, E x)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 循环，直到根元素</span></span><br><span class="line">    <span class="keyword">while</span> (k &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    	<span class="comment">// 寻找k的父元素下标，固定规则，可参考博客：http://vickyqi.com/</span></span><br><span class="line">        <span class="keyword">int</span> parent = (k - <span class="number">1</span>) &gt;&gt;&gt; <span class="number">1</span>;</span><br><span class="line">        Object e = <span class="built_in">queue</span>[parent];</span><br><span class="line">        <span class="comment">// 如果x &gt;= e，即子节点&gt;=父节点，则直接退出循环</span></span><br><span class="line">        <span class="comment">// 解释：自下而上一般出现在插入元素时调用，插入元素是插入到队列的最后，则需要将该元素调整到合适的位置</span></span><br><span class="line">        <span class="comment">// 即从队列的最后往上调整堆，直到不小于其父节点为止，相当于冒泡</span></span><br><span class="line">        <span class="keyword">if</span> (comparator.compare(x, (E) e) &gt;= <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="comment">// 如果当前节点&lt;其父节点，则将其与父节点进行交换，并继续往上访问父节点</span></span><br><span class="line">        <span class="built_in">queue</span>[k] = e;</span><br><span class="line">        k = parent;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">queue</span>[k] = x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>入队时通过调用ReentrantLock.lock()进行加锁，然后调用PriorityQueue.offer()方法进行入队操作，最后通过Condition.signal()唤醒等待其上的线程。PriorityQueue.offer()方法将元素插入到队列的最后，然后自上而下调整堆。文中代码都给出了注释，同时可参考博客：<a href="http://vickyqi.com/2015/11/19/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94%E5%A0%86/">数据结构系列——堆</a>进行详细的了解。</p>
+<h6 id="poll()和poll(long,_TimeUnit)，take()"><strong>poll()和poll(long, TimeUnit)，take()</strong></h6><p>出队操作。poll(long, TimeUnit)是poll()的阻塞版本，同时take()是无限阻塞版poll()（即无期限阻塞，直到获取到数据），通过Condition.awaitNanos()实现阻塞。三者实现主要逻辑相同，只是在等待时不同，这里主要介绍poll(long, TimeUnit)。</p>
+<figure class="highlight cs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * @By Vicky:阻塞版的出队</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> E <span class="title">poll</span>(<span class="params"><span class="keyword">long</span> timeout, TimeUnit unit</span>) throws InterruptedException </span>&#123;</span><br><span class="line">	<span class="keyword">long</span> nanos = unit.toNanos(timeout);</span><br><span class="line">	final ReentrantLock <span class="keyword">lock</span> = <span class="keyword">this</span>.<span class="keyword">lock</span>;</span><br><span class="line">	<span class="comment">// 此处不同于其他非阻塞方法，调用了ReentrantLock的lockInterruptibly()方法，考虑了当前线程是否被打断</span></span><br><span class="line">	<span class="keyword">lock</span>.lockInterruptibly();</span><br><span class="line">	<span class="keyword">try</span> &#123;</span><br><span class="line">		<span class="comment">// 循环，直到获取到元素，或者到达等待时间</span></span><br><span class="line">		<span class="keyword">for</span> (;;) &#123;</span><br><span class="line">			<span class="comment">// 从PriorityQueue获取一个元素，该方法不会阻塞</span></span><br><span class="line">			E x = q.poll();</span><br><span class="line">			<span class="keyword">if</span> (x != <span class="keyword">null</span>)</span><br><span class="line">				<span class="keyword">return</span> x;</span><br><span class="line">			<span class="comment">// 此处的nanos会因为每次调用Condition.awaitNanos而减少，如果&lt;0则说明累计等待时间已达到设定的等待时间</span></span><br><span class="line">			<span class="keyword">if</span> (nanos &lt;= <span class="number">0</span>)</span><br><span class="line">				<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">			<span class="keyword">try</span> &#123;</span><br><span class="line">				<span class="comment">// Condition.awaitNanos指定等待时间，但是有可能会被“虚假唤醒”（参考API），导致等待时间未满，返回值即剩余的等待时间</span></span><br><span class="line">				<span class="comment">// 所以需要在外层进行循环，每次等待的时候是上次剩余的时间</span></span><br><span class="line">				nanos = notEmpty.awaitNanos(nanos);</span><br><span class="line">			&#125; <span class="keyword">catch</span> (InterruptedException ie) &#123;</span><br><span class="line">				notEmpty.signal(); <span class="comment">// propagate to non-interrupted thread</span></span><br><span class="line">				<span class="keyword">throw</span> ie;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">		<span class="keyword">lock</span>.unlock();</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>具体的出队操作依然是调用PriorityQueue.poll()。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * @By Vicky:出队一个元素</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> E <span class="title">poll</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="comment">// size==0队列为0，直接返回null</span></span><br><span class="line">	<span class="keyword">if</span> (size == <span class="number">0</span>)</span><br><span class="line">		<span class="keyword">return</span> null;</span><br><span class="line">	<span class="keyword">int</span> s = --size;</span><br><span class="line">	modCount++;</span><br><span class="line">	<span class="comment">// 出队总是将数组的第一个元素进行出队，</span></span><br><span class="line">	E result = (E) <span class="built_in">queue</span>[<span class="number">0</span>];</span><br><span class="line">	E x = (E) <span class="built_in">queue</span>[s];</span><br><span class="line">	<span class="built_in">queue</span>[s] = null;</span><br><span class="line">	<span class="keyword">if</span> (s != <span class="number">0</span>)</span><br><span class="line">		<span class="comment">// 同时将队列的最后一个元素放到第一个位置，然后自上而下调整堆</span></span><br><span class="line">		siftDown(<span class="number">0</span>, x);</span><br><span class="line">	<span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line"> * @By Vicky:自下而上调整堆</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">siftDown</span><span class="params">(<span class="keyword">int</span> k, E x)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (comparator != null)</span><br><span class="line">        siftDownUsingComparator(k, x);</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        siftDownComparable(k, x);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line"> * @By Vicky:自下而上调整堆</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">siftDownUsingComparator</span><span class="params">(<span class="keyword">int</span> k, E x)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 由于堆是一个二叉树，所以size/2是树中的最后一个非叶子节点</span></span><br><span class="line">	<span class="comment">// 如果k是叶子节点，那么其无子节点，则不需要再往下调整堆</span></span><br><span class="line">    <span class="keyword">int</span> half = size &gt;&gt;&gt; <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span> (k &lt; half) &#123;</span><br><span class="line">    	<span class="comment">// 左节点，固定规则，可参考博客：http://vickyqi.com/</span></span><br><span class="line">        <span class="keyword">int</span> child = (k &lt;&lt; <span class="number">1</span>) + <span class="number">1</span>;</span><br><span class="line">        Object c = <span class="built_in">queue</span>[child];</span><br><span class="line">        <span class="comment">// 右节点</span></span><br><span class="line">        <span class="keyword">int</span> right = child + <span class="number">1</span>;</span><br><span class="line">        <span class="comment">// 找出两个子节点以及父节点中较小的一个</span></span><br><span class="line">        <span class="keyword">if</span> (right &lt; size &amp;&amp;</span><br><span class="line">            comparator.compare((E) c, (E) <span class="built_in">queue</span>[right]) &gt; <span class="number">0</span>)</span><br><span class="line">            c = <span class="built_in">queue</span>[child = right];</span><br><span class="line">        <span class="comment">// 如果父节点最小，则无需继续往下调整堆</span></span><br><span class="line">        <span class="keyword">if</span> (comparator.compare(x, (E) c) &lt;= <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="comment">// 否则将父节点与两个子节点中较小的一个交换，然后往下继续调整</span></span><br><span class="line">        <span class="built_in">queue</span>[k] = c;</span><br><span class="line">        k = child;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">queue</span>[k] = x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>基本操作原理见代码注释，同时可参考博客：<a href="http://vickyqi.com/2015/11/19/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94%E5%A0%86/">数据结构系列——堆</a>进行详细的了解。</p>
+<h6 id="remove(Object)"><strong>remove(Object)</strong></h6><p>删除其实并不是常用的方法，主要是堆在删除时还是有点值得介绍的。这里我们直接看PriorityQueue.remove()方法。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * @By Vicky:移除指定元素</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> boolean <span class="title">remove</span><span class="params">(Object o)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// 在队列中查询元素，返回待删除元素在队列中的位置</span></span><br><span class="line">	<span class="keyword">int</span> i = indexOf(o);</span><br><span class="line">	<span class="keyword">if</span> (i == -<span class="number">1</span>)</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	<span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="comment">// 删除指定位置的元素</span></span><br><span class="line">		removeAt(i);</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span><br><span class="line"> * @By Vicky:删除指定位置的元素</span><br><span class="line"> */</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> E <span class="title">removeAt</span><span class="params">(<span class="keyword">int</span> i)</span> </span>&#123;</span><br><span class="line">	assert i &gt;= <span class="number">0</span> &amp;&amp; i &lt; size;</span><br><span class="line">	modCount++;</span><br><span class="line">	<span class="keyword">int</span> s = --size;</span><br><span class="line">	<span class="keyword">if</span> (s == i) <span class="comment">// removed last element</span></span><br><span class="line">		<span class="built_in">queue</span>[i] = null;</span><br><span class="line">	<span class="keyword">else</span> &#123;</span><br><span class="line">		<span class="comment">// 删除最后一个元素，将最后一个元素放到i的位置，然后从i开始上而下调整堆</span></span><br><span class="line">		E moved = (E) <span class="built_in">queue</span>[s];</span><br><span class="line">		<span class="built_in">queue</span>[s] = null;</span><br><span class="line">		siftDown(i, moved);</span><br><span class="line">		<span class="comment">// 如果queue[i] == moved说明未发生调整，那么则需要自下而上调整堆</span></span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">queue</span>[i] == moved) &#123;</span><br><span class="line">			siftUp(i, moved);</span><br><span class="line">			<span class="keyword">if</span> (<span class="built_in">queue</span>[i] != moved)</span><br><span class="line">				<span class="keyword">return</span> moved;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当删除堆中的一个元素时，将堆的最后一个元素移动到被删除的位置，然后将最后一个位置值为NULL，当把最后一个元素移动到堆中的某个位置时，这时首先需要从该位置开始自上而下的调整堆，如果该位置的元素在调整时发生变化，即堆有变化，则说明该元素是大于其子节点的，那么该节点就不可能小于其上的父节点（因为堆的结构是传递性的，即子节点小于父节点，其孙子节点同时小于其父节点），所以就不需要再网上调整了；但是如果未发生变化，则说明该位置的节点小于其子节点，那么就无法保证其一定比父节点大，所以需要从该节点开始自上而下的调整堆。调整堆的方法是入队和出队时都有介绍，这里就不介绍了。</p>
+<p>以上即PriorityBlockingQueue常用的一些方法，另外一些peek()，迭代等方法就不介绍了，毕竟不涉及堆的改变。</p>
+<h5 id="使用场景"><strong>使用场景</strong></h5><p>PriorityBlockingQueue与普通阻塞队列的不同之处就是在于其支持对队列中的元素进行比较，而已决定出队的顺序，所以可以使用PriorityBlockingQueue实现高优先级的线程优先执行。</p>
+<hr>
+<p>以上即本篇的全部内容，如有错误之处，请不吝赐教~~~</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/JDK/" rel="tag">#JDK</a>
+          
+            <a href="/tags/JUC/" rel="tag">#JUC</a>
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/11/23/数据结构系列——Trie树/" rel="prev">数据结构系列——Trie树</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/11/19/数据结构系列——堆/" rel="next">数据结构系列——堆</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2015/11/20/JDK并发工具类源码学习系列——PriorityBlockingQueue/"
+     data-title="JDK并发工具类源码学习系列——PriorityBlockingQueue"
+     data-content=""
+     data-url="http://vickyqi.com/2015/11/20/JDK并发工具类源码学习系列——PriorityBlockingQueue/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2015/11/20/JDK并发工具类源码学习系列——PriorityBlockingQueue/"
+                       data-title="JDK并发工具类源码学习系列——PriorityBlockingQueue" data-url="http://vickyqi.com/2015/11/20/JDK并发工具类源码学习系列——PriorityBlockingQueue/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/avatar.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">让自己的努力变得更有价值</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">49</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">10</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">36</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#实现原理"><span class="nav-number">1.</span> <span class="nav-text">实现原理</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#堆的介绍"><span class="nav-number">2.</span> <span class="nav-text">堆的介绍</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#结构介绍"><span class="nav-number">3.</span> <span class="nav-text">结构介绍</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#常用方法介绍"><span class="nav-number">4.</span> <span class="nav-text">常用方法介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-6"><a class="nav-link" href="#offer(E)"><span class="nav-number">4.1.</span> <span class="nav-text">offer(E)</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#poll()和poll(long,_TimeUnit)，take()"><span class="nav-number">4.2.</span> <span class="nav-text">poll()和poll(long, TimeUnit)，take()</span></a></li><li class="nav-item nav-level-6"><a class="nav-link" href="#remove(Object)"><span class="nav-number">4.3.</span> <span class="nav-text">remove(Object)</span></a></li></ol></li><li class="nav-item nav-level-5"><a class="nav-link" href="#使用场景"><span class="nav-number">5.</span> <span class="nav-text">使用场景</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>

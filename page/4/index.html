@@ -57,7 +57,7 @@
   };
 </script>
 
-    <title> Vicky's Blog </title>
+    <title> Vicky's Blog - 让自己的努力变得更有价值 </title>
 </head>
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
 <!--[if lte IE 8]>
@@ -186,7 +186,6 @@
   
 </nav>
 
-
         </div>
     </header>
 
@@ -195,6 +194,827 @@
             <div id="content" class="content">
                 
   <section id="posts" class="posts-expand">
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2014/03/01/算法系列：PageRank算法的MapReduce实现/" itemprop="url">
+                算法系列：PageRank算法的MapReduce实现
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2014-03-01T17:28:00+08:00" content="2014-03-01">
+            2014-03-01
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2014/03/01/算法系列：PageRank算法的MapReduce实现/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2014/03/01/算法系列：PageRank算法的MapReduce实现/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <span itemprop="articleBody">
+            
+            首先简单介绍PageRank的算法公式：(图片来源：http://en.wikipedia.org/wiki/Page_rank)PR(A)即A的PageRank值；d为阻尼因子，一般设为0.85；L(B)即B网站所有的出链数量（即B网站内的所有链接的数量）。所以公式的意义是：A的PageRank值
+            ...
+          </span>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2014/03/01/算法系列：PageRank算法的MapReduce实现/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2014/02/25/算法系列：矩阵相乘算法的MapReduce实现/" itemprop="url">
+                算法系列：矩阵相乘算法的MapReduce实现
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2014-02-25T19:47:00+08:00" content="2014-02-25">
+            2014-02-25
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2014/02/25/算法系列：矩阵相乘算法的MapReduce实现/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2014/02/25/算法系列：矩阵相乘算法的MapReduce实现/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <span itemprop="articleBody">
+            
+            看到一篇文章，列出了几个使用MapReduce完成的算法（附有实现案例），但是还是想自己实现下，所以自己写了一个，后来看了下案例，不是太一样，但是我实现了，不管效果如何，或者好不好看，总之我实现了。这里就跟大家分享下，同时也希望能得到一个建议。首先介绍下我的实现思想：
+
+两个矩阵相乘，我们假设为a[
+            ...
+          </span>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2014/02/25/算法系列：矩阵相乘算法的MapReduce实现/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/" itemprop="url">
+                FairScheduler的任务调度机制——assignTasks（续）
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-12-15T20:49:00+08:00" content="2013-12-15">
+            2013-12-15
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <span itemprop="articleBody">
+            
+            上一篇文章浅析了FairScheduler的assignTasks()方法，介绍了FairScheduler任务调度的原理。略过了最后一步通过JobScheduler获取Task时调用JobInProgress的五个方法：obtainNewNodeLocalMapTask()，obtainNewNo
+            ...
+          </span>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2013/12/15/FairScheduler的任务调度机制——assignTasks（续）/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2013/12/11/FairScheduler的任务调度机制——assignTasks/" itemprop="url">
+                FairScheduler的任务调度机制——assignTasks
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-12-11T00:33:00+08:00" content="2013-12-11">
+            2013-12-11
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/12/11/FairScheduler的任务调度机制——assignTasks/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/11/FairScheduler的任务调度机制——assignTasks/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <span itemprop="articleBody">
+            
+            首先需要了解FairScheduler是如何在各个Pool之间分配资源，以及每个Pool如何在Job之间分配资源的。FairScheduler的分配资源发生在update()方法中，而该方法由一个线程UpdateThread每隔updateInterval（由mapred.fairscheduler
+            ...
+          </span>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2013/12/11/FairScheduler的任务调度机制——assignTasks/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/" itemprop="url">
+                Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-12-07T22:17:00+08:00" content="2013-12-07">
+            2013-12-07
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <span itemprop="articleBody">
+            
+            前两篇文章简单介绍了hadoop心跳机制的两个重要角色：JT和TT，虽然不是太详细，但是大纸业说清楚了一些事，在JT篇的最后对于JT返回TT的心跳响应中的一些命令一笔带过，这篇文章将重要介绍这些命令：ReinitTrackerAction，KillTaskAction，KillJobAction，C
+            ...
+          </span>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2013/12/07/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——命令篇/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2013/12/05/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——JT篇/" itemprop="url">
+                Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——JT篇
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-12-05T00:36:00+08:00" content="2013-12-05">
+            2013-12-05
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/12/05/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——JT篇/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/05/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——JT篇/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <span itemprop="articleBody">
+            
+            上一篇浅析了Hadoop心跳机制的TT（TaskTracker）方面，这一篇浅析下JT（JobTracker）方面。我们知道心跳是TT通过RPC请求调用JT的heartbeat()方法的，TT在调用JT的heartbeat回收集自身的状态信息封装到TaskTrackerStatus对象中，传递给JT
+            ...
+          </span>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2013/12/05/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——JT篇/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/" itemprop="url">
+                Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-12-03T23:37:00+08:00" content="2013-12-03">
+            2013-12-03
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <span itemprop="articleBody">
+            
+            在Hadoop中JT（JobTracker）与TT（TaskTracker）之间的通信是通过心跳机制完成的。JT实现InterTrackerProtocol协议，该协议定义了JT与TT之间的通信机制——心跳。心跳机制实际上就是一个RPC请求，JT作为Server，而TT作为Client，TT通过RP
+            ...
+          </span>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2013/12/03/Hadoop1.2.1源码解析系列：JT与TT之间的心跳通信机制——TT篇/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/" itemprop="url">
+                Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-11-24T23:52:00+08:00" content="2013-11-24">
+            2013-11-24
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <span itemprop="articleBody">
+            
+            JobTracker是hadoop的mapreduce框架中最重要的一个类，这个类负责整个集群的作业控制和资源管理。JobTracker的启动是在用户启动hadoop集群时启动的，也就是在hadoop启动完之后使用jps命令看到的jobTracker进程，启动代码是在start-mapred.sh中
+            ...
+          </span>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2013/11/24/Hadoop1.2.1源码解析系列：JobTracker（一）——JobTracker初始化/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              <a class="post-title-link" href="/2013/11/21/FairScheduler job初始化过程源码浅析/" itemprop="url">
+                FairScheduler job初始化过程源码浅析
+              </a>
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2013-11-21T22:31:00+08:00" content="2013-11-21">
+            2013-11-21
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2013/11/21/FairScheduler job初始化过程源码浅析/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2013/11/21/FairScheduler job初始化过程源码浅析/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        
+          <span itemprop="articleBody">
+            
+            上一篇文章说到了jobTracker中的submitJob()方法，这个方法最终会调用listener.jobAdded(job)，将Job注册到TaskScheduler中，由其进行调度。今天接着研究hadoop中默认的TaskScheduler是JobQueueTaskScheduler，采用的
+            ...
+          </span>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2013/11/21/FairScheduler job初始化过程源码浅析/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
     
       
 
@@ -288,857 +1108,11 @@
 
 
     
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2013/11/18/hadoop job初始化源码浅析/" itemprop="url">
-                hadoop job初始化源码浅析
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2013-11-18T23:59:00+08:00" content="2013-11-18">
-            2013-11-18
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2013/11/18/hadoop job初始化源码浅析/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2013/11/18/hadoop job初始化源码浅析/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            hadoop的job提交过程相对来说还是有点复杂的，所以在学习源码的时候会显得有些乱，时常看了后面忘了前面，所以在看了多遍之后决定用文章的方式记录下来，一边自己下次再看的时候能够清晰些，同时也为初次接触这方面源码的同学提供一些帮助吧。希望自己可以写的足够详细。(本文针对hadoop1.2.1)
-jo
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2013/11/18/hadoop job初始化源码浅析/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2013/09/22/windows环境下使用MyEclipse调用hadoop集群/" itemprop="url">
-                windows环境下使用MyEclipse调用hadoop集群
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2013-09-22T23:03:00+08:00" content="2013-09-22">
-            2013-09-22
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2013/09/22/windows环境下使用MyEclipse调用hadoop集群/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2013/09/22/windows环境下使用MyEclipse调用hadoop集群/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            之前看网上说要想在windows下访问hadoop集群需要安装cygwin，但是我嫌安装这东西麻烦，所以没弄，但是今天根据linux下使用hadoop插件的eclipse建的一个项目来在Myeclipse下建了一个同样的项目，引入同样的jar包，然后执行调用Hadoop的程序竟然可以执行，大喜。不知
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2013/09/22/windows环境下使用MyEclipse调用hadoop集群/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2013/09/18/RedHat安装Hadoop0.20.2小集群/" itemprop="url">
-                RedHat安装Hadoop0.20.2小集群
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2013-09-18T23:37:00+08:00" content="2013-09-18">
-            2013-09-18
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Hadoop/" itemprop="url" rel="index"><span itemprop="name">Hadoop</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2013/09/18/RedHat安装Hadoop0.20.2小集群/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2013/09/18/RedHat安装Hadoop0.20.2小集群/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            在安装Hadoop之前先确保每台机器都装有jdk，版本什么路径什么的最好一样，然后配置好master对其他slavers的SSH无密码访问(可以参考：Linux下配置SSH无密码访问)
-确保上述条件满足之后就可以开始安装Hadoop了
-首先我的版本信息：
-
-LinuxOS：RedHat Enterp
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2013/09/18/RedHat安装Hadoop0.20.2小集群/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2013/09/17/Linux下配置SSH无密码访问/" itemprop="url">
-                Linux下配置SSH无密码访问
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2013-09-17T22:43:00+08:00" content="2013-09-17">
-            2013-09-17
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Linux/" itemprop="url" rel="index"><span itemprop="name">Linux</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2013/09/17/Linux下配置SSH无密码访问/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2013/09/17/Linux下配置SSH无密码访问/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            网上资料很多，基本都是一样。首先确保你已安装ssh，RedHat自带有openSSH，所以不需要考虑。
-第一步：使用  #ssh-keygen -t dsa  ，使用这个命令之后会提示是否输入密码，这里不输入密码，一路enter下去就可以了，最后会在用户目录下的隐藏文件夹.ssh下生成id.dsa和
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2013/09/17/Linux下配置SSH无密码访问/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2012/05/20/Java类加载器/" itemprop="url">
-                Java类加载器
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2012-05-20T22:15:00+08:00" content="2012-05-20">
-            2012-05-20
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2012/05/20/Java类加载器/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2012/05/20/Java类加载器/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            类加载器作用当JVM开始运作时需要使用当某个类时，就需要将对应类的字段吗加载到内存中，而类加载器正式负责加载这些类的工具。另外若果多次重复使用一个类的字节码时加载器不会多次加载，而是使用内存中的字节码。
-主要的类加载器我们首先看一下JVM预定义的三种类型类加载器，当一个 JVM 启动的时候，Java
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2012/05/20/Java类加载器/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2012/05/19/Java类之间的关联关系/" itemprop="url">
-                Java类之间的关联关系
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2012-05-19T20:43:00+08:00" content="2012-05-19">
-            2012-05-19
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2012/05/19/Java类之间的关联关系/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2012/05/19/Java类之间的关联关系/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            UML类图中的关系分为四种：泛化、依赖、关联、实现；关联关系又可以细化为聚合和组合。
-泛化（Generalization）泛化是父类和子类之间的关系，子类继承父类的所有结构和行为。在子类中可以增加新的结构和行为，也可以覆写父类的行为。一般用一个带空心箭头的实线表示泛化关系，UML图如下：泛化对应Ja
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2012/05/19/Java类之间的关联关系/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2012/05/19/Session的理解/" itemprop="url">
-                Session的理解
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2012-05-19T00:13:00+08:00" content="2012-05-19">
-            2012-05-19
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
-
-              
-              
-                ， 
-              
-
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/Web开发/" itemprop="url" rel="index"><span itemprop="name">Web开发</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2012/05/19/Session的理解/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2012/05/19/Session的理解/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            个人误区&emsp;&emsp;一开始很傻的把Session的会话与用户的登录与退出弄混淆了，实在很傻！Session的会话指的是当你打开浏览器，请求一个应用服务器时开始，直到与这个应用服务器断开连接（如关闭浏览器等）为止的一系列动作。这与用户登录完全没有关系，被弄混淆个人觉得是Session最普遍
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2012/05/19/Session的理解/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2012/05/13/Struts2整合Spring方法及原理/" itemprop="url">
-                Struts2整合Spring方法及原理
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2012-05-13T14:44:00+08:00" content="2012-05-13">
-            2012-05-13
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
-
-              
-              
-                ， 
-              
-
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/Web开发/" itemprop="url" rel="index"><span itemprop="name">Web开发</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2012/05/13/Struts2整合Spring方法及原理/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2012/05/13/Struts2整合Spring方法及原理/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            Struts 2框架整合Spring步骤
-复制文件。复制struts2-spring-plugin-x-x-x.jar和spring.jar到WEB-INF/lib目录下。其中的x对应了Spring的版本号。还需要复制commons-logging.jar文件到WEB-INF/lib目录下。
-配置s
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2012/05/13/Struts2整合Spring方法及原理/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      
-      
-        <h1 class="post-title" itemprop="name headline">
-          
-          
-            
-              <a class="post-title-link" href="/2012/05/12/Java多线程和同步的理解/" itemprop="url">
-                Java多线程和同步的理解
-              </a>
-            
-          
-        </h1>
-      
-
-      <div class="post-meta">
-        <span class="post-time">
-          发表于
-          <time itemprop="dateCreated" datetime="2012-05-12T00:41:00+08:00" content="2012-05-12">
-            2012-05-12
-          </time>
-        </span>
-
-        
-          <span class="post-category" >
-            &nbsp; | &nbsp; 分类于
-            
-              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
-
-              
-              
-
-            
-          </span>
-        
-
-        
-          
-            <span class="post-comments-count">
-              &nbsp; | &nbsp;
-              <a href="/2012/05/12/Java多线程和同步的理解/#comments" itemprop="discussionUrl">
-                <span class="post-comments-count ds-thread-count" data-thread-key="2012/05/12/Java多线程和同步的理解/" itemprop="commentsCount"></span>
-              </a>
-            </span>
-          
-        
-
-		
-		
-      </div>
-    </header>
-
-    <div class="post-body">
-
-      
-      
-
-      
-        
-          <span itemprop="articleBody">
-            
-            进程与线程在谈论线程之前，我们先来看看什么叫进程，以及进程与线程的关系。
-进程我们在windows操作系统中打开任务管理器，可以看到有一项是“进程”，里面列举出了用户目前正在运行的所有进程，包括系统进程和用户应用程序进程，以及每个进程所占用的内存资源等信息。进程是操作系统结构的基础，它不仅只包括运行
-            ...
-          </span>
-          <div class="post-more-link text-center">
-            <a class="btn" href="/2012/05/12/Java多线程和同步的理解/#more" rel="contents">
-              阅读全文 &raquo;
-            </a>
-          </div>
-        
-      
-    </div>
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/3/">&laquo;</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span>
+    <a class="extend prev" rel="prev" href="/page/3/">&laquo;</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/5/">&raquo;</a>
   </nav>
 
 
@@ -1173,21 +1147,21 @@ LinuxOS：RedHat Enterp
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">40</span>
+              <span class="site-state-item-count">49</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
 
           <div class="site-state-item site-state-categories">
             <a href="/categories">
-              <span class="site-state-item-count">8</span>
+              <span class="site-state-item-count">10</span>
               <span class="site-state-item-name">分类</span>
               </a>
           </div>
 
           <div class="site-state-item site-state-tags">
             <a href="/tags">
-              <span class="site-state-item-count">33</span>
+              <span class="site-state-item-count">36</span>
               <span class="site-state-item-name">标签</span>
               </a>
           </div>

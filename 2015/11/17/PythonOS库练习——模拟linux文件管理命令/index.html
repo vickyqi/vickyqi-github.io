@@ -1,0 +1,739 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="让自己的努力变得更有价值" />
+
+
+
+  <meta name="keywords" content="Python,OS,关键管理,Python练习,Python项目," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="最近对Python大有兴趣，由于将官网文档看了一遍，但是看完只是简单的了解了Python的语法，而且还只是最基础的语法，所以后续除了了解Python的高级功能外（例外并发机制，锁机制，IO机制等），另一个重要要学习的就是Python的基本类库，如os/sys/datetime等。
+本篇文章就是针对Python OS标准库的练习，OS库的功能主要是针对操作系统的文件管理，所以练习无外乎就是针对文件进">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PythonOS库练习——模拟linux文件管理命令">
+<meta property="og:url" content="http://vickyqi.com/2015/11/17/PythonOS库练习——模拟linux文件管理命令/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="最近对Python大有兴趣，由于将官网文档看了一遍，但是看完只是简单的了解了Python的语法，而且还只是最基础的语法，所以后续除了了解Python的高级功能外（例外并发机制，锁机制，IO机制等），另一个重要要学习的就是Python的基本类库，如os/sys/datetime等。
+本篇文章就是针对Python OS标准库的练习，OS库的功能主要是针对操作系统的文件管理，所以练习无外乎就是针对文件进">
+<meta property="og:updated_time" content="2015-11-17T03:54:28.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="PythonOS库练习——模拟linux文件管理命令">
+<meta name="twitter:description" content="最近对Python大有兴趣，由于将官网文档看了一遍，但是看完只是简单的了解了Python的语法，而且还只是最基础的语法，所以后续除了了解Python的高级功能外（例外并发机制，锁机制，IO机制等），另一个重要要学习的就是Python的基本类库，如os/sys/datetime等。
+本篇文章就是针对Python OS标准库的练习，OS库的功能主要是针对操作系统的文件管理，所以练习无外乎就是针对文件进">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> PythonOS库练习——模拟linux文件管理命令 - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              PythonOS库练习——模拟linux文件管理命令
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-11-17T12:52:47+08:00" content="2015-11-17">
+            2015-11-17
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/11/17/PythonOS库练习——模拟linux文件管理命令/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/11/17/PythonOS库练习——模拟linux文件管理命令/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>最近对Python大有兴趣，由于将官网文档看了一遍，但是看完只是简单的了解了Python的语法，而且还只是最基础的语法，所以后续除了了解Python的高级功能外（例外并发机制，锁机制，IO机制等），另一个重要要学习的就是Python的基本类库，如os/sys/datetime等。</p>
+<p>本篇文章就是针对Python OS标准库的练习，OS库的功能主要是针对操作系统的文件管理，所以练习无外乎就是针对文件进行操作，如果只是普通的创建个文件/删除个文件/读写下文件/etc，感觉没啥意思，所以就想自己模拟Linux下的文件管理命令来实现一个Python版的，但是在写的过程中发现真的不简单，尤其对于我这样一个初学者来说，不过还是希望能够坚持下去~好了，废话不多说，能写多少写多少吧！</p>
+<h5 id="实现框架"><strong>实现框架</strong></h5><p>首先介绍下整体的框架，框架通过FileManage类进入文件管理器；Context类用于定义上下文，上下文主要用来保存当前工作目录，以后可能还有用户信息等；Command类是一个父类，用于定义通用命令角色；LLCommand类继承自Command类，是一个具体的命令类，LLCommand是用于处理ll命令。目前整体架构还是很简单的。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"><span class="string">'''</span><br><span class="line">Created on 2015年11月16日</span><br><span class="line"></span><br><span class="line">@author: Vicky</span><br><span class="line">'''</span></span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> datetime</span><br><span class="line"></span><br><span class="line">__dir = <span class="string">""</span></span><br><span class="line">    </span><br><span class="line"><span class="string">"""模拟资源管理器"""</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">FileManage</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="string">'''</span><br><span class="line">    classdocs</span><br><span class="line">    '''</span></span><br><span class="line">    __tab__ = <span class="string">"    "</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, _dir)</span>:</span></span><br><span class="line">        <span class="string">'''</span><br><span class="line">        Constructor</span><br><span class="line">        '''</span></span><br><span class="line">        self._dir = _dir</span><br><span class="line">        self._context = Context(self._dir)</span><br><span class="line">        os.chdir(self._dir)</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_parse</span><span class="params">(self, inp)</span>:</span></span><br><span class="line">        <span class="string">"""解析用户输入"""</span></span><br><span class="line">        _cmd, _params, _vals = (<span class="string">""</span>, [], [])</span><br><span class="line">        </span><br><span class="line">        cmds = inp.split(<span class="string">" "</span>)</span><br><span class="line">        _len = len(cmds)</span><br><span class="line">        _cmd = cmds[<span class="number">0</span>]</span><br><span class="line">        <span class="keyword">if</span> _len &gt; <span class="number">1</span>:</span><br><span class="line">            <span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">1</span>, _len):</span><br><span class="line">                <span class="keyword">if</span> cmds[i].startswith(<span class="string">"-"</span>):</span><br><span class="line">                    <span class="keyword">for</span> s <span class="keyword">in</span> cmds[i][<span class="number">1</span>:]:</span><br><span class="line">                        _params.append(s)</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    _vals.extend(cmds[i:])</span><br><span class="line">                    <span class="keyword">break</span></span><br><span class="line">        <span class="keyword">return</span> (_cmd, _params, _vals)</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__main__</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">while</span> <span class="keyword">True</span>:</span><br><span class="line">            <span class="keyword">global</span> __dir</span><br><span class="line">            inp = input(<span class="string">"fe[%s]:"</span> % self._context._dir)</span><br><span class="line">            res = self._parse(inp)</span><br><span class="line">            <span class="keyword">if</span> res[<span class="number">0</span>] == <span class="string">"ll"</span>:</span><br><span class="line">                LLCommand(self._context, res[<span class="number">0</span>], res[<span class="number">1</span>], res[<span class="number">2</span>]).execute()</span><br><span class="line">            <span class="keyword">elif</span> res[<span class="number">0</span>] == <span class="string">"cd"</span>:</span><br><span class="line">                print(res)</span><br><span class="line">            <span class="keyword">elif</span> res[<span class="number">0</span>] == <span class="string">"cp"</span>:</span><br><span class="line">                print(res)</span><br><span class="line">            <span class="keyword">elif</span> res[<span class="number">0</span>] == <span class="string">"exit"</span>:  <span class="comment"># 退出</span></span><br><span class="line">                print(<span class="string">"logout..."</span>)</span><br><span class="line">                sys.exit()</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                print(<span class="string">"-fe: %s: command not found"</span> % res[<span class="number">0</span>])</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Context</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="string">"""上下文，保存信息，如当前工作空间"""</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, _dir)</span>:</span></span><br><span class="line">        self._dir = _dir  <span class="comment"># 当前用户目录</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Command</span><span class="params">(object)</span>:</span></span><br><span class="line">        <span class="string">"""命令"""</span></span><br><span class="line">        <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, context, cmd=None, options=None, vals=None)</span>:</span></span><br><span class="line">            <span class="string">"""</span><br><span class="line">            @param cmd: 命令</span><br><span class="line">            @param options: 选项(-a)</span><br><span class="line">            @param vals: 参数</span><br><span class="line">            @param context:    上下文</span><br><span class="line">            """</span></span><br><span class="line">            <span class="keyword">if</span> <span class="keyword">not</span> context:</span><br><span class="line">                <span class="keyword">raise</span> Exception(<span class="string">"context is necessary"</span>)</span><br><span class="line">            self._cmd = cmd</span><br><span class="line">            self._options = options</span><br><span class="line">            self._vals = vals</span><br><span class="line">            self._context = context</span><br><span class="line">        </span><br><span class="line">        <span class="function"><span class="keyword">def</span> <span class="title">setCmd</span><span class="params">(self, cmd)</span>:</span></span><br><span class="line">            self._cmd = cmd</span><br><span class="line">        </span><br><span class="line">        <span class="function"><span class="keyword">def</span> <span class="title">setOptions</span><span class="params">(self, options)</span>:</span></span><br><span class="line">            self._options = options</span><br><span class="line">        </span><br><span class="line">        <span class="function"><span class="keyword">def</span> <span class="title">setVals</span><span class="params">(self, vals)</span>:</span></span><br><span class="line">            self._vals = vals</span><br><span class="line">        </span><br><span class="line">        <span class="function"><span class="keyword">def</span> <span class="title">execute</span><span class="params">(self)</span>:</span></span><br><span class="line">            <span class="keyword">pass</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">timeToStr</span><span class="params">(timestamp, _format = <span class="string">"%Y-%m-%d %H:%M:%S"</span>)</span>:</span></span><br><span class="line">    <span class="string">"""将时间戳转成字符串"""</span></span><br><span class="line">    _time = datetime.datetime.fromtimestamp(timestamp)</span><br><span class="line">    <span class="keyword">return</span> datetime.date.strftime(_time, _format)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span><br><span class="line">    fm = FileManage(<span class="string">"E:/Work/Python/files"</span>)</span><br><span class="line">    fm.__main__()</span><br></pre></td></tr></table></figure>
+<h5 id="ll命令实现"><strong>ll命令实现</strong></h5><p>直接上代码吧，实现没有什么难度，只是简单的调用os函数而已。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">LLCommand</span><span class="params">(Command)</span>:</span></span><br><span class="line">    <span class="string">"""继承自Command，处理ll命令"""</span></span><br><span class="line">    __tab__ = <span class="string">"\t"</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">execute</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="string">"""执行命令"""</span></span><br><span class="line">        _dirs = self._vals <span class="keyword">if</span> self._vals <span class="keyword">else</span> []</span><br><span class="line">        <span class="keyword">if</span> len(_dirs) == <span class="number">0</span>:</span><br><span class="line">            _dirs.append(self._context._dir)</span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 循环列出目录下的文件</span></span><br><span class="line">        <span class="keyword">for</span> d <span class="keyword">in</span> _dirs:</span><br><span class="line">            self.__none(d)</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__none</span><span class="params">(self, _dir)</span>:</span></span><br><span class="line">        <span class="string">"""递归列出子目录"""</span></span><br><span class="line">        _recursion = <span class="keyword">False</span></span><br><span class="line">        <span class="keyword">if</span> <span class="string">"r"</span> <span class="keyword">in</span> self._options:</span><br><span class="line">            _recursion = <span class="keyword">True</span></span><br><span class="line">        files = []</span><br><span class="line">        total = self._list(_dir, files, <span class="string">""</span>, _recursion)</span><br><span class="line">        print(<span class="string">"total files:%s"</span> % total)</span><br><span class="line">        <span class="keyword">for</span> f <span class="keyword">in</span> files:</span><br><span class="line">            print(<span class="string">"&#123;0:7d&#125; &#123;1:19s&#125; &#123;2:s&#125;"</span>.format(*f))</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">_list</span><span class="params">(self, _dir, files, _tab=<span class="string">""</span>, recursion=False)</span>:</span></span><br><span class="line">        old_dir = os.getcwd(); <span class="comment"># 保存当前目录</span></span><br><span class="line">        os.chdir(_dir) <span class="comment">#进入需要遍历的目录</span></span><br><span class="line">        _total = <span class="number">0</span></span><br><span class="line">        <span class="keyword">for</span> f <span class="keyword">in</span> os.listdir():</span><br><span class="line">            _total = _total + <span class="number">1</span></span><br><span class="line">            stat = os.stat(f)</span><br><span class="line">            _size = stat.st_size</span><br><span class="line">            _time = timeToStr(int(stat.st_mtime))</span><br><span class="line">            files.append((_size, _time, f))</span><br><span class="line">            <span class="keyword">if</span> recursion <span class="keyword">and</span> os.path.isdir(f):</span><br><span class="line">                _total = _total + self._list(f, _tab + self.__tab__, recursion, files)</span><br><span class="line">        </span><br><span class="line">        os.chdir(old_dir)  <span class="comment">#进入原来的目录</span></span><br><span class="line">        <span class="keyword">return</span> _total</span><br></pre></td></tr></table></figure>
+<p>写下这篇文章主要是鼓励自己学下去，当然如果有人看见了，而且有好的建议，那么就请不宁赐教~</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/FM项目/" rel="tag">#FM项目</a>
+          
+            <a href="/tags/Python/" rel="tag">#Python</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/11/17/JDK并发工具类源码学习系列——CopyOnWriteArrayList/" rel="prev">JDK并发工具类源码学习系列——CopyOnWriteArrayList</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/11/13/JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)/" rel="next">JDK并发工具类源码学习系列——ConcurrentSkipListMap(续)</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2015/11/17/PythonOS库练习——模拟linux文件管理命令/"
+     data-title="PythonOS库练习——模拟linux文件管理命令"
+     data-content=""
+     data-url="http://vickyqi.com/2015/11/17/PythonOS库练习——模拟linux文件管理命令/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2015/11/17/PythonOS库练习——模拟linux文件管理命令/"
+                       data-title="PythonOS库练习——模拟linux文件管理命令" data-url="http://vickyqi.com/2015/11/17/PythonOS库练习——模拟linux文件管理命令/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/avatar.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">让自己的努力变得更有价值</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">49</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">10</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">36</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#实现框架"><span class="nav-number">1.</span> <span class="nav-text">实现框架</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ll命令实现"><span class="nav-number">2.</span> <span class="nav-text">ll命令实现</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>

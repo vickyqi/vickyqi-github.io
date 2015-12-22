@@ -1,0 +1,811 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="让自己的努力变得更有价值" />
+
+
+
+  <meta name="keywords" content="Java,JDK,源码,并发,JUC,阻塞队列,SynchronousQueue," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="SynchronousQueue是一种特殊的阻塞队列，不同于LinkedBlockingQueue、ArrayBlockingQueue和PriorityBlockingQueue，其内部没有任何容量，任何的入队操作都需要等待其他线程的出队操作，反之亦然。如果将SynchronousQueue用于生产者/消费者模式，那么相当于生产者和消费者手递手交易，即生产者生产出一个货物，则必须等到消费者过来取">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JDK并发工具类源码学习系列——SynchronousQueue">
+<meta property="og:url" content="http://vickyqi.com/2015/11/30/JDK并发工具类源码学习系列——SynchronousQueue/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="SynchronousQueue是一种特殊的阻塞队列，不同于LinkedBlockingQueue、ArrayBlockingQueue和PriorityBlockingQueue，其内部没有任何容量，任何的入队操作都需要等待其他线程的出队操作，反之亦然。如果将SynchronousQueue用于生产者/消费者模式，那么相当于生产者和消费者手递手交易，即生产者生产出一个货物，则必须等到消费者过来取">
+<meta property="og:updated_time" content="2015-12-01T04:47:52.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JDK并发工具类源码学习系列——SynchronousQueue">
+<meta name="twitter:description" content="SynchronousQueue是一种特殊的阻塞队列，不同于LinkedBlockingQueue、ArrayBlockingQueue和PriorityBlockingQueue，其内部没有任何容量，任何的入队操作都需要等待其他线程的出队操作，反之亦然。如果将SynchronousQueue用于生产者/消费者模式，那么相当于生产者和消费者手递手交易，即生产者生产出一个货物，则必须等到消费者过来取">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> JDK并发工具类源码学习系列——SynchronousQueue - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              JDK并发工具类源码学习系列——SynchronousQueue
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-11-30T19:18:11+08:00" content="2015-11-30">
+            2015-11-30
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/" itemprop="url" rel="index"><span itemprop="name">Java</span></a></span>
+
+              
+              
+                ， 
+              
+
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/Java/JDK源码/" itemprop="url" rel="index"><span itemprop="name">JDK源码</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/11/30/JDK并发工具类源码学习系列——SynchronousQueue/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/11/30/JDK并发工具类源码学习系列——SynchronousQueue/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>SynchronousQueue是一种特殊的阻塞队列，不同于<a href="http://vickyqi.com/2015/11/23/JDK%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94LinkedBlockingQueue/">LinkedBlockingQueue</a>、ArrayBlockingQueue和<a href="http://vickyqi.com/2015/11/20/JDK%E5%B9%B6%E5%8F%91%E5%B7%A5%E5%85%B7%E7%B1%BB%E6%BA%90%E7%A0%81%E5%AD%A6%E4%B9%A0%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94PriorityBlockingQueue/">PriorityBlockingQueue</a>，其内部没有任何容量，任何的入队操作都需要等待其他线程的出队操作，反之亦然。如果将SynchronousQueue用于生产者/消费者模式，那么相当于生产者和消费者手递手交易，即生产者生产出一个货物，则必须等到消费者过来取货，方可完成交易。<br>SynchronousQueue有一个fair选项，如果fair为true，称为fair模式，否则就是unfair模式。fair模式使用一个先进先出的队列保存生产者或者消费者线程，unfair模式则使用一个后进先出的栈保存。</p>
+<h3 id="基本原理"><strong>基本原理</strong></h3><p>SynchronousQueue通过将入队出队的线程绑定到队列的节点上，并借助LockSupport的park()和unpark()实现等待，先到达的线程A需调用LockSupport的park()方法将当前线程进入阻塞状态，知道另一个与之匹配的线程B调用LockSupport.unpark(Thread)来唤醒在该节点上等待的线程A。<br>基本逻辑：</p>
+<ol>
+<li>初始状态队列为null</li>
+<li>当一个线程到达，如果队列为null，无与之匹配的线程，则进入队列等待；队列不为null，参考3</li>
+<li>当另一个线程到达，如果队列不为null，则判断队列中的第一个元素（针对fair和unfair不同）是否与其匹配，如果匹配则完成交易，不匹配则也入队；队列为null，参考2</li>
+</ol>
+<h3 id="常用方法解析"><strong>常用方法解析</strong></h3><p>在深入分析其实现机制之前，我们先了解对于SynchronousQueue可执行哪些操作，由于SynchronousQueue的容量为0，所以一些针对集合的操作，如：isEmpty()/size()/clear()/remove(Object)/contains(Object)等操作都是无意义的，同样peek()也总是返回null。所以针对SynchronousQueue只有两类操作：</p>
+<ul>
+<li>入队（put(E)/offer(E, long, TimeUnit)/offer(E)）</li>
+<li>出队（take()/poll(long, TimeUnit)/poll()）</li>
+</ul>
+<p>这两类操作内部都是调用Transferer的transfer(Object, boolean, long)方法，通过第一个参数是否为null，来区分是生产者还是消费者（生产者不为null）。<br>针对以上情况，我们将着重分析Transferer的transfer(Object, boolean, long)方法，这里由于两种不同的公平模式，会存在两个Transferer的派生类：<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">SynchronousQueue</span><span class="params">(<span class="keyword">boolean</span> fair)</span> </span>&#123;</span><br><span class="line">    transferer = (fair)? <span class="keyword">new</span> TransferQueue() : <span class="keyword">new</span> TransferStack();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可见fair模式使用TransferQueue，unfair模式使用TransferStack，下面我们将分别对这两种模式进行着重分析。</p>
+<h3 id="fair模式"><strong>fair模式</strong></h3><p>fair模式使用一个FIFO的队列保存线程，TransferQueue的结构如下：<br><figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/** Dual Queue */</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> TransferQueue <span class="keyword">extends</span> Transferer &#123;</span><br><span class="line">	<span class="comment">/** Node class for TransferQueue. */</span></span><br><span class="line">	<span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">class</span> QNode &#123;</span><br><span class="line">		<span class="keyword">volatile</span> QNode <span class="keyword">next</span>;          <span class="comment">// next node in queue</span></span><br><span class="line">		<span class="keyword">volatile</span> Object item;         <span class="comment">// CAS'ed to or from null</span></span><br><span class="line">		<span class="keyword">volatile</span> Thread waiter;       <span class="comment">// to control park/unpark</span></span><br><span class="line">		<span class="keyword">final</span> <span class="keyword">boolean</span> isData;</span><br><span class="line"></span><br><span class="line">		QNode(Object item, <span class="keyword">boolean</span> isData) &#123;</span><br><span class="line">			<span class="keyword">this</span>.item = item;</span><br><span class="line">			<span class="keyword">this</span>.isData = isData;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		...</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/** Head of queue */</span></span><br><span class="line">	<span class="keyword">transient</span> <span class="keyword">volatile</span> QNode head;</span><br><span class="line">	<span class="comment">/** Tail of queue */</span></span><br><span class="line">	<span class="keyword">transient</span> <span class="keyword">volatile</span> QNode tail;</span><br><span class="line">	<span class="comment">/**</span><br><span class="line">	 * Reference to a cancelled node that might not yet have been</span><br><span class="line">	 * unlinked from queue because it was the last inserted node</span><br><span class="line">	 * when it cancelled.</span><br><span class="line">	 */</span></span><br><span class="line">	<span class="keyword">transient</span> <span class="keyword">volatile</span> QNode cleanMe;</span><br><span class="line"></span><br><span class="line">	TransferQueue() &#123;</span><br><span class="line">		QNode h = <span class="keyword">new</span> QNode(<span class="keyword">null</span>, <span class="keyword">false</span>); <span class="comment">// initialize to dummy node.</span></span><br><span class="line">		head = h;</span><br><span class="line">		tail = h;</span><br><span class="line">	&#125;</span><br><span class="line">	</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>以上是TransferQueue的大致结构，可以看到TransferQueue同一个普通的队列，同时存在一个指向队列头部的指针——head，和一个指向队列尾部的指针——tail；cleanMe的存在主要是解决不可清楚队列的尾节点的问题，后面会介绍到；队列的节点通过内部类QNode封装，QNode包含四个变量：</p>
+<ul>
+<li>next：指向队列中的下一个节点</li>
+<li>item：节点包含的数据</li>
+<li>waiter：等待在该节点上的线程</li>
+<li>isData：表示该节点由生产者创建还是由消费者创建，由于生产者是放入数据，所以isData==true，而消费者==false</li>
+</ul>
+<p>其他的内容就是一些CAS变量以及操作，下面主要分析TransferQueue的三个重要方法：transfer(Object, boolean, long)、awaitFulfill(QNode, Object, boolean, long)、clean(QNode, QNode)。这三个方法是TransferQueue的核心，入口是transfer()，下面具体看代码。</p>
+<h4 id="transfer"><strong>transfer</strong></h4><figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * @By Vicky:交换数据，生产者和消费者通过e==null来区分</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">Object</span> transfer(<span class="keyword">Object</span> e, <span class="built_in">boolean</span> timed, <span class="keyword">long</span> nanos) &#123;</span><br><span class="line">	QNode s = <span class="keyword">null</span>; <span class="comment">// constructed/reused as needed</span></span><br><span class="line">	<span class="built_in">boolean</span> isData = (e != <span class="keyword">null</span>);<span class="comment">// e==null，则isData==false,else idData==true</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> (;;) &#123;<span class="comment">// 循环</span></span><br><span class="line">		QNode t = tail;</span><br><span class="line">		QNode h = head;</span><br><span class="line">		<span class="keyword">if</span> (t == <span class="keyword">null</span> || h == <span class="keyword">null</span>)         <span class="comment">// 无视即可，具体信息在方法开始的注释中有提到</span></span><br><span class="line">			<span class="keyword">continue</span>;                       <span class="comment">// spin</span></span><br><span class="line"></span><br><span class="line">		<span class="comment">// h==t队列为null,tail的isData==isData表示该队列中的等待的线程与当前线程是相同模式</span></span><br><span class="line">		<span class="comment">//（同为生产者，或者同为消费者）（队列中只存在一种模式的线程）</span></span><br><span class="line">		<span class="comment">// 此时需要将该线程插入到队列中进行等待</span></span><br><span class="line">		<span class="keyword">if</span> (h == t || t.isData == isData) &#123; </span><br><span class="line">			QNode tn = t.next;</span><br><span class="line">			<span class="keyword">if</span> (t != tail)                  <span class="comment">// inconsistent read</span></span><br><span class="line">				<span class="keyword">continue</span>;</span><br><span class="line">			<span class="comment">// 这里的目的是为了帮助其他线程完成入队操作</span></span><br><span class="line">			<span class="keyword">if</span> (tn != <span class="keyword">null</span>) &#123;               <span class="comment">// lagging tail</span></span><br><span class="line">				<span class="comment">// 原子性将tail从t更新为tn，即将tail往后移动，直到队列的最后一个元素</span></span><br><span class="line">				advanceTail(t, tn);</span><br><span class="line">				<span class="keyword">continue</span>;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">// 如果nanos&lt;=0则说明不等待，那么到这里已经说到队列没有可匹配的线程，所以直接返回null即可</span></span><br><span class="line">			<span class="keyword">if</span> (timed &amp;&amp; nanos &lt;= <span class="number">0</span>)        <span class="comment">// can't wait</span></span><br><span class="line">				<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">			<span class="comment">// 仅初始化一次s，节点s会保存isData信息作为生产者和消费者的区分</span></span><br><span class="line">			<span class="keyword">if</span> (s == <span class="keyword">null</span>)</span><br><span class="line">				s = <span class="keyword">new</span> QNode(e, isData);</span><br><span class="line">			<span class="comment">// 原子性的更新t的next指针指向s，上面将tail从t更新为tn就是为了处理此处剩下的操作</span></span><br><span class="line">			<span class="comment">// 由于此处插入一个节点分成了两个步骤，所以过程中会插入其他线程，导致看到不一致状态</span></span><br><span class="line">			<span class="comment">// 所以其他线程会执行剩下的步骤帮助其完成入队操作</span></span><br><span class="line">			<span class="keyword">if</span> (!t.casNext(<span class="keyword">null</span>, s))        <span class="comment">// failed to link in</span></span><br><span class="line">				<span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">			<span class="comment">// 如果自己执行失败没有关系，会有其他线程帮忙执行完成的，所以才无需锁，类似ConcurrentLinkedQueue</span></span><br><span class="line">			advanceTail(t, s);              <span class="comment">// swing tail and wait</span></span><br><span class="line">			<span class="comment">// 等待匹配</span></span><br><span class="line">			<span class="keyword">Object</span> x = awaitFulfill(s, e, timed, nanos);</span><br><span class="line">			<span class="comment">// 这里有两种情况：</span></span><br><span class="line">			<span class="comment">//	A:匹配完成，返回数据</span></span><br><span class="line">			<span class="comment">//	B:等待超时/取消，返回原节点s</span></span><br><span class="line">			<span class="keyword">if</span> (x == s) &#123;                   <span class="comment">// wait was cancelled</span></span><br><span class="line">				<span class="comment">// 情况B则需要清除掉节点s</span></span><br><span class="line">				clean(t, s);</span><br><span class="line">				<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">			&#125;</span><br><span class="line">			</span><br><span class="line">			<span class="comment">// 情况A，则匹配成功了，但是还需要将该节点从队列中移除</span></span><br><span class="line">			<span class="comment">//  由于FIFO原则，所以匹配上的元素必然是队列的第一个元素，所以只需要移动head即可</span></span><br><span class="line">			<span class="keyword">if</span> (!s.isOffList()) &#123;           <span class="comment">// not already unlinked</span></span><br><span class="line">				<span class="comment">// 移动head指向s，则下次匹配从s.next开始</span></span><br><span class="line">				advanceHead(t, s);          <span class="comment">// unlink if head</span></span><br><span class="line">				<span class="comment">// 清除对节点中保存的数据的引用，GC友好</span></span><br><span class="line">				<span class="keyword">if</span> (x != <span class="keyword">null</span>)              <span class="comment">// and forget fields</span></span><br><span class="line">					s.item = s;</span><br><span class="line">				s.waiter = <span class="keyword">null</span>;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span> (x != <span class="keyword">null</span>)? x : e;</span><br><span class="line"></span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;                            <span class="comment">// complementary-mode</span></span><br><span class="line">			<span class="comment">// 进行匹配，从队列的头部开始，即head.next，非head</span></span><br><span class="line">			QNode m = h.next;               <span class="comment">// node to fulfill</span></span><br><span class="line">			<span class="keyword">if</span> (t != tail || m == <span class="keyword">null</span> || h != head)</span><br><span class="line">				<span class="keyword">continue</span>;                   <span class="comment">// inconsistent read</span></span><br><span class="line"></span><br><span class="line">			<span class="comment">// 判断该节点的isData是否与当前线程的isData匹配</span></span><br><span class="line">			<span class="comment">// 相等则说明m已经匹配过了，因为正常情况是不相等才对</span></span><br><span class="line">			<span class="comment">// x==m说明m被取消了，见QNode的tryCancel()方法</span></span><br><span class="line">			<span class="comment">// CAS设置m.item为e，这里的e，如果是生产者则是数据，消费者则是null，</span></span><br><span class="line">			<span class="comment">// 所以m如果是生产者，则item变为null，消费者则变为生产者的数据</span></span><br><span class="line">			<span class="comment">// CAS操作失败，则直接将m出队，CAS失败说明m已经被其他线程匹配了，所以将其出队，然后retry</span></span><br><span class="line">			<span class="keyword">Object</span> x = m.item;</span><br><span class="line">			<span class="keyword">if</span> (isData == (x != <span class="keyword">null</span>) ||    <span class="comment">// m already fulfilled</span></span><br><span class="line">				x == m ||                   <span class="comment">// m cancelled</span></span><br><span class="line">				!m.casItem(x, e)) &#123;         <span class="comment">// lost CAS</span></span><br><span class="line">				advanceHead(h, m);          <span class="comment">// dequeue and retry</span></span><br><span class="line">				<span class="keyword">continue</span>;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">// 与m匹配成功，将m出队，并唤醒等待在m上的线程m.waiter</span></span><br><span class="line">			advanceHead(h, m);              <span class="comment">// successfully fulfilled</span></span><br><span class="line">			LockSupport.unpark(m.waiter);</span><br><span class="line">			<span class="keyword">return</span> (x != <span class="keyword">null</span>)? x : e;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从上面的代码可以看出TransferQueue.transfer()的整体流程：</p>
+<ol>
+<li>判断当前队列是否为null或者队尾线程是否与当前线程匹配，为null或者不匹配都将进行入队操作</li>
+<li>入队主要很简单，分成两步：修改tail的next为新的节点，修改tail为新的节点，这两步操作有可能分在两个不同的线程执行，不过不影响执行结果</li>
+<li>入队之后需要将当前线程阻塞，调用LockSupport.park()方法，直到打断/超时/被匹配的线程唤醒</li>
+<li>如果被取消，则需要调用clean()方法进行清除</li>
+<li>由于FIFO，所以匹配总是发生在队列的头部，匹配将修改等待节点的item属性传递数据，同时唤醒等待在节点上的线程</li>
+</ol>
+<h4 id="awaitFulfill"><strong>awaitFulfill</strong></h4><p>下面看看具体如何让一个线程进入阻塞。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> *@ By Vicky:等待匹配，该方法会进入阻塞，直到三种情况下才返回：</span><br><span class="line"> *	a.等待被取消了，返回值为s</span><br><span class="line"> *	b.匹配上了，返回另一个线程传过来的值</span><br><span class="line"> *	c.线程被打断，会取消，返回值为s</span><br><span class="line"> */</span></span><br><span class="line"><span class="function">Object <span class="title">awaitFulfill</span><span class="params">(QNode s, Object e, boolean timed, <span class="keyword">long</span> nanos)</span> </span>&#123;</span><br><span class="line">	<span class="comment">// timed==false，则不等待，lastTime==0即可</span></span><br><span class="line">	<span class="keyword">long</span> lastTime = (timed)? System.nanoTime() : <span class="number">0</span>;</span><br><span class="line">	<span class="comment">// 当前线程</span></span><br><span class="line">	Thread w = Thread.currentThread();</span><br><span class="line">	<span class="comment">// 循环次数，原理同自旋锁，如果不是队列的第一个元素则不自旋，因为压根轮不上他，自旋只是浪费CPU</span></span><br><span class="line">	<span class="comment">// 如果等待的话则自旋的次数少些，不等待就多些</span></span><br><span class="line">	<span class="keyword">int</span> spins = ((head.next == s) ?</span><br><span class="line">				 (timed? maxTimedSpins : maxUntimedSpins) : <span class="number">0</span>);</span><br><span class="line">	<span class="keyword">for</span> (;;) &#123;</span><br><span class="line">		<span class="keyword">if</span> (w.isInterrupted())<span class="comment">// 支持打断</span></span><br><span class="line">			s.tryCancel(e);</span><br><span class="line">		<span class="comment">// 如果s的item不等于e，有三种情况：</span></span><br><span class="line">		<span class="comment">// a.等待被取消了，此时x==s</span></span><br><span class="line">		<span class="comment">// b.匹配上了，此时x==另一个线程传过来的值</span></span><br><span class="line">		<span class="comment">// c.线程被打断，会取消，此时x==s</span></span><br><span class="line">		<span class="comment">// 不管是哪种情况都不要再等待了，返回即可</span></span><br><span class="line">		Object x = s.item;</span><br><span class="line">		<span class="keyword">if</span> (x != e)</span><br><span class="line">			<span class="keyword">return</span> x;</span><br><span class="line">		<span class="comment">// 等到，直接超时取消</span></span><br><span class="line">		<span class="keyword">if</span> (timed) &#123;</span><br><span class="line">			<span class="keyword">long</span> now = System.nanoTime();</span><br><span class="line">			nanos -= now - lastTime;</span><br><span class="line">			lastTime = now;</span><br><span class="line">			<span class="keyword">if</span> (nanos &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">				s.tryCancel(e);</span><br><span class="line">				<span class="keyword">continue</span>;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 自旋，直到spins==0，进入等待</span></span><br><span class="line">		<span class="keyword">if</span> (spins &gt; <span class="number">0</span>)</span><br><span class="line">			--spins;</span><br><span class="line">		<span class="comment">// 设置等待线程</span></span><br><span class="line">		<span class="keyword">else</span> <span class="keyword">if</span> (s.waiter == null)</span><br><span class="line">			s.waiter = w;</span><br><span class="line">		<span class="comment">// 调用LockSupport.park进入等待</span></span><br><span class="line">		<span class="keyword">else</span> <span class="keyword">if</span> (!timed)</span><br><span class="line">			LockSupport.park(<span class="keyword">this</span>);</span><br><span class="line">		<span class="keyword">else</span> <span class="keyword">if</span> (nanos &gt; spinForTimeoutThreshold)</span><br><span class="line">			LockSupport.parkNanos(<span class="keyword">this</span>, nanos);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>awaitFulfill()主要涉及自旋以及LockSupport.park()两个关键点，自旋可去了解自旋锁的原理。</p>
+<blockquote>
+<p>自旋锁原理：通过空循环则霸占着CPU，避免当前线程进入睡眠，因为睡眠/唤醒是需要进行线程上下文切换的，所以如果线程睡眠的时间很段，那么使用空循环能够避免线程进入睡眠的耗时，从而快速响应。但是由于空循环会浪费CPU，所以也不能一直循环。自旋锁一般适合同步快很小，竞争不是很激烈的场景。</p>
+</blockquote>
+<p>LockSupport.park()可到API文档进行了解。</p>
+<h4 id="clean"><strong>clean</strong></h4><p>下面再看看如何清除被取消的节点。<br><figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> *@By Vicky:清除节点被取消的节点 </span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">void</span> clean(QNode pred, QNode s) &#123;</span><br><span class="line">	s.waiter = <span class="keyword">null</span>; <span class="comment">// forget thread</span></span><br><span class="line">	<span class="comment">// 如果pred.next!=s则说明s已经出队了</span></span><br><span class="line">	<span class="keyword">while</span> (pred.<span class="keyword">next</span> == s) &#123; <span class="comment">// Return early if already unlinked</span></span><br><span class="line">		QNode h = head;</span><br><span class="line">		QNode hn = h.<span class="keyword">next</span>;   <span class="comment">// Absorb cancelled first node as head</span></span><br><span class="line">		<span class="comment">// 从队列头部开始遍历，遇到被取消的节点则将其出队 </span></span><br><span class="line">		<span class="keyword">if</span> (hn != <span class="keyword">null</span> &amp;&amp; hn.isCancelled()) &#123;</span><br><span class="line">			advanceHead(h, hn);</span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		QNode t = tail;      <span class="comment">// Ensure consistent read for tail</span></span><br><span class="line">		<span class="comment">// t==h则队列为null</span></span><br><span class="line">		<span class="keyword">if</span> (t == h)</span><br><span class="line">			<span class="keyword">return</span>;</span><br><span class="line">		QNode tn = t.<span class="keyword">next</span>;</span><br><span class="line">		<span class="keyword">if</span> (t != tail)</span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line">		<span class="comment">// 帮助其他线程入队</span></span><br><span class="line">		<span class="keyword">if</span> (tn != <span class="keyword">null</span>) &#123;</span><br><span class="line">			advanceTail(t, tn);</span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 只能出队非尾节点</span></span><br><span class="line">		<span class="keyword">if</span> (s != t) &#123;        <span class="comment">// If not tail, try to unsplice</span></span><br><span class="line">			<span class="comment">// 出队方式很简单，将pred.next指向s.next即可</span></span><br><span class="line">			QNode sn = s.<span class="keyword">next</span>;</span><br><span class="line">			<span class="keyword">if</span> (sn == s || pred.casNext(s, sn))</span><br><span class="line">				<span class="keyword">return</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 如果s是队尾元素，那么就需要cleanMe出场了，如果cleanMe==null，则只需将pred赋值给cleanMe即可，</span></span><br><span class="line">		<span class="comment">// 赋值cleanMe的意思是等到s不是队尾时再进行清除，毕竟队尾只有一个</span></span><br><span class="line">		<span class="comment">// 同时将上次的cleanMe清除掉，正常情况下此时的cleanMe已经不是队尾了，因为当前需要清除的节点是队尾</span></span><br><span class="line">		<span class="comment">// (上面说的cleanMe其实是需要清除的节点的前继节点)</span></span><br><span class="line">		QNode dp = cleanMe;</span><br><span class="line">		<span class="keyword">if</span> (dp != <span class="keyword">null</span>) &#123;    <span class="comment">// Try unlinking previous cancelled node</span></span><br><span class="line">			QNode d = dp.<span class="keyword">next</span>;</span><br><span class="line">			QNode dn;</span><br><span class="line">			<span class="comment">// d==null说明需要清除的节点已经没了</span></span><br><span class="line">			<span class="comment">// d==dp说明dp已经被清除了，那么dp.next也一并被清除了</span></span><br><span class="line">			<span class="comment">// 如果d未被取消，说明哪里出错了，将cleanMe清除，不清除这个节点了</span></span><br><span class="line">			<span class="comment">// 后面括号将清除cleanMe的next出局，前提是cleanMe.next没有已经被出局</span></span><br><span class="line">			<span class="keyword">if</span> (d == <span class="keyword">null</span> ||               <span class="comment">// d is gone or</span></span><br><span class="line">				d == dp ||                 <span class="comment">// d is off list or</span></span><br><span class="line">				!d.isCancelled() ||        <span class="comment">// d not cancelled or</span></span><br><span class="line">				(d != t &amp;&amp;                 <span class="comment">// d not tail and</span></span><br><span class="line">				 (dn = d.<span class="keyword">next</span>) != <span class="keyword">null</span> &amp;&amp;  <span class="comment">//   has successor</span></span><br><span class="line">				 dn != d &amp;&amp;                <span class="comment">//   that is on list</span></span><br><span class="line">				 dp.casNext(d, dn)))       <span class="comment">// d unspliced</span></span><br><span class="line">				casCleanMe(dp, <span class="keyword">null</span>);</span><br><span class="line">			<span class="comment">// dp==pred说明cleanMe.next已经其他线程被更新了</span></span><br><span class="line">			<span class="keyword">if</span> (dp == pred)</span><br><span class="line">				<span class="keyword">return</span>;      <span class="comment">// s is already saved node</span></span><br><span class="line">		&#125; <span class="keyword">else</span> <span class="keyword">if</span> (casCleanMe(<span class="keyword">null</span>, pred))</span><br><span class="line">			<span class="keyword">return</span>;          <span class="comment">// Postpone cleaning s</span></span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>清除节点时有个原则：不能清除队尾节点。所以如果对尾节点需要被清除，则将其保存到cleanMe变量，等待下次进行清除。在清除cleanMe时可能说的有点模糊，因为涉及到太多的并发会出现很多情况，所以if条件太多，导致难以分析全部情况。</p>
+<p>以上就是TransferQueue的操作逻辑，下面看看后进先出的TransferStack。</p>
+<h3 id="unfair模式"><strong>unfair模式</strong></h3><p>unfair模式使用一个LIFO的队列保存线程，TransferStack的结构如下：<br><figure class="highlight dart"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="markdown">/<span class="emphasis">** Dual stack *</span>/</span></span></span><br><span class="line"><span class="literal">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">TransferStack</span> <span class="keyword">extends</span> <span class="title">Transferer</span> </span>&#123;</span><br><span class="line">	<span class="comment">/* Modes for SNodes, ORed together in node fields */</span></span><br><span class="line">	<span class="comment"><span class="markdown">/** Node represents </span>an<span class="markdown"> unfulfilled consumer */</span></span></span><br><span class="line">	<span class="literal">static</span> <span class="keyword">final</span> <span class="built_in">int</span> REQUEST    = <span class="number">0</span>;<span class="comment">// 消费者请求数据</span></span><br><span class="line">	<span class="comment"><span class="markdown">/** Node represents </span>an<span class="markdown"> unfulfilled producer */</span></span></span><br><span class="line">	<span class="literal">static</span> <span class="keyword">final</span> <span class="built_in">int</span> DATA       = <span class="number">1</span>;<span class="comment">// 生产者生产数据</span></span><br><span class="line">	<span class="comment"><span class="markdown">/<span class="emphasis">** Node is fulfilling another unfulfilled DATA or REQUEST *</span>/</span></span></span><br><span class="line">	<span class="literal">static</span> <span class="keyword">final</span> <span class="built_in">int</span> FULFILLING = <span class="number">2</span>;<span class="comment">// 正在匹配中...</span></span><br><span class="line"></span><br><span class="line">	<span class="comment"><span class="markdown">/<span class="emphasis">** 只需要判断mode的第二位是否==1即可，==1则正在匹配中...*</span>/</span></span></span><br><span class="line">	<span class="literal">static</span> boolean isFulfilling(<span class="built_in">int</span> m) &#123; <span class="keyword">return</span> (m &amp; FULFILLING) != <span class="number">0</span>; &#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment"><span class="markdown">/<span class="emphasis">** Node class for TransferStacks. *</span>/</span></span></span><br><span class="line">	<span class="literal">static</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> <span class="title">SNode</span> </span>&#123;</span><br><span class="line">		volatile SNode next;        <span class="comment">// next node in stack</span></span><br><span class="line">		volatile SNode match;       <span class="comment">// the node matched to this</span></span><br><span class="line">		volatile Thread waiter;     <span class="comment">// to control park/unpark</span></span><br><span class="line">		<span class="built_in">Object</span> item;                <span class="comment">// data; or null for REQUESTs</span></span><br><span class="line">		<span class="built_in">int</span> mode;</span><br><span class="line">		<span class="comment">// <span class="doctag">Note:</span> item and mode fields don't need to be volatile</span></span><br><span class="line">		<span class="comment">// since they are always written before, and read after,</span></span><br><span class="line">		<span class="comment">// other volatile/atomic operations.</span></span><br><span class="line"></span><br><span class="line">		SNode(<span class="built_in">Object</span> item) &#123;</span><br><span class="line">			<span class="keyword">this</span>.item = item;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment"><span class="markdown">/** The head (top) of </span>the<span class="markdown"> stack */</span></span></span><br><span class="line">	volatile SNode head;</span><br><span class="line"></span><br><span class="line">	<span class="literal">static</span> SNode snode(SNode s, <span class="built_in">Object</span> e, SNode next, <span class="built_in">int</span> mode) &#123;</span><br><span class="line">		<span class="keyword">if</span> (s == <span class="keyword">null</span>) s = <span class="keyword">new</span> SNode(e);</span><br><span class="line">		s.mode = mode;</span><br><span class="line">		s.next = next;</span><br><span class="line">		<span class="keyword">return</span> s;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>TransferStacks比TransferQueue的结构复杂些。使用一个head指向栈顶元素，使用内部类SNode封装栈中的节点信息，SNode包含5个变量：</p>
+<ul>
+<li>next：指向栈中下一个节点</li>
+<li>match：与之匹配的节点</li>
+<li>waiter：等待的线程</li>
+<li>item：数据</li>
+<li>mode：模式，对应REQUEST/DATA/FULFILLING（第三个并不是FULFILLING，而是FULFILLING | REQUEST或者FULFILLING | DATA）</li>
+</ul>
+<p>SNode的5个变量，三个是volatile的，另外两个item和mode没有volatile修饰，代码注释给出的解释是：对这两个变量的写总是发生在volatile/原子操作的之前，读总是发生在volatile/原子操作的之后。</p>
+<p>上面提到SNode.mode的三个常量表示栈中节点的状态,f分别为：</p>
+<ul>
+<li>REQUEST：0，消费者的请求生成的节点</li>
+<li>DATA：1，生产者的请求生成的节点</li>
+<li>FULFILLING：2，正在匹配中的节点，具体对应的mode值是FULFILLING | REQUEST和FULFILLING | DATA</li>
+</ul>
+<p>其他内部基本同TransferQueue，不同之处是当匹配到一个节点时并非是将被匹配的节点出栈，而是将匹配的节点入栈，然后同时将匹配上的两个节点一起出栈。下面我们参照TransferQueue来看看TransferStacks的三个方法：transfer(Object, boolean, long)、awaitFulfill(QNode, Object, boolean, long)、clean(QNode, QNode)。</p>
+<h4 id="transfer-1"><strong>transfer</strong></h4><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * @By Vicky:交换数据，生产者和消费者通过e==null来区分</span><br><span class="line"> */</span></span><br><span class="line">Object transfer(Object <span class="keyword">e</span>, boolean timed, long nanos) &#123;</span><br><span class="line">	SNode s = null; <span class="comment">// constructed/reused as needed</span></span><br><span class="line">	int mode = (<span class="keyword">e</span> == null)? REQUEST : DATA;<span class="comment">// 根据e==null判断生产者还是消费者，对应不同的mode值</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> (;;) &#123;</span><br><span class="line">		SNode <span class="keyword">h</span> = head;</span><br><span class="line">		<span class="comment">// 栈为null或者栈顶元素的模式同当前模式，则进行入栈操作</span></span><br><span class="line">		<span class="keyword">if</span> (<span class="keyword">h</span> == null || <span class="keyword">h</span>.mode == mode) &#123;  <span class="comment">// empty or same-mode</span></span><br><span class="line">			<span class="comment">// 不等待，则直接返回null，返回之前顺带清理下被取消的元素</span></span><br><span class="line">			<span class="keyword">if</span> (timed &amp;&amp; nanos &lt;= 0) &#123;      <span class="comment">// can't wait</span></span><br><span class="line">				<span class="keyword">if</span> (<span class="keyword">h</span> != null &amp;&amp; <span class="keyword">h</span>.isCancelled())</span><br><span class="line">					casHead(<span class="keyword">h</span>, <span class="keyword">h</span>.next);     <span class="comment">// pop cancelled node</span></span><br><span class="line">				<span class="keyword">else</span></span><br><span class="line">					<span class="keyword">return</span> null;</span><br><span class="line">			&#125; <span class="keyword">else</span> <span class="keyword">if</span> (casHead(<span class="keyword">h</span>, s = snode(s, <span class="keyword">e</span>, <span class="keyword">h</span>, mode))) &#123;<span class="comment">// 入栈，更新栈顶为新节点</span></span><br><span class="line">				<span class="comment">// 等待，返回值m==s，则被取消，需清除</span></span><br><span class="line">				SNode <span class="keyword">m</span> = awaitFulfill(s, timed, nanos);</span><br><span class="line">				<span class="comment">// m==s说明s被取消了，清除</span></span><br><span class="line">				<span class="keyword">if</span> (<span class="keyword">m</span> == s) &#123;               <span class="comment">// wait was cancelled</span></span><br><span class="line">					clean(s);</span><br><span class="line">					<span class="keyword">return</span> null;</span><br><span class="line">				&#125;</span><br><span class="line">				<span class="comment">// 帮忙出栈</span></span><br><span class="line">				<span class="keyword">if</span> ((<span class="keyword">h</span> = head) != null &amp;&amp; <span class="keyword">h</span>.next == s)</span><br><span class="line">					casHead(<span class="keyword">h</span>, s.next);     <span class="comment">// help s's fulfiller</span></span><br><span class="line">				<span class="comment">// 消费者则返回生产者的数据，生产者则返回自己的数据</span></span><br><span class="line">				<span class="keyword">return</span> mode == REQUEST? <span class="keyword">m</span>.item : s.item;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125; <span class="keyword">else</span> <span class="keyword">if</span> (!isFulfilling(<span class="keyword">h</span>.mode)) &#123; <span class="comment">// try to fulfill	// 栈顶未开始匹配，则开始匹配</span></span><br><span class="line">			<span class="comment">// h被取消，则出栈</span></span><br><span class="line">			<span class="keyword">if</span> (<span class="keyword">h</span>.isCancelled())            <span class="comment">// already cancelled</span></span><br><span class="line">				casHead(<span class="keyword">h</span>, <span class="keyword">h</span>.next);         <span class="comment">// pop and retry</span></span><br><span class="line">			<span class="comment">// 更新栈顶为新插入的节点，并更新节点的mode为FULFILLING，对应判断是否正在出栈的方法</span></span><br><span class="line">			<span class="comment">// 匹配需要先将待匹配的节点入栈，所以不管是匹配还是不匹配都需要创建一个节点入栈</span></span><br><span class="line">			<span class="keyword">else</span> <span class="keyword">if</span> (casHead(<span class="keyword">h</span>, s=snode(s, <span class="keyword">e</span>, <span class="keyword">h</span>, FULFILLING|mode))) &#123;</span><br><span class="line">				<span class="comment">// 循环直到找到一个可以匹配的节点</span></span><br><span class="line">				<span class="keyword">for</span> (;;) &#123; <span class="comment">// loop until matched or waiters disappear</span></span><br><span class="line">					<span class="comment">// m即与s匹配的节点</span></span><br><span class="line">					SNode <span class="keyword">m</span> = s.next;       <span class="comment">// m is s's match</span></span><br><span class="line">					<span class="comment">// m==null说明栈s之后无元素了，直接将栈顶设置为null，并重新进行最外层的循环</span></span><br><span class="line">					<span class="keyword">if</span> (<span class="keyword">m</span> == null) &#123;        <span class="comment">// all waiters are gone</span></span><br><span class="line">						casHead(s, null);   <span class="comment">// pop fulfill node</span></span><br><span class="line">						s = null;           <span class="comment">// use new node next time</span></span><br><span class="line">						<span class="keyword">break</span>;              <span class="comment">// restart main loop</span></span><br><span class="line">					&#125;</span><br><span class="line">					<span class="comment">// 将s设置为m的匹配节点，并更新栈顶为m.next，即将s和m同时出栈</span></span><br><span class="line">					SNode mn = <span class="keyword">m</span>.next;</span><br><span class="line">					<span class="keyword">if</span> (<span class="keyword">m</span>.tryMatch(s)) &#123;</span><br><span class="line">						casHead(s, mn);     <span class="comment">// pop both s and m</span></span><br><span class="line">						<span class="keyword">return</span> (mode == REQUEST)? <span class="keyword">m</span>.item : s.item;</span><br><span class="line">					&#125; <span class="keyword">else</span>                  <span class="comment">// lost match</span></span><br><span class="line">						<span class="comment">// 设置匹配失败，则说明m正准备出栈，帮助出栈</span></span><br><span class="line">						s.casNext(<span class="keyword">m</span>, mn);   <span class="comment">// help unlink</span></span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;                            <span class="comment">// help a fulfiller	// 栈顶已开始匹配，帮助匹配</span></span><br><span class="line">			<span class="comment">// 此处的操作逻辑同上面的操作逻辑一致，目的就是帮助上面进行操作，因为此处完成匹配需要分成两步：</span></span><br><span class="line">			<span class="comment">// a.m.tryMatch(s)和b.casHead(s, mn)</span></span><br><span class="line">			<span class="comment">// 所以必然会插入其他线程，只要插入的线程也按照这个步骤执行那么就避免了不一致问题</span></span><br><span class="line">			SNode <span class="keyword">m</span> = <span class="keyword">h</span>.next;               <span class="comment">// m is h's match</span></span><br><span class="line">			<span class="keyword">if</span> (<span class="keyword">m</span> == null)                  <span class="comment">// waiter is gone</span></span><br><span class="line">				casHead(<span class="keyword">h</span>, null);           <span class="comment">// pop fulfilling node</span></span><br><span class="line">			<span class="keyword">else</span> &#123;</span><br><span class="line">				SNode mn = <span class="keyword">m</span>.next;</span><br><span class="line">				<span class="keyword">if</span> (<span class="keyword">m</span>.tryMatch(<span class="keyword">h</span>))          <span class="comment">// help match</span></span><br><span class="line">					casHead(<span class="keyword">h</span>, mn);         <span class="comment">// pop both h and m</span></span><br><span class="line">				<span class="keyword">else</span>                        <span class="comment">// lost match</span></span><br><span class="line">					<span class="keyword">h</span>.casNext(<span class="keyword">m</span>, mn);       <span class="comment">// help unlink</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>从上面的代码可以看出TransferStack.transfer()的整体流程：</p>
+<ol>
+<li>判断当前栈是否为null或者栈顶线程是否与当前线程匹配，为null或者不匹配都将进行入栈操作</li>
+<li>入栈主要很简单，分成两步：插入一个节点入栈，该步无需同步，第二步需要head指针指向新节点，该步通过CAS保证安全</li>
+<li>入栈之后需要将当前线程阻塞，调用LockSupport.park()方法，直到打断/超时/被匹配的线程唤醒</li>
+<li>如果被取消，则需要调用clean()方法进行清除</li>
+<li>由于LIFO，所以匹配的节点总是栈顶的两个节点，分成两步：原子性更新节点的match变量，更新head。由于两步无法保证原子性，所以通过将栈顶元素的mode更新为FULFILLING，阻止其他线程在栈顶发生匹配时进行其他操作，同时其他线程需帮助栈顶进行的匹配操作</li>
+</ol>
+<h4 id="awaitFulfill-1"><strong>awaitFulfill</strong></h4><p>下面看看TransferStack是如何让一个线程进入阻塞。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> *@ By Vicky:等待匹配，逻辑大致同TransferQueue可参考阅读</span><br><span class="line"> */</span></span><br><span class="line"><span class="function">SNode <span class="title">awaitFulfill</span><span class="params">(SNode s, boolean timed, <span class="keyword">long</span> nanos)</span> </span>&#123;</span><br><span class="line">	<span class="keyword">long</span> lastTime = (timed)? System.nanoTime() : <span class="number">0</span>;</span><br><span class="line">	Thread w = Thread.currentThread();</span><br><span class="line">	SNode h = head;</span><br><span class="line">	<span class="comment">// 计算自旋的次数，逻辑大致同TransferQueue</span></span><br><span class="line">	<span class="keyword">int</span> spins = (shouldSpin(s)?</span><br><span class="line">				 (timed? maxTimedSpins : maxUntimedSpins) : <span class="number">0</span>);</span><br><span class="line">	<span class="keyword">for</span> (;;) &#123;</span><br><span class="line">		<span class="keyword">if</span> (w.isInterrupted())</span><br><span class="line">			s.tryCancel();</span><br><span class="line">		<span class="comment">// 如果s的match不等于null，有三种情况：</span></span><br><span class="line">		<span class="comment">// a.等待被取消了，此时x==s</span></span><br><span class="line">		<span class="comment">// b.匹配上了，此时match==另一个节点</span></span><br><span class="line">		<span class="comment">// c.线程被打断，会取消，此时x==s</span></span><br><span class="line">		<span class="comment">// 不管是哪种情况都不要再等待了，返回即可</span></span><br><span class="line">		SNode m = s.match;</span><br><span class="line">		<span class="keyword">if</span> (m != null)</span><br><span class="line">			<span class="keyword">return</span> m;</span><br><span class="line">		<span class="keyword">if</span> (timed) &#123;</span><br><span class="line">			<span class="comment">// 等待</span></span><br><span class="line">			<span class="keyword">long</span> now = System.nanoTime();</span><br><span class="line">			nanos -= now - lastTime;</span><br><span class="line">			lastTime = now;</span><br><span class="line">			<span class="keyword">if</span> (nanos &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">				s.tryCancel();</span><br><span class="line">				<span class="keyword">continue</span>;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// 自旋</span></span><br><span class="line">		<span class="keyword">if</span> (spins &gt; <span class="number">0</span>)</span><br><span class="line">			spins = shouldSpin(s)? (spins-<span class="number">1</span>) : <span class="number">0</span>;</span><br><span class="line">		<span class="comment">// 设置等待线程</span></span><br><span class="line">		<span class="keyword">else</span> <span class="keyword">if</span> (s.waiter == null)</span><br><span class="line">			s.waiter = w; <span class="comment">// establish waiter so can park next iter</span></span><br><span class="line">		<span class="comment">// 等待</span></span><br><span class="line">		<span class="keyword">else</span> <span class="keyword">if</span> (!timed)</span><br><span class="line">			LockSupport.park(<span class="keyword">this</span>);</span><br><span class="line">		<span class="keyword">else</span> <span class="keyword">if</span> (nanos &gt; spinForTimeoutThreshold)</span><br><span class="line">			LockSupport.parkNanos(<span class="keyword">this</span>, nanos);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>逻辑基本同TransferQueue，不同之处是通过修改SNode的match变量标示匹配，以及取消。</p>
+<h4 id="clean-1"><strong>clean</strong></h4><p>下面再看看如何清除被取消的节点。<br><figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * @By Vicky:清除节点</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">void</span> clean(SNode s) &#123;</span><br><span class="line">	s.item = <span class="keyword">null</span>;   <span class="comment">// forget item</span></span><br><span class="line">	s.waiter = <span class="keyword">null</span>; <span class="comment">// forget thread</span></span><br><span class="line">	<span class="comment">// 清除</span></span><br><span class="line">	SNode past = s.<span class="keyword">next</span>;</span><br><span class="line">	<span class="keyword">if</span> (past != <span class="keyword">null</span> &amp;&amp; past.isCancelled())</span><br><span class="line">		past = past.<span class="keyword">next</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Absorb cancelled nodes at head</span></span><br><span class="line">	<span class="comment">// 从栈顶节点开始清除，一直到遇到未被取消的节点，或者直到s.next</span></span><br><span class="line">	SNode p;</span><br><span class="line">	<span class="keyword">while</span> ((p = head) != <span class="keyword">null</span> &amp;&amp; p != past &amp;&amp; p.isCancelled())</span><br><span class="line">		casHead(p, p.<span class="keyword">next</span>);</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Unsplice embedded nodes</span></span><br><span class="line">	<span class="comment">// 如果p本身未取消(上面的while碰到一个未取消的节点就会退出，但这个节点和past节点之间可能还有取消节点)，</span></span><br><span class="line">	<span class="comment">// 再把p到past之间的取消节点都移除。</span></span><br><span class="line">	<span class="keyword">while</span> (p != <span class="keyword">null</span> &amp;&amp; p != past) &#123;</span><br><span class="line">		SNode n = p.<span class="keyword">next</span>;</span><br><span class="line">		<span class="keyword">if</span> (n != <span class="keyword">null</span> &amp;&amp; n.isCancelled())</span><br><span class="line">			p.casNext(n, n.<span class="keyword">next</span>);</span><br><span class="line">		<span class="keyword">else</span></span><br><span class="line">			p = n;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>以上即全部的TransferStack的操作逻辑。</p>
+<p>看完了TransferQueue和TransferStack的逻辑，SynchronousQueue的逻辑基本清楚了。</p>
+<h3 id="应用场景"><strong>应用场景</strong></h3><p>SynchronousQueue的应用场景得看具体业务需求，J.U.C下有一个应用案例：Executors.newCachedThreadPool()就是使用SynchronousQueue作为任务队列。</p>
+<h3 id="参考文章"><strong>参考文章</strong></h3><p><a href="http://brokendreams.iteye.com/blog/2252081" target="_blank" rel="external">Jdk1.6 JUC源码解析(15)-SynchronousQueue</a><br><a href="http://www.cnblogs.com/wanly3643/p/3904681.html" target="_blank" rel="external">《java.util.concurrent 包源码阅读》16 一种特别的BlockingQueue：SynchronousQueue</a></p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/JDK/" rel="tag">#JDK</a>
+          
+            <a href="/tags/JUC/" rel="tag">#JUC</a>
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/11/27/数据结构系列——后缀树Java实现代码/" rel="next">数据结构系列——后缀树Java实现代码</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2015/11/30/JDK并发工具类源码学习系列——SynchronousQueue/"
+     data-title="JDK并发工具类源码学习系列——SynchronousQueue"
+     data-content=""
+     data-url="http://vickyqi.com/2015/11/30/JDK并发工具类源码学习系列——SynchronousQueue/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2015/11/30/JDK并发工具类源码学习系列——SynchronousQueue/"
+                       data-title="JDK并发工具类源码学习系列——SynchronousQueue" data-url="http://vickyqi.com/2015/11/30/JDK并发工具类源码学习系列——SynchronousQueue/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/avatar.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">让自己的努力变得更有价值</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">49</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">10</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">36</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#基本原理"><span class="nav-number">1.</span> <span class="nav-text">基本原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#常用方法解析"><span class="nav-number">2.</span> <span class="nav-text">常用方法解析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#fair模式"><span class="nav-number">3.</span> <span class="nav-text">fair模式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#transfer"><span class="nav-number">3.1.</span> <span class="nav-text">transfer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#awaitFulfill"><span class="nav-number">3.2.</span> <span class="nav-text">awaitFulfill</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#clean"><span class="nav-number">3.3.</span> <span class="nav-text">clean</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#unfair模式"><span class="nav-number">4.</span> <span class="nav-text">unfair模式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#transfer-1"><span class="nav-number">4.1.</span> <span class="nav-text">transfer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#awaitFulfill-1"><span class="nav-number">4.2.</span> <span class="nav-text">awaitFulfill</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#clean-1"><span class="nav-number">4.3.</span> <span class="nav-text">clean</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#应用场景"><span class="nav-number">5.</span> <span class="nav-text">应用场景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考文章"><span class="nav-number">6.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>

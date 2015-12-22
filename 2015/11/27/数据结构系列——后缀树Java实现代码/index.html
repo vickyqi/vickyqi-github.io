@@ -1,0 +1,773 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="让自己的努力变得更有价值" />
+
+
+
+  <meta name="keywords" content="Java,数据结构,树,后缀树,Ukkonen," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="上一篇文章介绍了什么是后缀树以及后缀树的应用场景，同时结合Ukkonen算法论文细述了如何在O（n）时间内构建一颗后缀树，这一篇详细介绍如何使用Java实现的Ukkonen后缀树构建算法。完整代码看这里Github
+Talk is cheap. Show me the code.
+
+首先定义一个SuffixTree类，用于封装后缀树，内部定义了两个内部类：Node和ActivePoint，分别封装">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据结构系列——后缀树Java实现代码">
+<meta property="og:url" content="http://vickyqi.com/2015/11/27/数据结构系列——后缀树Java实现代码/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="上一篇文章介绍了什么是后缀树以及后缀树的应用场景，同时结合Ukkonen算法论文细述了如何在O（n）时间内构建一颗后缀树，这一篇详细介绍如何使用Java实现的Ukkonen后缀树构建算法。完整代码看这里Github
+Talk is cheap. Show me the code.
+
+首先定义一个SuffixTree类，用于封装后缀树，内部定义了两个内部类：Node和ActivePoint，分别封装">
+<meta property="og:updated_time" content="2015-11-27T05:29:16.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="数据结构系列——后缀树Java实现代码">
+<meta name="twitter:description" content="上一篇文章介绍了什么是后缀树以及后缀树的应用场景，同时结合Ukkonen算法论文细述了如何在O（n）时间内构建一颗后缀树，这一篇详细介绍如何使用Java实现的Ukkonen后缀树构建算法。完整代码看这里Github
+Talk is cheap. Show me the code.
+
+首先定义一个SuffixTree类，用于封装后缀树，内部定义了两个内部类：Node和ActivePoint，分别封装">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> 数据结构系列——后缀树Java实现代码 - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              数据结构系列——后缀树Java实现代码
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-11-27T19:35:00+08:00" content="2015-11-27">
+            2015-11-27
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/数据结构/" itemprop="url" rel="index"><span itemprop="name">数据结构</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/11/27/数据结构系列——后缀树Java实现代码/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/11/27/数据结构系列——后缀树Java实现代码/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p><a href="http://vickyqi.com/2015/11/27/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94%E5%90%8E%E7%BC%80%E6%A0%91%EF%BC%88%E9%99%84Java%E5%AE%9E%E7%8E%B0%E4%BB%A3%E7%A0%81%EF%BC%89/">上一篇文章介绍了什么是后缀树以及后缀树的应用场景</a>，同时结合Ukkonen算法论文细述了如何在O（n）时间内构建一颗后缀树，这一篇详细介绍如何使用Java实现的Ukkonen后缀树构建算法。<a href="https://github.com/vickyqi/StudyBuddy/blob/master/java/datastructure/src/main/java/com/vicky/datastructure/tree/SuffixTree.java" target="_blank" rel="external"><strong>完整代码看这里Github</strong></a></p>
+<p>Talk is cheap. Show me the code.</p>
+<hr>
+<p>首先定义一个SuffixTree类，用于封装后缀树，内部定义了两个内部类：Node和ActivePoint，分别封装树的节点和算法中提到的活动点。代码结构如下：</p>
+<figure class="highlight axapta"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SuffixTree</span> </span>&#123;</span><br><span class="line">	<span class="keyword">private</span> Node root = <span class="keyword">new</span> Node(<span class="keyword">new</span> <span class="keyword">char</span>[<span class="number">0</span>]);<span class="comment">// 根节点</span></span><br><span class="line">	<span class="comment">// active point，一个三元组：(active_node,active_edge,active_length)</span></span><br><span class="line">	<span class="comment">// active_node是当前的活动点，用节点代表，active_edge是活动的边，这里用节点来表示，active_length是活动的长度</span></span><br><span class="line">	<span class="keyword">private</span> ActivePoint activePoint = <span class="keyword">new</span> ActivePoint(root, <span class="keyword">null</span>, <span class="number">0</span>);</span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">int</span> reminder = <span class="number">0</span>;<span class="comment">// remainder，表示还剩多少后缀需要插入</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span><br><span class="line">	 * &lt;p&gt;</span><br><span class="line">	 * 后缀树的节点，即边</span><br><span class="line">	 * &lt;/p&gt;</span><br><span class="line">	 */</span></span><br><span class="line">	<span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span> </span>&#123;</span><br><span class="line">		<span class="keyword">public</span> <span class="keyword">char</span>[] chars;</span><br><span class="line">		<span class="keyword">public</span> Node child;</span><br><span class="line">		<span class="keyword">public</span> Node brother;</span><br><span class="line">		<span class="keyword">public</span> Node suffixNode;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">public</span> Node(<span class="keyword">char</span>[] chars) &#123;</span><br><span class="line">			<span class="keyword">this</span>.chars = chars;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/**</span><br><span class="line">	 * &lt;p&gt;</span><br><span class="line">	 * 活动点(active point)，一个三元组：(active_node,active_edge,active_length)</span><br><span class="line">	 * &lt;/p&gt;</span><br><span class="line">	 */</span></span><br><span class="line">	<span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">ActivePoint</span> </span>&#123;</span><br><span class="line">		<span class="keyword">public</span> Node point;</span><br><span class="line">		<span class="keyword">public</span> Node <span class="keyword">index</span>;</span><br><span class="line">		<span class="keyword">public</span> <span class="keyword">int</span> length;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">public</span> ActivePoint(Node point, Node <span class="keyword">index</span>, <span class="keyword">int</span> length) &#123;</span><br><span class="line">			<span class="keyword">this</span>.point = point;</span><br><span class="line">			<span class="keyword">this</span>.<span class="keyword">index</span> = <span class="keyword">index</span>;</span><br><span class="line">			<span class="keyword">this</span>.length = length;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>说明一下，算法中使用了边来保存字符，但是实现时没必要多维护一个类，直接使用节点（Node）来保存字符即可，效果上没有任何差别。同时树的结构通过子节点与兄弟节点的方式保存，如下结构图所示：<br><figure class="highlight 1c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">父节点</span><br><span class="line"><span class="string">|</span></span><br><span class="line">子节点—兄弟节点—兄弟节点</span><br></pre></td></tr></table></figure></p>
+<p>采用这种方式的原因是因为一个节点的子节点数量是未知的，所以不适合使用一个固定长度的数组来保存节点的全部子节点，使用集合会造成数据结构嵌套数据结构，不适合。同时根节点也是一个普通节点，只是根节点不存在任何字符（字符数组长度==0）。ActivePoint是一个三元组（包含三个属性），分别对应：活动节点（Node），活动边（Node），活动长度。reminder对应算法中的reminder，记录剩余后缀数量。Node表示一个节点，有4个属性：chars表示该节点上的字符，child和brother是子节点和兄弟节点的指针，suffixNode是后缀连接。</p>
+<p>介绍完了整体结构，下面来看看具体如何对一个字符串构建后缀树。</p>
+<p><strong>注意</strong>：在构建后缀树时使用了一个优化手段，算法中提到每次修改#，使得边上的字符自动扩充一位，在实际实现时我们可直接将从插入字符开始到字符串结束所有的字符全部一次性放到边上，省去每次扩充#。该优化点引用如下（原文见参考文章二）：</p>
+<blockquote>
+<p>借助后缀树的特性, 我们可以做出一个相当有效的算法. 首先一个重要的特性是: 一朝为叶, 终生为叶. 一个叶节点自诞生以后绝不会有子孙. 更重要的是, 每当我们往树上加入一个新的前缀, 每一条通往叶节点的边都会延长一个字符(新前缀的最后一个字符). 这使得处理通往叶节点的边变得异常简单, 我们完全可以在创建叶节点的时候就把当前字符到文本末的所有字符一股脑塞进去. 是的, 我们不需要知道后面的字符是啥, 但我们知道它们最终都要被加进去. 因此, 一个叶节点诞生的时候, 也正是它可以被我们遗忘的时候. 你可能会担心通往叶节点的边被分割了怎么办, 那也不要紧, 分割之后只是起点变了, 尾部该怎么着还是怎么着。</p>
+</blockquote>
+<figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * 构建后缀树</span><br><span class="line"> * </span><br><span class="line"> * @param word</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> build(<span class="keyword">String</span> word) &#123;</span><br><span class="line">	<span class="built_in">int</span> index = <span class="number">0</span>;</span><br><span class="line">	<span class="built_in">char</span>[] chars = word.toCharArray();</span><br><span class="line">	<span class="keyword">while</span> (index &lt; chars.length) &#123;<span class="comment">// 循环建立后缀</span></span><br><span class="line">		<span class="built_in">int</span> currenctIndex = index++;<span class="comment">// 保存当前的位置</span></span><br><span class="line">		<span class="built_in">char</span> w = chars[currenctIndex];<span class="comment">// 当前的后缀字符</span></span><br><span class="line">		</span><br><span class="line">		<span class="keyword">this</span>.<span class="built_in">print</span>();<span class="comment">// 打印</span></span><br><span class="line">		System.out.<span class="built_in">println</span>();</span><br><span class="line">		System.out.<span class="built_in">println</span>(<span class="string">"当前插入后缀："</span> + w + <span class="string">"========"</span>);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> (find(w)) &#123;<span class="comment">// 查找是否存在保存有当前后缀字符的节点</span></span><br><span class="line">			reminder++;<span class="comment">// 存在，则将reminder+1，activePoint.length+1，然后返回即可</span></span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 不存在的话，如果reminder==0表示之前在该字符之前未剩余有其他带插入的后缀字符，所以直接插入该后缀字符即可</span></span><br><span class="line">		<span class="keyword">if</span> (reminder == <span class="number">0</span>) &#123;</span><br><span class="line">			<span class="comment">// 直接在当前活动节点插入一个节点即可</span></span><br><span class="line">			<span class="comment">// 这里插入的节点包含的字符是从当前字符开始该字符串剩余的全部字符，这里是一个优化，</span></span><br><span class="line">			<span class="comment">// 优化参考自：http://blog.csdn.net/v_july_v/article/details/6897097 (3.6、归纳, 反思, 优化)</span></span><br><span class="line">			Node node = <span class="keyword">new</span> Node(Arrays.copyOfRange(chars, currenctIndex, chars.length));</span><br><span class="line">			<span class="comment">// 如果当前活动点无子节点，则将新建的节点作为其子节点即可，否则循环遍历子节点(通过兄弟节点进行保存)</span></span><br><span class="line">			Node child = activePoint.<span class="built_in">point</span>.child;</span><br><span class="line">			<span class="keyword">if</span> (<span class="keyword">null</span> == child) &#123;</span><br><span class="line">				activePoint.<span class="built_in">point</span>.child = node;</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				<span class="keyword">while</span> (<span class="keyword">null</span> != child.brother) &#123;</span><br><span class="line">					child = child.brother;</span><br><span class="line">				&#125;</span><br><span class="line">				child.brother = node;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="comment">// 如果reminder&gt;0，则说明该字符之前存在剩余字符，需要进行分割，然后插入新的后缀字符</span></span><br><span class="line">			Node splitNode = activePoint.index;<span class="comment">// 待分割的节点即为活动边(active_edge)</span></span><br><span class="line">			<span class="comment">// 创建切分后的节点，放到当前节点的子节点</span></span><br><span class="line">			<span class="comment">// 该节点继承了当前节点的子节点以及后缀节点信息</span></span><br><span class="line">			Node node = <span class="keyword">new</span> Node(Arrays.copyOfRange(splitNode.chars, activePoint.length, splitNode.chars.length));<span class="comment">// 从活动边长度开始截取剩余字符作为子节点</span></span><br><span class="line">			node.child = splitNode.child;</span><br><span class="line">			node.suffixNode = splitNode.suffixNode;</span><br><span class="line">			splitNode.child = node;</span><br><span class="line">			splitNode.suffixNode = <span class="keyword">null</span>;</span><br><span class="line">			<span class="comment">// 创建新插入的节点，放到当前节点的子节点(通过子节点的兄弟节点保存)</span></span><br><span class="line">			Node newNode = <span class="keyword">new</span> Node(Arrays.copyOfRange(chars, currenctIndex, chars.length));<span class="comment">// 插入新的后缀字符</span></span><br><span class="line">			splitNode.child.brother = newNode;</span><br><span class="line">			splitNode.chars = Arrays.copyOfRange(splitNode.chars, <span class="number">0</span>, activePoint.length);<span class="comment">// 修改当前节点的字符</span></span><br><span class="line"></span><br><span class="line">			<span class="comment">// 分割完成之后需根据规则1和规则2进行区分对待</span></span><br><span class="line">			<span class="comment">// 按照规则1进行处理</span></span><br><span class="line">			<span class="keyword">if</span> (root == activePoint.<span class="built_in">point</span>) &#123;<span class="comment">// 活动节点是根节点的情况</span></span><br><span class="line">				<span class="comment">// activePoint.point == root</span></span><br><span class="line">			<span class="comment">// 按照规则3进行处理</span></span><br><span class="line">			&#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">null</span> == activePoint.<span class="built_in">point</span>.suffixNode) &#123;<span class="comment">// 无后缀节点，则活动节点变为root</span></span><br><span class="line">				activePoint.<span class="built_in">point</span> = root;</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;<span class="comment">// 否则活动节点变为当前活动节点的后缀节点</span></span><br><span class="line">				activePoint.<span class="built_in">point</span> = activePoint.<span class="built_in">point</span>.suffixNode;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">// 活动边和活动边长度都重置</span></span><br><span class="line">			activePoint.index = <span class="keyword">null</span>;</span><br><span class="line">			activePoint.length = <span class="number">0</span>;</span><br><span class="line">			<span class="comment">// 递归处理剩余的待插入后缀</span></span><br><span class="line">			innerSplit(chars, currenctIndex, splitNode);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在SuffixTree中定义一个build(String word)方法，参数word是待生成后缀树的字符串。首先将字符串转成字符数组，并按照算法步骤逐个插入。find(char w)用于查找指定的后缀是否存在（这里所说的后缀其实就是单个字符，因为单个字符代表的就是以该字符开头的后缀）。</p>
+<figure class="highlight axapta"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * 寻找当前活动点的子节点中是否存在包含后缀字符的节点(边)</span><br><span class="line"> * </span><br><span class="line"> * @param w</span><br><span class="line"> * @return</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">boolean</span> find(<span class="keyword">char</span> w) &#123;</span><br><span class="line">	<span class="keyword">final</span> Node start = activePoint.point;</span><br><span class="line">	<span class="keyword">final</span> Node current = activePoint.<span class="keyword">index</span>;</span><br><span class="line">	<span class="keyword">boolean</span> exist = <span class="keyword">false</span>;</span><br><span class="line">	<span class="keyword">if</span> (<span class="keyword">null</span> == current) &#123;<span class="comment">// current==null 无活动边，则从活动点的子节点开始查找</span></span><br><span class="line">		<span class="comment">// 寻找子节点</span></span><br><span class="line">		Node child = start.child;</span><br><span class="line">		<span class="keyword">while</span> (<span class="keyword">null</span> != child) &#123;</span><br><span class="line">			<span class="keyword">if</span> (child.chars[<span class="number">0</span>] == w) &#123;<span class="comment">// 存在</span></span><br><span class="line">				activePoint.<span class="keyword">index</span> = child;</span><br><span class="line">				activePoint.length++;<span class="comment">// activePoint.length++</span></span><br><span class="line">				exist = <span class="keyword">true</span>;</span><br><span class="line">				<span class="keyword">break</span>;</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				child = child.brother;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> <span class="keyword">if</span> (current.chars[activePoint.length] == w) &#123;<span class="comment">// 有活动边，则在活动边上查找</span></span><br><span class="line">		activePoint.length++;</span><br><span class="line">		exist = <span class="keyword">true</span>;</span><br><span class="line">		<span class="keyword">if</span> (current.chars.length == activePoint.length) &#123;</span><br><span class="line">			<span class="comment">// 如果活动边的长度已达到活动边的最后一个字符，则将活动点置为活动边，同时活动边置为null，长度置为0</span></span><br><span class="line">			activePoint.point = current;</span><br><span class="line">			activePoint.<span class="keyword">index</span> = <span class="keyword">null</span>;</span><br><span class="line">			activePoint.length = <span class="number">0</span>;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		exist = <span class="keyword">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> exist;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>查找后缀是否存在是从活动节边开始查找，如果活动边为NULL，则从活动节点的子节点挨个查找，查找是通过比较边上的指定位置（活动长度指定）与查找字符是否相等。这里有个地方需要注意：算法中提到，如果一个活动边已到达结尾（即活动长度==活动边的字符长度），则将活动边晋升为活动节点，并重置活动边和活动长度为NULL和0。如下代码所示：</p>
+<figure class="highlight rsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (current.chars.<span class="built_in">length</span> == activePoint.<span class="built_in">length</span>) &#123;</span><br><span class="line">	<span class="comment">// 如果活动边的长度已达到活动边的最后一个字符，则将活动点置为活动边，同时活动边置为null，长度置为0</span></span><br><span class="line">	activePoint.<span class="keyword">point</span> = current;</span><br><span class="line">	activePoint.index = null;</span><br><span class="line">	activePoint.<span class="built_in">length</span> = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果查找到后缀存在，则直接将活动长度+1（在find()方法内部处理的），reminder+1即可。</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="keyword">find</span>(w)) &#123;<span class="comment">// 查找是否存在保存有当前后缀字符的节点</span></span><br><span class="line">	reminder++;<span class="comment">// 存在，则将reminder+1，activePoint.length+1，然后返回即可</span></span><br><span class="line">	<span class="keyword">continue</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果不存在，需区分两种情况，一种是：前面没有堆积未插入的后缀，即reminder==0，另外一种是reminder&gt;0。<br>对于reminder==0（如算法中举例的前三个字符abc），只需要直接将当前后缀插入到活动节点即可。具体首先新建一个节点，<code>Node node = new Node(Arrays.copyOfRange(chars, currenctIndex, chars.length));</code>，该节点包含从当前字符往后所有的字符，即上面提到的优化点；接着将新建的节点作为活动节点的子节点插入，这里需判断子节点是否存在，不存在，作为子节点，存在则作为子节点的最后一个兄弟节点。<br><figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">Node</span><span class="identifier"> </span><span class="title">child</span> = activePoint.point.child;</span><br><span class="line">if (null == child) &#123;</span><br><span class="line">	activePoint.point.child = <span class="keyword">node</span><span class="identifier"></span><span class="title">;</span><br><span class="line">&#125; else</span> &#123;</span><br><span class="line">	while (null != child.brother) &#123;</span><br><span class="line">		child = child.brother;</span><br><span class="line">	&#125;</span><br><span class="line">	child.brother = <span class="keyword">node</span><span class="identifier"></span><span class="title">;</span><br><span class="line">&#125;</span></span><br></pre></td></tr></table></figure></p>
+<p>如果reminder&gt;0（如算法中举例<strong>步骤6</strong>，插入第四到第六个字符abx，到达x时就是这种情况），我们需要对当前活动边进行分割操作。</p>
+<figure class="highlight crmsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">// 如果reminder&gt;<span class="number">0</span>，则说明该字符之前存在剩余字符，需要进行分割，然后插入新的后缀字符</span><br><span class="line"><span class="keyword">Node</span><span class="identifier"> </span><span class="title">splitNode</span> = activePoint.index;// 待分割的节点即为活动边(active_edge)</span><br><span class="line">// 创建切分后的节点，放到当前节点的子节点</span><br><span class="line">// 该节点继承了当前节点的子节点以及后缀节点信息</span><br><span class="line"><span class="keyword">Node</span><span class="identifier"> </span><span class="title">node</span> = new <span class="keyword">Node</span><span class="identifier"></span><span class="title">(Arrays</span>.copyOfRange(splitNode.chars, activePoint.length, splitNode.chars.length));// 从活动边长度开始截取剩余字符作为子节点</span><br><span class="line"><span class="keyword">node</span>.<span class="identifier"></span><span class="title">child</span> = splitNode.child;</span><br><span class="line"><span class="keyword">node</span>.<span class="identifier"></span><span class="title">suffixNode</span> = splitNode.suffixNode;</span><br><span class="line">splitNode.child = <span class="keyword">node</span><span class="identifier"></span><span class="title">;</span><br><span class="line">splitNode</span>.suffixNode = null;</span><br><span class="line">// 创建新插入的节点，放到当前节点的子节点(通过子节点的兄弟节点保存)</span><br><span class="line"><span class="keyword">Node</span><span class="identifier"> </span><span class="title">newNode</span> = new <span class="keyword">Node</span><span class="identifier"></span><span class="title">(Arrays</span>.copyOfRange(chars, currenctIndex, chars.length));// 插入新的后缀字符</span><br><span class="line">splitNode.child.brother = newNode;</span><br><span class="line">splitNode.chars = Arrays.copyOfRange(splitNode.chars, <span class="number">0</span>, activePoint.length);// 修改当前节点的字符</span><br></pre></td></tr></table></figure>
+<p>分割的节点是活动边指向的节点，分割的位置由活动长度指定。具体分割是新建一个节点A，该节点的字符是被分割节点分割之后剩余的字符（’cabx’），同时该节点需继承被分割节点的子节点信息，以及后缀连接信息；再新建一个节点B存放当前要插入的后缀（’x’）。以上两个新建的节点都将作为被分割节点的子节点存在，所以A的兄弟节点指向B，并将被分割节点的字符切去只剩活动长度指定的字符（’ab’）。分割完之后需要根据规则1和规则3重置活动点信息，但是不管活动节点如何设定，活动边和活动边长度必须要重置为NULL和0。</p>
+<figure class="highlight processing"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 分割完成之后需根据规则1和规则3进行区分对待</span></span><br><span class="line"><span class="comment">// 按照规则1进行处理</span></span><br><span class="line"><span class="keyword">if</span> (root == activePoint.<span class="built_in">point</span>) &#123;<span class="comment">// 活动节点是根节点的情况</span></span><br><span class="line">	<span class="comment">// activePoint.point == root</span></span><br><span class="line"><span class="comment">// 按照规则3进行处理</span></span><br><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">null</span> == activePoint.<span class="built_in">point</span>.suffixNode) &#123;<span class="comment">// 无后缀节点，则活动节点变为root</span></span><br><span class="line">	activePoint.<span class="built_in">point</span> = root;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;<span class="comment">// 否则活动节点变为当前活动节点的后缀节点</span></span><br><span class="line">	activePoint.<span class="built_in">point</span> = activePoint.<span class="built_in">point</span>.suffixNode;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 活动边和活动边长度都重置</span></span><br><span class="line">activePoint.index = <span class="keyword">null</span>;</span><br><span class="line">activePoint.length = <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
+<p>到这里我们只是插入了后缀’abx’，由于reminder==2，还需要插入’bx’和’x’，所以引入一个递归方法：innerSplit(char[] chars, int currenctIndex, Node prefixNode)，用于插入’bx’和’x’。方法有三个参数：chars是构建后缀树的字符串的字符数组，currenctIndex是我们当前插入后缀的位置（for循环的位置），prefixNode是前一次进行分割的节点。所以此处分割完之后需调用innerSplit()方法处理剩余后缀。<br><figure class="highlight scss"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 递归处理剩余的待插入后缀</span></span><br><span class="line"><span class="function">innerSplit</span>(chars, currenctIndex, splitNode);</span><br></pre></td></tr></table></figure></p>
+<p>第三个参数传入splitNode，即将当前被分割的节点传入方法。下面看看innerSplit()如何递归如何剩余后缀。<br><figure class="highlight axapta"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * 处理剩余的待插入后缀</span><br><span class="line"> * @param chars	构建后缀树的全部字符</span><br><span class="line"> * @param currenctIndex	当前已处理到的字符位置</span><br><span class="line"> * @param prefixNode 前继节点，即已经进行分割的节点，用于标识后缀节点</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> innerSplit(<span class="keyword">char</span>[] chars, <span class="keyword">int</span> currenctIndex, Node prefixNode) &#123;</span><br><span class="line">	<span class="comment">// 此处计算剩余待插入的后缀的开始位置，例如我们需要插入三个后缀(abx,bx,x)，已处理了abx，则还剩余ba和x，则下面计算的位置就是b的位置</span></span><br><span class="line">	<span class="keyword">int</span> start = currenctIndex - reminder + <span class="number">1</span>;</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">this</span>.print();<span class="comment">// 打印</span></span><br><span class="line">	System.out.println();</span><br><span class="line">	System.out.println(<span class="string">"当前插入后缀："</span> + String.copyValueOf(chars, start, currenctIndex - start + <span class="number">1</span>) + <span class="string">"========"</span>);</span><br><span class="line">	</span><br><span class="line">	<span class="comment">// dealStart表示本次插入我们需要进行查找的开始字符位置，因为由于规则2，可能出现通过后缀节点直接找到活动节点的情况</span></span><br><span class="line">	<span class="comment">// 如通过ab节点的后缀节点，直接找到节点b，那么此时的activePoint(node[b], null, 0)，我们需要从node[b]开始查找x，dealStart的位置就是x的位置</span></span><br><span class="line">	<span class="keyword">int</span> dealStart = start + activePoint.point.chars.length + activePoint.length;</span><br><span class="line">	<span class="comment">// 从dealStart开始查找所有后缀字符是否都存在(相对与活动点)</span></span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> <span class="keyword">index</span> = dealStart; <span class="keyword">index</span> &lt;= currenctIndex; <span class="keyword">index</span>++) &#123;</span><br><span class="line">		<span class="keyword">char</span> w = chars[<span class="keyword">index</span>];</span><br><span class="line">		<span class="keyword">if</span> (find(w)) &#123;<span class="comment">// 存在，则查找下一个，activePoint.length+1，这里不增加reminder</span></span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		Node splitNode = <span class="keyword">null</span>;<span class="comment">// 被分割的节点</span></span><br><span class="line">		<span class="keyword">if</span>(<span class="keyword">null</span>==activePoint.<span class="keyword">index</span>)&#123;<span class="comment">// 如果activePoint.index==null，说明没有找到活动边，那么只需要在活动节点下插入一个节点即可</span></span><br><span class="line">			<span class="comment">// --此处代码build()方法插入节点部分--</span></span><br><span class="line">		&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">			<span class="comment">// 开始分割，分割部分同上面的分割</span></span><br><span class="line">			<span class="comment">// --此处代码build()方法分割部分--</span></span><br><span class="line"></span><br><span class="line">			<span class="comment">// 规则2，连接后缀节点</span></span><br><span class="line">			prefixNode.suffixNode = splitNode;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">// --</span></span><br><span class="line">		reminder--;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 分割完成之后需根据规则1和规则3进行区分对待</span></span><br><span class="line">		<span class="comment">// --代码同build()代码部分--</span></span><br><span class="line">		</span><br><span class="line">		<span class="keyword">if</span>(reminder &gt; <span class="number">0</span>)&#123;<span class="comment">// 如果reminder==0则不需要继续递归插入后缀</span></span><br><span class="line">			innerSplit(chars, currenctIndex, splitNode);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>上面代码为了消减篇幅省去了与build()方法重复的代码（完整代码会放到Github上），其实基本逻辑是一样的，只是所处理的方式略有不同，所以没法放到一起。</p>
+<p>这里说一下start和dealStart这两个变量的用处。start是本次需要插入的后缀的开始位置，如’bx’，则start就是b的位置，通过reminder获得；dealStart是下面的for循环开始的位置，也就是需要查找后缀的位置，dealStart的出现是由于规则2的存在，如果没有规则2，那么dealStart就是start了，由于规则2活动节点会从root直接跳到一个节点，而无需进行查找，所以如果发生了跳转，比如字符串时’abcabxabcd’，待插入后缀是’bcd’时，这时就是根据规则2直接跳到一个节点b，所以要从’c’开始找，就是因为节点b为我们省了一个字符，所以说后缀连接是用于优化的。<code>prefixNode.suffixNode = splitNode;</code>就是将之前被分割的节点的后缀连接指向当前被分割的节点。</p>
+<p>剩余的部分就是查找，分割了，同build()的代码一样，所以省去了。最后，如果本次处理完reminder依旧&gt;0，那么就需要进行递归调用该方法了。</p>
+<p>到这里构建后缀树就完成了。下面介绍后缀树的一个应用：查找子串。具体看代码：<br><figure class="highlight axapta"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span><br><span class="line"> * 查找给定字符串是否是其子串</span><br><span class="line"> * </span><br><span class="line"> * @param word</span><br><span class="line"> * @return</span><br><span class="line"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">boolean</span> select(String word) &#123;</span><br><span class="line">	<span class="keyword">char</span>[] chars = word.toCharArray();</span><br><span class="line">	<span class="keyword">int</span> <span class="keyword">index</span> = <span class="number">0</span>;<span class="comment">// 查找到的节点的匹配的位置</span></span><br><span class="line">	<span class="comment">// 查找从根节点开始，遍历子节点</span></span><br><span class="line">	Node start = root;</span><br><span class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; chars.length; i++) &#123;</span><br><span class="line">		<span class="keyword">if</span> (start.chars.length &lt; <span class="keyword">index</span> + <span class="number">1</span>) &#123;<span class="comment">// 如果当前节点已匹配完，则从子节点开始，同时需重置index==0</span></span><br><span class="line">			<span class="keyword">index</span> = <span class="number">0</span>;</span><br><span class="line">			start = start.child;</span><br><span class="line">			<span class="keyword">while</span> (<span class="keyword">null</span> != start) &#123;</span><br><span class="line">				<span class="comment">// 比较当前节点指定位置(index)的字符是否与待查找字符一致</span></span><br><span class="line">				<span class="comment">// 由于是遍历子节点，所以如果不匹配换个子节点继续</span></span><br><span class="line">				<span class="keyword">if</span> (start.chars[<span class="keyword">index</span>] == chars[i]) &#123;</span><br><span class="line">					<span class="keyword">index</span>++;</span><br><span class="line">					<span class="keyword">break</span>;</span><br><span class="line">				&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">					start = start.brother;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">if</span> (<span class="keyword">null</span> == start) &#123;<span class="comment">// 子节点遍历完都无匹配则返回false</span></span><br><span class="line">				<span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125; <span class="keyword">else</span> <span class="keyword">if</span> (start.chars[<span class="keyword">index</span>] == chars[i]) &#123;</span><br><span class="line">			<span class="comment">// 如果当前查找到的节点的还有可比较字符，则进行比较，如果不同则直接返回false</span></span><br><span class="line">			<span class="keyword">index</span>++;</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>由于每个节点包含的字符数不确定，所以需要一个额外的索引记录当前匹配节点中字符的位置。查找的主要思想是先从根节点的字节点开始，挨个找，找不到则不是子串，找到一个节点后从节点上的所有字符挨个匹配，匹配不上则没有，匹配完了，就从这个节点的子节点继续找。</p>
+<p><a href="https://github.com/vickyqi/StudyBuddy/blob/master/java/datastructure/src/main/java/com/vicky/datastructure/tree/SuffixTree.java" target="_blank" rel="external"><strong>完整代码看这里Github</strong></a></p>
+<p><strong>参考文章</strong><br><a href="http://www.oschina.net/translate/ukkonens-suffix-tree-algorithm-in-plain-english" target="_blank" rel="external">Ukkonen 的后缀树算法的清晰解释</a><br><a href="http://www.cnblogs.com/gaochundong/p/suffix_tree.html" target="_blank" rel="external">后缀树</a><br><a href="http://blog.csdn.net/v_july_v/article/details/6897097" target="_blank" rel="external">从Trie树（字典树）谈到后缀树（10.28修订）</a></p>
+<hr>
+<p>以上就是自己实现的后缀树全部内容，欢迎大家测试，如发现问题请在下方留言，谢谢~~</p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/数据结构/" rel="tag">#数据结构</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/11/30/JDK并发工具类源码学习系列——SynchronousQueue/" rel="prev">JDK并发工具类源码学习系列——SynchronousQueue</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/11/27/数据结构系列——后缀树（附Java实现代码）/" rel="next">数据结构系列——后缀树（附Java实现代码）</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2015/11/27/数据结构系列——后缀树Java实现代码/"
+     data-title="数据结构系列——后缀树Java实现代码"
+     data-content=""
+     data-url="http://vickyqi.com/2015/11/27/数据结构系列——后缀树Java实现代码/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2015/11/27/数据结构系列——后缀树Java实现代码/"
+                       data-title="数据结构系列——后缀树Java实现代码" data-url="http://vickyqi.com/2015/11/27/数据结构系列——后缀树Java实现代码/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/avatar.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">让自己的努力变得更有价值</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">49</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">10</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">36</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <p class="post-toc-empty">此文章未包含目录</p>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>

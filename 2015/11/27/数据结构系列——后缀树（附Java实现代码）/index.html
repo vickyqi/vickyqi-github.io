@@ -1,0 +1,964 @@
+<!doctype html>
+<html class="theme-next use-motion theme-next-mist">
+<head>
+    
+
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+  <link rel="stylesheet" type="text/css" href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5"/>
+
+
+
+
+<link rel="stylesheet" type="text/css" href="/css/main.css?v=0.4.4"/>
+
+
+    <meta name="description" content="让自己的努力变得更有价值" />
+
+
+
+  <meta name="keywords" content="Java,数据结构,树,后缀树,Ukkonen," />
+
+
+
+  <link rel="alternate" href="/atom.xml" title="Vicky's Blog" type="application/atom+xml" />
+
+
+
+  <link rel="shorticon icon" type="image/x-icon" href="/favicon.ico?v=0.4.4" />
+
+
+<meta name="description" content="后缀树，说的通俗点就是将一个字符串所有的后缀按照前缀树（Trie树，可参考此篇文章）的形式组织成一棵树。
+什么是后缀树举例：“banana\0”，其中 “\0” 作为文本结束符号，该字符串所有的后缀如下：1234567banana\0 anana\0  nana\0   ana\0    na\0     a\0      \0
+将所有的后缀构建成一个前缀树，如下：
+图1：粗陋的后缀树：
+
+
+从图">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据结构系列——后缀树（附Java实现代码）">
+<meta property="og:url" content="http://vickyqi.com/2015/11/27/数据结构系列——后缀树（附Java实现代码）/index.html">
+<meta property="og:site_name" content="Vicky's Blog">
+<meta property="og:description" content="后缀树，说的通俗点就是将一个字符串所有的后缀按照前缀树（Trie树，可参考此篇文章）的形式组织成一棵树。
+什么是后缀树举例：“banana\0”，其中 “\0” 作为文本结束符号，该字符串所有的后缀如下：1234567banana\0 anana\0  nana\0   ana\0    na\0     a\0      \0
+将所有的后缀构建成一个前缀树，如下：
+图1：粗陋的后缀树：
+
+
+从图">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffix_tree_1.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffix_tree_2.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_1.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_2.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_3.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_4.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_5.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_6.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_7.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_8.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_9.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_10.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_11.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_12.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_13.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_14.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_15.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_16.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_17.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_18.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_19.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_20.png">
+<meta property="og:image" content="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_21.png">
+<meta property="og:updated_time" content="2015-11-27T05:30:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="数据结构系列——后缀树（附Java实现代码）">
+<meta name="twitter:description" content="后缀树，说的通俗点就是将一个字符串所有的后缀按照前缀树（Trie树，可参考此篇文章）的形式组织成一棵树。
+什么是后缀树举例：“banana\0”，其中 “\0” 作为文本结束符号，该字符串所有的后缀如下：1234567banana\0 anana\0  nana\0   ana\0    na\0     a\0      \0
+将所有的后缀构建成一个前缀树，如下：
+图1：粗陋的后缀树：
+
+
+从图">
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: 'post'
+  };
+</script>
+
+    <title> 数据结构系列——后缀树（附Java实现代码） - Vicky's Blog </title>
+</head>
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+<!--[if lte IE 8]>
+  <div style=' clear: both; height: 59px; padding:0 0 0 15px; position: relative;margin:0 auto;'>
+    <a href="http://windows.microsoft.com/en-US/internet-explorer/products/ie/home?ocid=ie6_countdown_bannercode">
+      <img src="http://7u2nvr.com1.z0.glb.clouddn.com/picouterie.jpg" border="0" height="42" width="820"
+           alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today or use other browser ,like chrome firefox safari."
+           style='margin-left:auto;margin-right:auto;display: block;'/>
+    </a>
+  </div>
+<![endif]-->
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-69055865-2', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "//hm.baidu.com/hm.js?1adf407d0fa660f9d712a98579cdac09";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+<div class="container one-column page-post-detail">
+    <div class="headband"></div>
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+        <div class="header-inner"><h1 class="site-meta">
+  <span class="logo-line-before"><i></i></span>
+  <a href="/" class="brand" rel="start">
+      <span class="logo">
+        <i class="icon-logo"></i>
+      </span>
+      <span class="site-title">Vicky's Blog</span>
+  </a>
+  <span class="logo-line-after"><i></i></span>
+</h1>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu menu-left">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            <i class="menu-item-icon icon-home"></i> <br />
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            <i class="menu-item-icon icon-categories"></i> <br />
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            <i class="menu-item-icon icon-tags"></i> <br />
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            <i class="menu-item-icon icon-archives"></i> <br />
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            <i class="menu-item-icon icon-about"></i> <br />
+            关于
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+<form class="site-search-form">
+  <input type="text" id="st-search-input" class="st-search-input st-default-search-input" />
+</form>
+<script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+  _st('install', 'G8S2ksi3eMDfbztLn4xs','2.0.0');
+</script>
+
+<div class="site-search-toggle"></div>
+    </div>
+  
+</nav>
+
+        </div>
+    </header>
+
+    <main id="main" class="main">
+        <div class="main-inner">
+            <div id="content" class="content">
+                
+
+  <div id="posts" class="posts-expand">
+	
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      
+      
+        <h1 class="post-title" itemprop="name headline">
+          
+          
+            
+              数据结构系列——后缀树（附Java实现代码）
+            
+          
+        </h1>
+      
+
+      <div class="post-meta">
+        <span class="post-time">
+          发表于
+          <time itemprop="dateCreated" datetime="2015-11-27T19:17:00+08:00" content="2015-11-27">
+            2015-11-27
+          </time>
+        </span>
+
+        
+          <span class="post-category" >
+            &nbsp; | &nbsp; 分类于
+            
+              <span itemprop="about" itemscope itemtype="https://schema.org/Thing"><a href="/categories/数据结构/" itemprop="url" rel="index"><span itemprop="name">数据结构</span></a></span>
+
+              
+              
+
+            
+          </span>
+        
+
+        
+          
+            <span class="post-comments-count">
+              &nbsp; | &nbsp;
+              <a href="/2015/11/27/数据结构系列——后缀树（附Java实现代码）/#comments" itemprop="discussionUrl">
+                <span class="post-comments-count ds-thread-count" data-thread-key="2015/11/27/数据结构系列——后缀树（附Java实现代码）/" itemprop="commentsCount"></span>
+              </a>
+            </span>
+          
+        
+
+		
+		<span>&nbsp; | &nbsp;
+		<span id="busuanzi_value_page_pv" ></span>次阅读
+		</span>    
+		
+		
+      </div>
+    </header>
+
+    <div class="post-body">
+
+      
+      
+
+      
+        <span itemprop="articleBody"><p>后缀树，说的通俗点就是将一个字符串所有的后缀按照<a href="http://vickyqi.com/2015/11/23/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94Trie%E6%A0%91/">前缀树（Trie树，可参考此篇文章）</a>的形式组织成一棵树。</p>
+<h2 id="什么是后缀树"><strong>什么是后缀树</strong></h2><p>举例：“banana\0”，其中 “\0” 作为文本结束符号，该字符串所有的后缀如下：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">banana\<span class="number">0</span></span><br><span class="line"> anana\<span class="number">0</span></span><br><span class="line">  nana\<span class="number">0</span></span><br><span class="line">   ana\<span class="number">0</span></span><br><span class="line">    na\<span class="number">0</span></span><br><span class="line">     a\<span class="number">0</span></span><br><span class="line">      \<span class="number">0</span></span><br></pre></td></tr></table></figure></p>
+<p>将所有的后缀构建成一个前缀树，如下：</p>
+<p><strong>图1：粗陋的后缀树：</strong></p>
+<center><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffix_tree_1.png" alt="图1：粗陋的后缀树"></center>
+
+<p>从图中可以看出大量的重复子串，如存在三个“a\0”，浪费太多的空间，我们需要将其进行压缩，得到如下的后缀树：</p>
+<p><strong>图2：真正的后缀树：</strong></p>
+<center><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffix_tree_2.png" alt="图2：真正的后缀树"></center>
+
+<p>瞬间感觉看不懂了是吧，其实就是把每个节点放一个字符，改成放多个字符，比如图1最左边的一条分支，每个节点一个字符，太浪费，到图2就成了一个节点，存储了全部的”banana\0”字符，大大节省了空间。当然也增加了查找的复杂度。</p>
+<h2 id="后缀树的应用"><strong>后缀树的应用</strong></h2><p>在看如何构建这样一颗后缀树之前，先了解下后缀树的应用，如果没有很好地应用场景，那么我们就没必要浪费时间去了解这么一颗复杂的数据结构了。</p>
+<ol>
+<li>查找字符串o是否在字符串S中。<br>方案：用S构造后缀树，按在trie中搜索字串的方法搜索o即可。<br>原理：若o在S中，则o必然是S的某个后缀的前缀。<br>例如S: leconte，查找o: con是否在S中,则o(con)必然是S(leconte)的后缀之一conte的前缀.有了这个前提，采用trie搜索的方法就不难理解了。</li>
+<li>指定字符串T在字符串S中的重复次数。<br>方案：用S+”$”构造后缀树，搜索T节点下的叶节点数目即为重复次数<br>原理：如果T在S中重复了两次，则S应有两个后缀以T为前缀，重复次数就自然统计出来了。</li>
+<li>字符串S中的最长重复子串<br>方案：原理同2，具体做法就是找到最深的非叶节点。<br>这个深是指从root所经历过的字符个数，最深非叶节点所经历的字符串起来就是最长重复子串。<br>为什么要非叶节点呢?因为既然是要重复，当然叶节点个数要&gt;=2。 </li>
+<li>两个字符串S1，S2的最长公共部分<br>方案：将S1#S2\$作为字符串压入后缀树，找到最深的非叶节点，且该节点的叶节点既有#也有\$(无#)。</li>
+</ol>
+<p>后面会用代码来描述如何应用后缀树进行字符串子串的查找，即应用1。下面先来看看后缀树的构建算法。</p>
+<h2 id="后缀树的构建"><strong>后缀树的构建</strong></h2><p>在 1995 年，Esko Ukkonen 发表了论文<a href="http://www.cs.helsinki.fi/u/ukkonen/SuffixT1withFigs.pdf" target="_blank" rel="external">《On-line construction of suffix trees》</a>，描述了在线性时间内构建后缀树的方法。该文章当然是英文的了，不过国内已经有人翻译了，<a href="http://www.oschina.net/translate/ukkonens-suffix-tree-algorithm-in-plain-english" target="_blank" rel="external">翻译的文章可以看这里</a>。不过说真的，这是论文，还是老外的论文，就算翻译成中文，但是还是比较难以理解的，至少需要研究好几遍才能大致明白，而且文中出现了比较多的感官动词（不知道是不是这个名词），如“一眼看出”，“显然”等。所以我会结合这篇译文，并加上自己的理解，希望以此帮助大家快速的理解。原文会通过正文对译文进行原样照搬，注释采用斜体，请注意区分。</p>
+<h3 id="Ukkonen算法"><strong>Ukkonen算法</strong></h3><hr>
+<p>本文试图描述Ukkonen算法，首先显示当字符串是简单的(即不包含任何重复的字符)时候它做什么，然后扩展到完整的算法。</p>
+<p>首先来看一些前言：<br>我们正在建设的，基本上像一个搜索特里结构（单词查找树）。所以有一个根节点，从根节点引出新的节点，以及进一步从新节点引出其它节点，依次类推。</p>
+<p>但是：与搜索单词查找树中不同，边标签不是单个字符。相反,每个边的标签是使用一对整数[从哪,到哪]。这些都是指向文本的指针。从这个意义上说，每个边有任意长度的字符串标签，但只需要O(1)的空间(两个指针)。</p>
+<h3 id="基本原理"><strong>基本原理</strong></h3><p>我想首先展示如何创建一个特别简单的字符串的后缀树，这个字符串没有重复的字符，如：</p>
+<pre>abc</pre>
+
+<p>这个<strong>算法工作的步骤，从左到右。字符串的每个字符都有一个步骤。</strong>每一步都可能涉及到多个个体的操作,但是我们将会看到(见结尾最后的观察)的总数量操作是O(n)。</p>
+<p>所以我们从左开始，第一次插入单个字符“a“创建一个从根节点(在左边)到一个叶节点的边，和作为[0,#)的标签，这意味着边代表了子串在位置0开始，结束在当前的结尾。我使用符号#来表示当前末尾，这是在位置1(a之后的右边)。</p>
+<p>因此，我们拥有一棵起始树，这棵树看起来如下：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_1.png" alt="这里写图片描述"></p>
+<p>而其意义如下：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_2.png" alt="这里写图片描述"></p>
+<p>现在我们前进到位置2(b的右边）。 我们每个步骤的目标是插入至当前位置的所有后缀。<br>我们通过以下动作完成目标： </p>
+<ul>
+<li>扩展已存在边a为ab</li>
+<li>插入一条新边b</li>
+</ul>
+<p>在我们的图示里，它看起来如下： </p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_3.png" alt="这里写图片描述"></p>
+<p>而其意义如下： </p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_4.png" alt="这里写图片描述"></p>
+<p><strong>我们看到了</strong>两点：</p>
+<ul>
+<li>ab边的图示与它在起始树：[0,#]边的图示是相同的。它的意义却已经自动更改了，因为我们把当前的位置#从1更改到2。</li>
+<li>每条边使用的空间复杂度为O(1)，因为无论边代表多少个字符 ，它都是由指向文本里的两个指针组成。</li>
+</ul>
+<p>接着我们再次增加位置，并且修改树：给每个已经存在的边增加c，插入一条表示新后缀c的边。<br>在我们的图示里，它看起来如下： </p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_5.png" alt="这里写图片描述"></p>
+<p>而其意义如下： </p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_6.png" alt="这里写图片描述"></p>
+<p><strong>我们看到</strong>： </p>
+<ul>
+<li>这棵树是经过上面的每个步骤后至当前位置的正确的后缀树。</li>
+<li>步骤数目与文本中包含的字符一样多。</li>
+<li>每个步骤的工作量是O(1)，因为所有已经存在的边都是增加#来自动更改的，而且为最后一个字符插入一条新边的时间复杂度为  O(1)。因此对一个长度为n的字符串来说，只需要O(n)时间复杂度。</li>
+</ul>
+<hr>
+<p><em><b>注释1</b>：到这里论文中构建了一颗“abc”的后缀树，按照步骤一步一步很容易理解，唯一的地方就是那个#，不过我们可以忽略这个#，在使用程序实现的时候我们会有一个很好的优化的方式让我们很轻松的处理掉这个#。不过，从下面开始，事情似乎变得复杂了很多</em></p>
+<hr>
+<h3 id="第一次扩展：简单的重复"><strong>第一次扩展：简单的重复</strong></h3><p>当然，后缀树表示的如此良好只是因为我们的字符串没有包含任何重复。现在我们看一个更真实的字符串：</p>
+<pre>abcabxabcd</pre>
+
+<p>这个字符串像前面例子里一样是abc开始的，接着重复ab ，紧跟着x，再接着重复abc，紧跟着d。<br><strong>步骤1到3</strong>：经过了前三个步骤后，我们拥有了前面例子的那棵树：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_7.png" alt="这里写图片描述"></p>
+<p><strong>步骤4</strong>：我们移动#到位置4。这隐含地更改所有已经存在的边为如下：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_8.png" alt="这里写图片描述"></p>
+<p>而且我们需要在根节点插入当前步骤的最末的后缀a。<br>我们做这些之前，我们引入除#之外的 两个或者更多变量，当然这些变量一直都存在，只是我们迄今为止没有使用它们： </p>
+<ul>
+<li><strong>活动点(active point)</strong>，它是一个三元组（活动节点，活动边，活动长度）</li>
+<li><strong>剩余后缀数(reminder)</strong>，它是一个整数，来说明我们需要插入多少个新的后缀。</li>
+</ul>
+<p>这两个图示的确切含义不久就会清晰，不过现在我们只能说： </p>
+<ul>
+<li>在简单的abc例子里，活动点总是(root,’0x’,0),也就是说，活动节点是根节点，活动边是由空字符’0x’指定的边，活动长度是0。这么做的结果是我们在每一步骤里插入的一条新边是作为新创建的边插入到根节点。不久我们就会明白为什么需要三元组表示这条信息。</li>
+<li>在每个步骤开始时剩余后缀数总是设置为1。它的意义是我们主动插入到每一步骤末尾的后缀数目是1（总是最后一个字符）。</li>
+</ul>
+<hr>
+<p><em><b>注释2</b>：关于这里的活动点和剩余后缀数简单解释下。活动点中的<strong>活动节点</strong>：是用于查找一个后缀是否已经存在这棵树里，即查找的时候从活动节点的子节点开始查找，同时当需要插入边的时候也是插入到该节点下；而<strong>活动边</strong>则是每次需要进行分割的边，即成为活动边就意味着需要被分割；而<strong>活动长度</strong>则是指明从活动边的哪个位置开始分割。<strong>剩余后缀数</strong>是我们需要插入的后缀的数量，说明程序员点就是缓存的数量，因为每次如果要插入的后缀存在，则缓存起来。</em></p>
+<hr>
+<p>现在将有变化了，当我们给根节点插入当前最后一个字符a的时候，我们特别注意到已经存在一条以a开始的边：abca。在这种情况下我们做如下工作： </p>
+<ul>
+<li>我们不向根节点插入一条新边[4,#]。相反，我们只是注意到后缀a已经在我们的树里。它终止在更长的边的中间位置，不过这么做我们并不疑惑，我们还是保留它们原来的样子。</li>
+<li>我们设置活动点为(root,’a’,1)。这意味着活动点现在是在根节点的以a开始的向外的边的中间某个位置，具体地指这条边的位置1之后。我们注意到这条边只是由它的首个字符a来声明的。这就足够了，因为以一个特定的字符开始的只有一条边（通读整个文档之后可以确定这是真的）。</li>
+<li>我们还增加了剩余后缀数， 那么在下一步骤开始的时候，剩余后缀数为2。</li>
+</ul>
+<p><strong>注意</strong>：当<strong>发现我们需要插入的最终后缀已经存在在这棵树里的时候</strong>，这棵树本身根本就<strong>没有改变</strong>（我们只是修改了活动节点和剩余后缀数）。那么这棵树就不再是能准确的表示至当前位置的后缀树了，不过它<strong>包含了</strong>所有的后缀（因为最终的后缀a隐含地包含了）。因此，除了修改变量外（所有这些变量都是定长的，因此空间复杂度是 O(1)），在这一步里<strong>没有做其他工作</strong>。</p>
+<hr>
+<p><em><b>注释3</b>：这里原文用了<strong>我们特别注意到</strong>，可惜，程序可不会注意到，所以在实现的时候这里会涉及到对活动节点的子节点的一个遍历操作。这里还更新了活动点，活动节点是root，而活动边是’a’，对于程序来说活动边则是一个边的对象，只是这个边包含的字符串时以’a’开头，同时活动长度是从0增加到了1。剩余后缀数是1，因为我们缓存了一个后缀’a’。</em></p>
+<hr>
+<p><strong>步骤5：</strong>我们修改当前的位置#为5。这将自动地如下更新这棵树：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_9.png" alt="这里写图片描述"></p>
+<p>而且<strong>由于剩余后缀数为2</strong>，我们需要插入目前位置的两个最终后缀：ab和b。这主要是因为： </p>
+<ul>
+<li>前一步骤的a后缀从来都没有真正地插入。因此它保留下来，然而由于我们已经向前走了一步，它现在由a延长为ab。</li>
+<li>还有，我们需要插入新的最终边b。</li>
+</ul>
+<p>实际上，这意味着我们要修改活动点（它现在指向的是abcab边里的a之后），而且插入当前的最后一个字符b， <strong>不过</strong>：同时它也证明b也已经出现在同一条边里。 </p>
+<p>因此，我们再次不修改这棵树，我们只是： </p>
+<ul>
+<li>修改活动点为(root,’a’,2)(是与前面相同的节点和边，只不过现在我们指向到b之后)</li>
+<li>增加剩余后缀数为3 ，因为我们仍然不能插入前一个步骤的最终边，同时我们也不能插入当前的最终边</li>
+</ul>
+<p>为了清晰地说明：我们需要在当前的步骤里插入ab和b，不过由于ab已经找到，所以我们修改了活动点，而且甚至不试图插入b。为什么？因为如果ab处于这棵树里，那么它的<strong>每个后缀</strong>（包括b)也一定在这棵树里。也许仅仅是隐含性的，不过它一定在这棵树里，因为这是我们迄今为止建立这棵树所采用的方法。</p>
+<hr>
+<p><em><b>注释4</b>：<strong>同时它也证明b也已经出现在同一条边里</strong>，看到这句话时思考了半天，真的无法证明，只是我们用肉眼看出来而已，所以程序需要做的是：比较活动边在活动长度指定的字符与’b’是否相同，相同则证明了’b’也出现过在同一条边。此时活动长度的作用就出来了，其实就是标识活动边比较到哪里了。</em></p>
+<hr>
+<p>我们增加#而前进到<strong>步骤6</strong>。这棵树自动修改为：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_10.png" alt="这里写图片描述"></p>
+<p>由于<strong>剩余后缀数是3</strong> ，我们不得不增加abx,bx和x。活动点告诉我们ab结束在哪儿，因此我们仅仅需要跳过这儿，然后插入x。x确实还不在这棵树里，因此我们分割abcabx边，插入一个内部节点：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_11.png" alt="这里写图片描述"></p>
+<p>这条边表示的仍然是指向文本内部的指针，因此分割和插入内部节点的时间复杂度为O(1)。 </p>
+<hr>
+<p><em><b>注释5</b>：这里为什么突然不证明x也出现过在同一条边呢？因为被肉眼识破了，好吧，程序还是需要按照注释4所说的方法进行一次比较，最终得出x不存在活动边，所以如果需要插入abx，为了充分利用空间，所以不会单独建一个分支存放abx，而是将原来的abcabx分割成ab和cabx两段，然后再为ab增加一个分支存放x。而分割的边就是活动边，分割的长度就是活动长度。</em></p>
+<hr>
+<p>这时我们处理了abx,并且把剩余后缀数减为2。现在我们需要插入下一个剩余后缀bx。但是在我们做这些之前，我们需要修改活动节点。分割并插入一条边遵循的规则称作<strong>规则1</strong>，如下，而且它适用于活动节点是根节点的情况（针对下面后续的其他情况，我们将要了解规则3）。规则1如下：</p>
+<p>向根节点插入遵循：</p>
+<ul>
+<li>活动节点保留为根节点</li>
+<li>设置活动边为我们需要插入的新后缀的第一个字符，也就是b。</li>
+<li>活动长度减1</li>
+</ul>
+<p>因此，新的活动节点三元组(root,’b’,1)表明要做的下一个插入在bcabx边，第一个字符之后，即b之后。我们可以确定插入点的时间复杂度为 O(1)，并且检查x是否已经出现在树里。如果它出现在这条边里，我们将结束当前的步骤，保持一切为原样。然而如果x没有出现在这条边里，那么我们分割这条边而插入它：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_12.png" alt="这里写图片描述"></p>
+<hr>
+<p><em><b>注释6</b>：上面进行了一次分割，所以引入了规则1，规则1的前提条件是向根节点插入，但是我们插入的是在a这个分支，其实我觉得应该是这么理解：进行分割时如果活动节点是根节点，则依旧保留为根节点；至于第二个 设置活动边为b，这个可不是这么一句话就可以认定的，需要从活动节点进行一次查找，不过肯定是存在的，因为存在ab，则必然存在b。如果剩余的是bcx，则找到b之后还需要继续找c，找x。最终找不到就分割，然后重复以上步骤即可。</em></p>
+<hr>
+<p>再此说明，它的时间复杂度为 O(1)，而且我们按照规则1所示把剩余后缀数修改为1，活动节点修改为(root,’x’,0)。</p>
+<p>不过还有一件事情我们必须做。我们称它为<strong>规则2</strong>：</p>
+<blockquote>
+<p>如果我们分割一条边并插入新的节点，而且如果它不是在当前步骤里创建的第一个节点的话，我们通过特殊的指针，即后缀连接，把 以前插入的节点和新增的节点连接起来。后面我们将明白为什么这么做是有用的。这儿我们要明白：后缀连接表示为虚线边</p>
+</blockquote>
+<hr>
+<p><em><b>注释7</b>：后缀连接的目的是为了方便后面进行查找，不过需要注意的是：是将前一个分割的节点通过后缀节点指向后一个分割的节点，而且这两次分割必须是出现在一次插入中，即这里是出现在插入x的情况下发生的两次分割，所以可以增加后缀连接。</em></p>
+<hr>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_13.png" alt="这里写图片描述"></p>
+<p>我们仍然需要插入当前步骤的最终后缀x。因为活动节点的活动长度部分已经减少到0，最终直接插入到根节点上。由于根节点上没有以x开始的边，所以我们插入了新边：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_14.png" alt="这里写图片描述"></p>
+<p>正如你所能看到的，在当前的步骤里插入了所有剩余的后缀。</p>
+<p>我们设置#=7而前进到<strong>步骤7</strong>，这将像往常一样自动添加下一个字符a到所有的叶子边上。然后我们试图插入新的最终字符到活动节点（根节点），然后发现它已经存在在这棵树里了。因此我们结束当前的步骤，不插入任何边，并且修改活动点位(root,’a’,1)。</p>
+<p>设置#=8进入<strong>步骤8</strong>,我们添加b,像以前所看到的，这仅仅意味着我们修改活动点位(root,’a’,2) ,而且不需要做其他事情就增加剩余后缀数。因为b已经出现在这棵树里。然而我们（在 O(1)时间复杂度里）注意到活动节点现在是一条边的结尾。我们通过重置活动节点位(node1,’\0x’,0)来体现这个。这儿，我们用node1来指ab边结束的哪个内部节点。</p>
+<hr>
+<p><em><b>注释8</b>：这里出现了一个修改活动节点的规则：即如果活动边上的所有字符全部都被匹配完了(级活动边上的字符数==活动长度)，则将活动边晋升为活动节点，同时重置活动长度为0。所以下次查找时就得从该节点开始了，而不是根节点了。</em></p>
+<hr>
+<p>接着设置#=9进入<strong>步骤9</strong>，我们需要插入’c’,这将有助于我们理解的最后一条技巧。</p>
+<h3 id="第二次扩展：使用后缀连接"><strong>第二次扩展：使用后缀连接</strong></h3><p>像往常一样，#的修改自动给每条是叶子的边添加了c，而且我们转到活动点看是否可以插入’c’。活动点显示’c’已经存在在那条边里，因此我们设置活动点为(node1,’c’,1),且增加剩余后缀数，不做任何其他事情。</p>
+<p>现在设置#=10进入<strong>步骤10</strong>，剩余后缀数是4 ，因此我们首先需要在活动点插入d而实现插入abcd（这条边从第三步骤开始就一直保留着）。</p>
+<p>试图在活动点插入d将引起时间复杂度为O(1)的边分割：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_15.png" alt="这里写图片描述"></p>
+<p>分割起始的活动点在上图中标记为红色。 最后一条规则即规则3如下： </p>
+<blockquote>
+<p>分割从不是根节点的活动点开始的边之后，我们应当紧跟着从活动点开始的后缀连接，如果存在一条这样的连接，那么重置活动节点使它指向这个节点。如果不存在这样后缀连接，那么我们设置活动节点为根节点，活动边和活动长度保持不变。</p>
+</blockquote>
+<p>因此活动节点现在是(node2,’c’,1),这里node2如下图所示标记为红色：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_16.png" alt="这里写图片描述"></p>
+<hr>
+<p><em><b>注释9</b>：这里使用到了规则2，因为分割c的时候，活动节点是ab，而非根节点，而ab正好存在后缀节点，所以分割完活动节点就跑到了ab的后缀节点b。其实添加了abcd之后，要插入的就是bcd了，如果不使用后缀节点，则需要从根节点开始找b，但是b就一个字符，所以活动节点还是会变成b，而后缀节点就是省了这一步，所以后缀节点只是一个优化手段而已。可以看到b分割之后就需要从根节点找c了，因为b没有后缀连接快速找到c。</em></p>
+<hr>
+<p>由于abcd的插入已经完成，我们把剩余后缀数减为3，而且考虑当前步骤的下一个剩余后缀bcd。规则3已经设置活动点为右边的节点和边，因此插入bcd可以简单地向活动点插入剩余后缀的最后一个字符d来完成。<br>要做到这个将引起另一个边分割，<strong>根据规则2</strong> ，我们必须创建一条从以前已插入的节点开始的到新建节点的后缀连接：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_17.png" alt="这里写图片描述"></p>
+<p><strong>我们注意到</strong>：后缀连接使我们重置了活动点，因为我们能在O(1)复杂度下插入下一个剩余后缀。看看上面的图就可确定标签为ab的真正节点连接到节点b(它的后缀），而节点abc则连接到bc节点。</p>
+<p>当前步骤仍然没有结束。现在剩余后缀数是2，我们需要遵循规则3再次重置活动节点。由于当前的活动节点（上图中红色标记的）已经没有后缀连接，我们重置活动节点位根节点。活动节点现在是(root,’c’,1)。</p>
+<p>因此下一个插入发生在根节点的一条边上，以c开始的这条边的标签为：cabxabcd，位于第一个字符之后，即c之后。这将产生另一个分割：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_18.png" alt="这里写图片描述"></p>
+<p>另外，由于这涉及到新的内部节点的创建，我们遵循规则2，设置一条新的从前面已创建的内部节点开始的后缀连接：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_19.png" alt="这里写图片描述"></p>
+<p>（为了制作这些小图，我使用了<a href="http://www.graphviz.org/" target="_blank" rel="external">Graphviz Dot</a>软件。新的后缀连接使得Dot软件爱你重新布局了已经存在的边，因此仔细地检查并确定上图中插入的唯一的东西就是一条新的后缀连接。）</p>
+<p>创建了这条连接，剩余后缀树可设置为1 ，另外由于活动节点是根节点，我们根据规则1修改活动点位(root,’d’,0)。这意味着这一步的最后一个插入是向根节点插入单独的d：</p>
+<p><img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_20.png" alt="这里写图片描述"></p>
+<hr>
+<p><em><b>注释10</b>：到这里全部的步骤就结束了，后面的一些需要主要的地方都是这个算法需要注意的地方，所以需要先了解这个算法的运作原理才能看懂后面的注意。</em></p>
+<hr>
+<p>这是最后一步，至此我们已经完成了后缀树的建立。虽然工作已经完成，但还有许多最后要注意的地方：</p>
+<ul>
+<li>在每一步里，我们向前移动#一个位置。这自动在时间复杂度O(1)内修改了所有的叶子结点。</li>
+<li>不过，后缀树没有处理 a) 前一步骤保留下来的任何后缀 b)和当前步骤的最后一个字符。</li>
+<li>剩余后缀树告诉我们我们需要做多少个后续的插入。这些插入把一对一对应为在当前位置#结束的字符串的最后的后缀。我们认为是一个接着一个，然后再对它们进行插入。重要的是：每条插入都在O(1)的时间复杂度内完成，因为活动点告诉我们确切的位置，然后我们只需要在活动点增加一个单独的字符。为什  么？因为其他字符都隐含地包含了（否则活动点将是其他地方）。</li>
+<li>在做了每个这样的插入之后，我们把剩余后缀数减少，并且如果存在后缀的边，就添加一条后缀连接。如果不存在，(根据规则3）我们把活动节点设置为根节点。如果我们已经处在根节点，那么我们根据规则1修改活动节点。在任何情况下，它只花费O(1)的时间复杂度。</li>
+<li>在任意插入期间，我们发现我们需要插入的字符已经存在，那么我们不作任何事情而结束当前步骤，甚至在剩余后缀树大于0的情况下。理由是保留的任何插入都是我们试图插入的边的后缀。因此它们所有都隐藏在当前的树里。事实是剩余后缀树大于0确保我们后续对剩余后缀的处理。</li>
+<li>如果在算法结束时剩余后缀数大于0意味着什么呢？将是这中情况：结束的文本是以前出现在某个地方的这个文本的子字符串。在这种  情况下，我们必须给这个字符串结尾添加一个额外以前没有出现过的字符。在这样的文档里，通常使用美元符号$作为解决这个问题的符号。<strong>为什么会发生这种事情呢？</strong>—&gt;如果后来我们使用完整的后缀树搜寻后缀，那么我们只有在后缀结束于叶子时才接受搜寻匹配。否则我们会得到许多假的匹配，因为后缀树立简单地包含了不是猪字符串的真正后缀的许多这样的字符串。在结束的时候强制剩余后  缀数为0是确保所有的后缀都结束在叶子节点的重要方法。然而，如果玩么想用这棵树来寻找通常的子字符串，而不仅仅是主字符串的后缀，那么根据下面OP的评论的建议，最后一步确实不是必需的。</li>
+<li>那么，整个算法的复杂性如何呢？如果文本是长度为n的字符组成，那么显然需要n步（或者如果我们增加了没有符号，那么就是n+1 步）。在每个步骤里，我们要么（除了修改变量外）什么都不做，要门我们插入剩余的后缀，每一步都花费O(1)时间复杂度。由于剩余后缀数表明了我们在以前的步骤里不做任何事情的次数，而且现在我们每做一次插入就对剩余后缀数递减，我们做这样的事情  总的次数准确地说是n(或者n+1)。因此，整体的复杂度是O(n)。</li>
+<li><p>然而，有一处小的地方我没有正确地说明： 可能发生这样的情况，我们添加了一条后缀连接，修改活动点，然后发现活动点的活动长度与新的活动节点不能一起正常工作。例如，看看下面这种情况：</p>
+<p>  <img src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/suffixtree/ukkonens-suffixtree_21.png" alt="这里写图片描述"><br>（短划线指的是这棵树的剩余部分，虚线指的是后缀连接。）</p>
+</li>
+</ul>
+<p>现在，假设活动节点是(red,’d’,3),因此它指向def边的f之后的位置。现在假设我们做了必须的修改，而且现在依据规则3续接了后缀连接并修改了活动节点。新的活动节点是(green,’d’,3)。然而从绿色节点出发的d边是de，因此这条边只有2个字符。为了找到正确的活动点，很明显我们需要添加一个到蓝色节点的边，然后重置活动节点为(blue,’f’,1)。</p>
+<p>在特别糟的情况下，活动长度可以是剩余后缀数那么大，它甚至可以与n一样大。再在找正确的活动节点的时候，这种情况可能刚好发生，我们不仅仅需要跳过一个内部节点长度，不过也许很长，最坏的情况是高达n。由于在每一步里 剩余后缀的插入通常是O(n)，续接了后缀之后的对活动节点的后续调整也是O(n)的复杂度 ，这是否意味着这个算法具有隐藏的O(n 2)的复杂度？</p>
+<p>不是这样的，理由是如果我们确实需要调整活动节点（例如，如上图所示从绿色节点调整到蓝色节点），那么这就给我们引入了一个拥有自己的后缀连接的新节点，而且活动长度将缩减。当我们沿着后缀连接这个链向下走，我们就要插入剩余的后缀，且只是缩减活动长度，使用这种方法我们可以调整的活动点的数目不可能超过任何给定时刻的活动长度。由于活动长度从来不会超过剩余后缀数，而后缀剩余数不仅仅在每个单一步骤里是O(n)，而且对整个处理过程进行的剩余后缀递增的总数也是O(n)，因此调整活动节点的数目也是以O(n)为界的。</p>
+<hr>
+<p><em><b>注释11</b>：最后一点注释，这里的<strong>注意</strong>其实主要证明为什么算法时O(n)，以及为了某种特殊目的需要在字符串后面加一个$。</em></p>
+<hr>
+<hr>
+<p>上面就是Ukkonen算法的全部内容，下面就是将其使用程序进行实现了，太长了，<a href="http://vickyqi.com/2015/11/27/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%B3%BB%E5%88%97%E2%80%94%E2%80%94%E5%90%8E%E7%BC%80%E6%A0%91Java%E5%AE%9E%E7%8E%B0%E4%BB%A3%E7%A0%81/">见下一篇吧~~~</a></p>
+<h2 id="参考文章"><strong>参考文章</strong></h2><p><a href="http://www.oschina.net/translate/ukkonens-suffix-tree-algorithm-in-plain-english" target="_blank" rel="external">Ukkonen 的后缀树算法的清晰解释</a><br><a href="http://www.cnblogs.com/gaochundong/p/suffix_tree.html" target="_blank" rel="external">后缀树</a><br><a href="http://blog.csdn.net/v_july_v/article/details/6897097" target="_blank" rel="external">从Trie树（字典树）谈到后缀树（10.28修订）</a></p>
+</span>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/数据结构/" rel="tag">#数据结构</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2015/11/27/数据结构系列——后缀树Java实现代码/" rel="prev">数据结构系列——后缀树Java实现代码</a>
+            
+          </div>
+
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2015/11/23/JDK并发工具类源码学习系列——LinkedBlockingQueue/" rel="next">JDK并发工具类源码学习系列——LinkedBlockingQueue</a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+ 
+	
+    <div class="post-spread">
+      
+        <div class="ds-share flat" data-thread-key="2015/11/27/数据结构系列——后缀树（附Java实现代码）/"
+     data-title="数据结构系列——后缀树（附Java实现代码）"
+     data-content=""
+     data-url="http://vickyqi.com/2015/11/27/数据结构系列——后缀树（附Java实现代码）/">
+  <div class="ds-share-inline">
+    <ul  class="ds-share-icons-16">
+
+      <li data-toggle="ds-share-icons-more"><a class="ds-more" href="javascript:void(0);">分享到：</a></li>
+      <li><a class="ds-weibo" href="javascript:void(0);" data-service="weibo">微博</a></li>
+      <li><a class="ds-qzone" href="javascript:void(0);" data-service="qzone">QQ空间</a></li>
+      <li><a class="ds-qqt" href="javascript:void(0);" data-service="qqt">腾讯微博</a></li>
+      <li><a class="ds-wechat" href="javascript:void(0);" data-service="wechat">微信</a></li>
+
+    </ul>
+    <div class="ds-share-icons-more">
+    </div>
+  </div>
+</div>
+      
+    </div>
+  </div>
+
+
+            </div>
+
+            
+
+            
+              <div class="comments" id="comments">
+                
+                  <div class="ds-thread" data-thread-key="2015/11/27/数据结构系列——后缀树（附Java实现代码）/"
+                       data-title="数据结构系列——后缀树（附Java实现代码）" data-url="http://vickyqi.com/2015/11/27/数据结构系列——后缀树（附Java实现代码）/">
+                  </div>
+                
+              </div>
+            
+        </div>
+
+        
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" src="http://7xnnj7.com1.z0.glb.clouddn.com/blog/avatar.jpg" alt="Vicky" itemprop="image"/>
+          <p class="site-author-name" itemprop="name">Vicky</p>
+        </div>
+        <p class="site-description motion-element" itemprop="description">让自己的努力变得更有价值</p>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">49</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          <div class="site-state-item site-state-categories">
+            <a href="/categories">
+              <span class="site-state-item-count">10</span>
+              <span class="site-state-item-name">分类</span>
+              </a>
+          </div>
+
+          <div class="site-state-item site-state-tags">
+            <a href="/tags">
+              <span class="site-state-item-count">36</span>
+              <span class="site-state-item-name">标签</span>
+              </a>
+          </div>
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="menu-item-icon icon-feed"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/vickyqi" target="_blank">github</a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://blog.csdn.net/vickyway" target="_blank">csdn</a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator"></div>
+          <div class="post-toc">
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#什么是后缀树"><span class="nav-number">1.</span> <span class="nav-text">什么是后缀树</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#后缀树的应用"><span class="nav-number">2.</span> <span class="nav-text">后缀树的应用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#后缀树的构建"><span class="nav-number">3.</span> <span class="nav-text">后缀树的构建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Ukkonen算法"><span class="nav-number">3.1.</span> <span class="nav-text">Ukkonen算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基本原理"><span class="nav-number">3.2.</span> <span class="nav-text">基本原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第一次扩展：简单的重复"><span class="nav-number">3.3.</span> <span class="nav-text">第一次扩展：简单的重复</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#第二次扩展：使用后缀连接"><span class="nav-number">3.4.</span> <span class="nav-text">第二次扩展：使用后缀连接</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文章"><span class="nav-number">4.</span> <span class="nav-text">参考文章</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator"></div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+    </main>
+
+    <footer id="footer" class="footer">
+        <div class="footer-inner">
+            <div class="copyright" >
+  
+  &copy; &nbsp; 
+  <span itemprop="copyrightYear">2015</span>
+  <span class="with-love">
+    <i class="icon-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Vicky</span>
+</div>
+
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+总共被光顾 <span id="busuanzi_value_site_pv"></span> 次 &nbsp|&nbsp
+恭喜，您排第 <span id="busuanzi_value_site_uv"></span> 位
+
+
+
+        </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+</div>
+
+<script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  
+  
+    
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"vickyqi"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('footer')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+    
+     
+  	  <script type="text/javascript">
+  		var duoshuo_user_ID = 13969606
+  	  </script>
+     
+  	<script src="/js/ua-parser.min.js"></script>
+  	<script src="/js/hook-duoshuo.js"></script>
+  
+
+    
+  
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+  <script type="text/javascript" src="/js/fancy-box.js?v=0.4.4"></script>
+
+
+  <script type="text/javascript" src="/js/helpers.js?v=0.4.4"></script>
+  
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/js/motion_global.js?v=0.4.4" id="motion.global"></script>
+
+
+
+  <script type="text/javascript" src="/js/search-toggle.js"></script>
+
+
+  
+<script type="text/javascript" src="/js/bootstrap.scrollspy.js?v=0.4.4" id="bootstrap.scrollspy.custom"></script>
+
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 0.4 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    var $tocContent = $('.post-toc-content');
+    if (isDesktop() && CONFIG.sidebar === 'post') {
+      if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+        displaySidebar();
+      }
+    }
+  });
+</script>
+
+
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        if (CONFIG.sidebar === 'always') {
+            displaySidebar();
+        }
+    });
+</script>
+
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i=0; i < all.length; i += 1) {
+      all[i].SourceElement().parentNode.className += ' has-jax';
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+
+
+
+
+
+
+<!-- lazyload -->
+<script type="text/javascript" src="/js/lazyload.js"></script>
+<script type="text/javascript">
+    jQuery(function () {
+        jQuery("#posts img").lazyload({
+            placeholder: "/images/loading.gif",
+            effect: "fadeIn"
+        });
+    });
+</script>
+</body>
+</html>
